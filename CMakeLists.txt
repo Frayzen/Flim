@@ -1,9 +1,20 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(engine)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -pedantic -std=c++20 -Wno-old-style-cast")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Werror -pedantic -std=c++20 -Wno-old-style-cast")
+
+find_package(glfw3 REQUIRED)
+find_package(Vulkan REQUIRED)
+find_package(glm REQUIRED)
+find_package(assimp REQUIRED)
+
+if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+  find_package(VulkanValidationLayers REQUIRED)
+endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
 
 file(GLOB_RECURSE sources src/*.cc)
 add_executable(engine ${sources})
+
+target_link_libraries(engine ${Vulkan_LIBRARY} glfw glm::glm assimp)
 

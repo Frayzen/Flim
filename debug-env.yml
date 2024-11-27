@@ -1,4 +1,4 @@
-name: Rengine
+name: Rengine-Debug
 channels:
   - conda-forge
   - nodefaults
@@ -9,6 +9,7 @@ dependencies:
   - eigen
   - vulkan-tools
   - vulkan-headers
+  - vulkan-validation-layers
   - cxx-compiler
   - c-compiler
   - stdlibs
