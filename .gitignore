@@ -1,0 +1,6 @@
+*
+!src/
+!src/*.cc
+!env.yml
+!CMakeLists.txt
+!.gitignore
