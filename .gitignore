@@ -1,9 +1,11 @@
 *
-!src/
-!src/*.cc
-!src/*.hh
-!src/*.h
+!*/
+!*.cc
+!*.hh
+!*.h
+
 !env.yml
 !debug-env.yml
+!setup-dev.sh
 !CMakeLists.txt
 !.gitignore

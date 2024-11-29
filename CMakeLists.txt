@@ -4,6 +4,10 @@ project(engine)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Werror -pedantic -std=c++20 -Wno-old-style-cast")
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2")
+endif()
+
 find_package(glfw3 REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(glm REQUIRED)
@@ -17,4 +21,5 @@ file(GLOB_RECURSE sources src/*.cc)
 add_executable(engine ${sources})
 
 target_link_libraries(engine ${Vulkan_LIBRARY} glfw glm::glm assimp)
+target_include_directories(engine PUBLIC src)
 
