@@ -1,17 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 project(engine)
 
+include(${CMAKE_SOURCE_DIR}/cmake/Dependencies.cmake)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Werror -pedantic -std=c++20 -Wno-old-style-cast")
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2")
 endif()
-
-find_package(glfw3 REQUIRED)
-find_package(Vulkan REQUIRED)
-find_package(glm REQUIRED)
-find_package(assimp REQUIRED)
 
 if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
   find_package(VulkanValidationLayers REQUIRED)
@@ -23,3 +20,4 @@ add_executable(engine ${sources})
 target_link_libraries(engine ${Vulkan_LIBRARY} glfw glm::glm assimp)
 target_include_directories(engine PUBLIC src)
 
+add_subdirectory(shaders)

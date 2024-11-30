@@ -1,9 +1,19 @@
 *
+
+!shaders/
+!cmake/
+
 !src/
 !src/**/
+
 !*.cc
 !*.hh
 !*.h
+
+!*.vert
+!*.frag
+
+!*.cmake
 
 !env.yml
 !debug-env.yml
