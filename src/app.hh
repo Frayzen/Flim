@@ -4,6 +4,7 @@
 #include "vulkan/context_holder.hh"
 #include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
+#include "vulkan/graphics/pipeline.hh"
 #include "vulkan/surface_manager.hh"
 #include <GLFW/glfw3.h>
 #include <cstdlib>
@@ -24,6 +25,7 @@ private:
   ExtensionManager extension_manager;
   DeviceManager device_manager;
   SurfaceManager surface_manager;
+  Pipeline pipeline;
 
   void initWindow() {
     if (!glfwInit()) {
@@ -83,6 +85,8 @@ private:
     device_manager.createSwapChain();
     surface_manager.setupSwapChainImages();
     surface_manager.createImageViews();
+    pipeline.createRenderPass();
+    pipeline.createGraphicPipeline();
   }
 
   void mainLoop() {
@@ -92,6 +96,7 @@ private:
   }
 
   void cleanup() {
+    pipeline.cleanup();
     surface_manager.cleanup();
     vkDestroySwapchainKHR(getContext().device, getContext().swapChain, nullptr);
     vkDestroyDevice(getContext().device, nullptr);
