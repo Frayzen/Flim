@@ -24,9 +24,10 @@ public:
   void createLogicalDevice();
   void createSwapChain();
 
+  QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+
 private:
   struct SwapChainSupportDetails swapChainSupport;
-  QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
   bool isDeviceSuitable(VkPhysicalDevice device);
   void querySwapChainSupport(VkPhysicalDevice &device);
 };

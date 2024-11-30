@@ -1,7 +1,22 @@
 #include "pipeline.hh"
 #include "vulkan/context_holder.hh"
 #include "vulkan/graphics/shader_utils.hh"
+#include "vulkan/surface_manager.hh"
 #include <stdexcept>
+
+/*
+Shader stages: the shader modules that define the functionality of the
+programmable stages of the graphics pipeline
+
+Fixed-function state: all of the structures that define the fixed-function
+stages of the pipeline, like input assembly, rasterizer, viewport and color
+blending
+
+Pipeline layout: the uniform and push values referenced by the shader that can
+be updated at draw time
+
+Render pass: the attachments referenced by the pipeline stages and their usage
+*/
 
 static VkShaderModule createShaderModule(const std::vector<char> &code) {
   VkShaderModuleCreateInfo createInfo{};
@@ -158,6 +173,30 @@ void Pipeline::createGraphicPipeline() {
     throw std::runtime_error("failed to create pipeline layout!");
   }
 
+  VkGraphicsPipelineCreateInfo pipelineInfo{};
+  pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+  pipelineInfo.stageCount = 2;
+  pipelineInfo.pStages = shaderStages;
+  pipelineInfo.pVertexInputState = &vertexInputInfo;
+  pipelineInfo.pInputAssemblyState = &inputAssembly;
+  pipelineInfo.pViewportState = &viewportState;
+  pipelineInfo.pRasterizationState = &rasterizer;
+  pipelineInfo.pMultisampleState = &multisampling;
+  pipelineInfo.pDepthStencilState = nullptr; // Optional
+  pipelineInfo.pColorBlendState = &colorBlending;
+  pipelineInfo.pDynamicState = &dynamicState;
+  pipelineInfo.layout = pipelineLayout;
+  pipelineInfo.renderPass = renderPass;
+  pipelineInfo.subpass = 0;
+  pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+  pipelineInfo.basePipelineIndex = -1;              // Optional
+                                                    //
+  if (vkCreateGraphicsPipelines(getContext().device, VK_NULL_HANDLE, 1,
+                                &pipelineInfo, nullptr,
+                                &graphicsPipeline) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create graphics pipeline!");
+  }
+
   vkDestroyShaderModule(getContext().device, fragShaderModule, nullptr);
   vkDestroyShaderModule(getContext().device, vertShaderModule, nullptr);
 }
@@ -198,12 +237,34 @@ void Pipeline::createRenderPass() {
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &colorAttachmentRef;
 
+  VkSubpassDependency dependency{};
+  // VK_SUBPASS_EXTERNAL refers to the implicit subpass before or after the
+  // render pass depending on whether it is specified in srcSubpass or
+  // dstSubpass
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  // index 0 refers to our subpass
+  // dstSubpass must always be higher than srcSubpass (unless one of the
+  // subpasses is VK_SUBPASS_EXTERNAL)
+  dependency.dstSubpass = 0;
+  // We need to wait for the swap chain to finish reading from the image before
+  // we can access it
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  // The operations that should wait on this are in the color attachment stage
+  // and involve the writing of the color attachment. These settings will
+  // prevent the transition from happening until it's actually necessary (and
+  // allowed): when we want to start writing colors to it.
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
   VkRenderPassCreateInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.attachmentCount = 1;
   renderPassInfo.pAttachments = &colorAttachment;
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpass;
+  renderPassInfo.dependencyCount = 1;
+  renderPassInfo.pDependencies = &dependency;
 
   if (vkCreateRenderPass(getContext().device, &renderPassInfo, nullptr,
                          &renderPass) != VK_SUCCESS) {
@@ -211,7 +272,35 @@ void Pipeline::createRenderPass() {
   }
 }
 
+void Pipeline::createFramebuffers() {
+  auto &swapChainImageViews = surface_manager.swapChainImageViews;
+  swapChainFramebuffers.resize(swapChainImageViews.size());
+
+  for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+    VkImageView attachments[] = {swapChainImageViews[i]};
+
+    VkFramebufferCreateInfo framebufferInfo{};
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.renderPass = renderPass;
+    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.pAttachments = attachments;
+    // May differ from HEIGHT and WIDTH
+    framebufferInfo.width = getContext().swapChainExtent.width;
+    framebufferInfo.height = getContext().swapChainExtent.height;
+    framebufferInfo.layers = 1;
+
+    if (vkCreateFramebuffer(getContext().device, &framebufferInfo, nullptr,
+                            &swapChainFramebuffers[i]) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create framebuffer!");
+    }
+  }
+}
+
 void Pipeline::cleanup() {
+  for (auto framebuffer : swapChainFramebuffers) {
+    vkDestroyFramebuffer(getContext().device, framebuffer, nullptr);
+  }
+  vkDestroyPipeline(getContext().device, graphicsPipeline, nullptr);
   vkDestroyPipelineLayout(getContext().device, pipelineLayout, nullptr);
   vkDestroyRenderPass(getContext().device, renderPass, nullptr);
 }

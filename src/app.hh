@@ -4,6 +4,7 @@
 #include "vulkan/context_holder.hh"
 #include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
+#include "vulkan/graphics/command_pool.hh"
 #include "vulkan/graphics/pipeline.hh"
 #include "vulkan/surface_manager.hh"
 #include <GLFW/glfw3.h>
@@ -14,6 +15,10 @@
 
 class VulkanApplication {
 public:
+  VulkanApplication()
+      : pipeline(surface_manager),
+        command_pool_manager(device_manager, pipeline) {}
+
   void run() {
     initWindow();
     initVulkan();
@@ -25,6 +30,7 @@ private:
   ExtensionManager extension_manager;
   DeviceManager device_manager;
   SurfaceManager surface_manager;
+  CommandPool command_pool_manager;
   Pipeline pipeline;
 
   void initWindow() {
@@ -87,15 +93,24 @@ private:
     surface_manager.createImageViews();
     pipeline.createRenderPass();
     pipeline.createGraphicPipeline();
+    pipeline.createFramebuffers();
+    command_pool_manager.createCommandPool();
+    command_pool_manager.createCommandBuffer();
+    command_pool_manager.createSyncObjects();
   }
 
   void mainLoop() {
     while (!glfwWindowShouldClose(getContext().window)) {
       glfwPollEvents();
+      command_pool_manager.drawFrame();
     }
+    vkDeviceWaitIdle(getContext().device);
   }
+  void drawFrame() {}
 
   void cleanup() {
+
+    command_pool_manager.cleanup();
     pipeline.cleanup();
     surface_manager.cleanup();
     vkDestroySwapchainKHR(getContext().device, getContext().swapChain, nullptr);
