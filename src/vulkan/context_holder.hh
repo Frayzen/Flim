@@ -14,8 +14,12 @@ public:
   VkPhysicalDevice physicalDevice;
   VkDevice device;
   VkSurfaceKHR surface;
-  VkSwapchainKHR swapChain;
   Queues queues;
+
+  // Swap chain related
+  VkSwapchainKHR swapChain;
+  VkFormat swapChainImageFormat;
+  VkExtent2D swapChainExtent;
 };
 
 VulkanContext &getContext();

@@ -9,9 +9,9 @@
 void DeviceManager::createSwapChain() {
   VkSurfaceFormatKHR surfaceFormat =
       chooseSwapSurfaceFormat(swapChainSupport.formats);
+  VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
   VkPresentModeKHR presentMode =
       chooseSwapPresentMode(swapChainSupport.presentModes);
-  VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
   uint32_t imageCount = swapChainSupport.capabilities.minImageCount;
   if (swapChainSupport.capabilities.maxImageCount > 0 /* 0 = no limit */ &&
       imageCount > swapChainSupport.capabilities.maxImageCount) {
@@ -25,6 +25,9 @@ void DeviceManager::createSwapChain() {
   createInfo.imageColorSpace = surfaceFormat.colorSpace;
   createInfo.imageExtent = extent;
   createInfo.imageArrayLayers = 1;
+
+  getContext().swapChainImageFormat = surfaceFormat.format;
+  getContext().swapChainExtent = extent;
 
   // It is also possible to render images to a separate image first to
   // perform operations like post-processing. In that case one may use a value

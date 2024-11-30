@@ -81,6 +81,8 @@ private:
     device_manager.pickPhysicalDevice();
     device_manager.createLogicalDevice();
     device_manager.createSwapChain();
+    surface_manager.setupSwapChainImages();
+    surface_manager.createImageViews();
   }
 
   void mainLoop() {
@@ -90,6 +92,7 @@ private:
   }
 
   void cleanup() {
+    surface_manager.cleanup();
     vkDestroySwapchainKHR(getContext().device, getContext().swapChain, nullptr);
     vkDestroyDevice(getContext().device, nullptr);
     vkDestroySurfaceKHR(getContext().instance, getContext().surface, nullptr);
