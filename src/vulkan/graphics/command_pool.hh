@@ -9,20 +9,20 @@ public:
   CommandPool(DeviceManager &device_manager, Pipeline &pipeline)
       : device_manager(device_manager), pipeline(pipeline) {};
   void createCommandPool();
-  void createCommandBuffer();
+  void createCommandBuffers();
   void createSyncObjects();
   void drawFrame();
   void cleanup();
 
 private:
-  void recordCommandBuffer(uint32_t imageIndex);
+  void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
   VkCommandPool commandPool = {};
-  VkCommandBuffer commandBuffer = {};
+  std::vector<VkCommandBuffer> commandBuffers;
 
-  VkSemaphore imageAvailableSemaphore;
-  VkSemaphore renderFinishedSemaphore;
-  VkFence inFlightFence;
+  std::vector<VkSemaphore> imageAvailableSemaphores;
+  std::vector<VkSemaphore> renderFinishedSemaphores;
+  std::vector<VkFence> inFlightFences;
 
   DeviceManager &device_manager;
   Pipeline &pipeline;

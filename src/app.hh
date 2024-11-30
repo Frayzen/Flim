@@ -95,7 +95,7 @@ private:
     pipeline.createGraphicPipeline();
     pipeline.createFramebuffers();
     command_pool_manager.createCommandPool();
-    command_pool_manager.createCommandBuffer();
+    command_pool_manager.createCommandBuffers();
     command_pool_manager.createSyncObjects();
   }
 

@@ -1,6 +1,7 @@
 #include "swap_chain.hh"
 #include "vulkan/context_holder.hh"
 #include <algorithm>
+#include <iostream>
 #include <limits>
 
 VkSurfaceFormatKHR chooseSwapSurfaceFormat(
@@ -44,10 +45,16 @@ VK_PRESENT_MODE_MAILBOX_KHR: This is another variation of
 VkPresentModeKHR chooseSwapPresentMode(
     const std::vector<VkPresentModeKHR> &availablePresentModes) {
   for (const auto &availablePresentMode : availablePresentModes) {
-    if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+    if (availablePresentMode == VK_PRESENT_MODE_FIFO_RELAXED_KHR) {
+#ifndef NDEBUG
+      std::cout << "FIFO relaxed present mode chosen" << std::endl;
+#endif
       return availablePresentMode;
     }
   }
+#ifndef NDEBUG
+      std::cout << "FIFO present mode chosen" << std::endl;
+#endif
   return VK_PRESENT_MODE_FIFO_KHR; // Guaranteed to exists
 }
 
