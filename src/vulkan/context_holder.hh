@@ -1,5 +1,6 @@
 #pragma once
 #include <fwd.h>
+#include <vulkan/vulkan_core.h>
 
 typedef struct Queues {
   VkQueue presentQueue;
@@ -13,6 +14,7 @@ public:
   VkPhysicalDevice physicalDevice;
   VkDevice device;
   VkSurfaceKHR surface;
+  VkSwapchainKHR swapChain;
   Queues queues;
 };
 

@@ -1,8 +1,7 @@
 #pragma once
-#include <vulkan/vulkan_core.h>
+#include <fwd.h>
 
 class SurfaceManager {
 public:
   void createSurface();
-
 };

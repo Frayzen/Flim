@@ -2,7 +2,7 @@
 
 #include "fwd.h"
 #include "vulkan/context_holder.hh"
-#include "vulkan/device_manager.hh"
+#include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
 #include "vulkan/surface_manager.hh"
 #include <GLFW/glfw3.h>
@@ -74,12 +74,13 @@ private:
   }
 
   void initVulkan() {
-    extension_manager.listExtensions();
+    /* extension_manager.listExtensions(); */
     createInstance();
     extension_manager.setupDebugMessenger();
     surface_manager.createSurface();
     device_manager.pickPhysicalDevice();
     device_manager.createLogicalDevice();
+    device_manager.createSwapChain();
   }
 
   void mainLoop() {
@@ -89,6 +90,7 @@ private:
   }
 
   void cleanup() {
+    vkDestroySwapchainKHR(getContext().device, getContext().swapChain, nullptr);
     vkDestroyDevice(getContext().device, nullptr);
     vkDestroySurfaceKHR(getContext().instance, getContext().surface, nullptr);
     extension_manager.cleanUp();
