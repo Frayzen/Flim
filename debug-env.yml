@@ -1,4 +1,4 @@
-name: Rengine-Debug
+name: Flim-Debug
 channels:
   - conda-forge
   - nodefaults

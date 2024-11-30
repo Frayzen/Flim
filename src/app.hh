@@ -44,7 +44,7 @@ private:
                    GLFW_NO_API);                // Disable OpenGL (default API)
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // For later
     getContext().window =
-        glfwCreateWindow(width, height, "Rengine", nullptr, nullptr);
+        glfwCreateWindow(width, height, "FLIM", nullptr, nullptr);
     if (!getContext().window) {
       throw std::runtime_error("Failed to create GLFW window");
     }
@@ -62,7 +62,7 @@ private:
     }
     VkApplicationInfo appInfo{}; // used to set pNext to nullptr by default;
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Rengine";
+    appInfo.pApplicationName = "Flim";
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "No engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);

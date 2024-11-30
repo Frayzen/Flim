@@ -2,7 +2,7 @@
 
 cd $(dirname $0)
 
-ENV_NAME="rengine"
+ENV_NAME="flim"
 ENV_YML="debug-env.yml"
 
 eval "$(conda shell.bash hook)"
@@ -19,3 +19,12 @@ conda activate $ENV_NAME
 cmake . -B build -DCMAKE_BUILD_TYPE=Debug
 rm compile_commands.json
 ln -s ./build/compile_commands.json compile_commands.json
+
+echo "Setup DONE"
+echo "You can now compile the project using:"
+echo "\$ conda activate flim"
+echo "\$ cd build"
+echo "\$ make -j"
+echo ""
+echo "The project can then be run using:"
+echo "\$ ./engine"
