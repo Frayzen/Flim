@@ -17,7 +17,7 @@ void WindowManager::initWindow() {
     throw std::runtime_error("Vulkan is not supported by GLFW");
   }
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Disable OpenGL (default API)
-  /* glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // For later */
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // For later
   context.window = glfwCreateWindow(width, height, "FLIM", nullptr, nullptr);
   if (!context.window) {
     throw std::runtime_error("Failed to create GLFW window");

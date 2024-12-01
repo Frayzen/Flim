@@ -1,9 +1,8 @@
 #include "command_pool_manager.hh"
 #include "vulkan/device/device_utils.hh"
+#include "vulkan/rendering/pipeline_manager.hh"
 
 #include <cstdint>
-#include <ios>
-#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -69,6 +68,12 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   scissor.offset = {0, 0};
   scissor.extent = context.swapChain.swapChainExtent;
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+  VkBuffer vertexBuffers[] = {context.vertexBuffer.buffer};
+  VkDeviceSize offsets[] = {0};
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+  vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
   /*
     TAKES AS PARAMETER:

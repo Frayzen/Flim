@@ -1,13 +1,13 @@
 #pragma once
 
 #include "fwd.h"
+#include <vulkan/vulkan_core.h>
 
 typedef struct SwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;
   std::vector<VkSurfaceFormatKHR> formats;
   std::vector<VkPresentModeKHR> presentModes;
 } SwapChainSupportDetails;
-
 
 typedef struct Queues {
   VkQueue presentQueue;
@@ -40,6 +40,11 @@ typedef struct SwapChain {
   VkExtent2D swapChainExtent;
 } SwapChain;
 
+typedef struct Buffer {
+  VkDeviceMemory bufferMemory;
+  VkBuffer buffer;
+} Buffer;
+
 class VulkanContext {
 public:
   VkInstance instance;
@@ -51,5 +56,5 @@ public:
   CommandPool commandPool;
   Pipeline pipeline;
   SwapChain swapChain;
-  /* SwapChainSupportDetails swapChainSupport; */
+  Buffer vertexBuffer;
 };

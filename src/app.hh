@@ -80,6 +80,7 @@ private:
     pipeline_manager.createGraphicPipeline();
     surface_manager.createFramebuffers();
     command_pool_manager.createCommandPool();
+    pipeline_manager.createVertexBuffer();
     command_pool_manager.createCommandBuffers();
     command_pool_manager.createSyncObjects();
   }
