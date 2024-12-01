@@ -7,4 +7,5 @@ class WindowManager : public BaseManager {
 public:
   WindowManager(VulkanContext &context) : BaseManager(context) {};
   void initWindow();
+  bool framebufferResized = false;
 };

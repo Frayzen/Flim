@@ -11,6 +11,7 @@
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -77,21 +78,23 @@ private:
     surface_manager.createImageViews();
     pipeline_manager.createRenderPass();
     pipeline_manager.createGraphicPipeline();
-    pipeline_manager.createFramebuffers();
+    surface_manager.createFramebuffers();
     command_pool_manager.createCommandPool();
     command_pool_manager.createCommandBuffers();
     command_pool_manager.createSyncObjects();
   }
 
-  void cleanupSwapChain() {
-    pipeline_manager.cleanFramebuffers();
-    surface_manager.cleanImageviews();
-    vkDestroySwapchainKHR(context.device, context.swapChain.swapChain, nullptr);
-  }
-
   void recreateSwapChain() {
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(context.window, &width, &height);
+    while (width == 0 || height == 0) {
+      glfwGetFramebufferSize(context.window, &width, &height);
+      glfwWaitEvents();
+    }
     vkDeviceWaitIdle(context.device);
+    swap_chain_manager.cleanup();
     swap_chain_manager.createSwapChain();
+    surface_manager.setupSwapChainImages();
     surface_manager.createImageViews();
     surface_manager.createFramebuffers();
   }
@@ -99,11 +102,13 @@ private:
   void mainLoop() {
     while (!glfwWindowShouldClose(context.window)) {
       glfwPollEvents();
-      command_pool_manager.drawFrame();
+      if (command_pool_manager.drawFrame(window_manager.framebufferResized)) {
+        window_manager.framebufferResized = false;
+        recreateSwapChain();
+      }
     }
     vkDeviceWaitIdle(context.device);
   }
-  void drawFrame() {}
 
   void cleanup() {
     swap_chain_manager.cleanup();

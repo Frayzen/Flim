@@ -51,5 +51,5 @@ public:
   CommandPool commandPool;
   Pipeline pipeline;
   SwapChain swapChain;
-  SwapChainSupportDetails swapChainSupport;
+  /* SwapChainSupportDetails swapChainSupport; */
 };

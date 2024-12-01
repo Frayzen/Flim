@@ -1,6 +1,9 @@
 #include "command_pool_manager.hh"
 #include "vulkan/device/device_utils.hh"
 
+#include <cstdint>
+#include <ios>
+#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -15,8 +18,8 @@ void CommandPoolManager::createCommandPool() {
   poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-  if (vkCreateCommandPool(context.device, &poolInfo, nullptr, &commandPool.pool) !=
-      VK_SUCCESS) {
+  if (vkCreateCommandPool(context.device, &poolInfo, nullptr,
+                          &commandPool.pool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create command pool!");
   }
 }
@@ -134,23 +137,31 @@ void CommandPoolManager::createSyncObjects() {
   }
 }
 
-void CommandPoolManager::drawFrame() {
+static uint32_t currentFrame = 0;
+
+bool CommandPoolManager::acquireFrame(uint32_t &imageIndex) {
+  auto &device = context.device;
+  vkWaitForFences(device, 1, &commandPool.inFlightFences[currentFrame], VK_TRUE,
+                  UINT64_MAX);
+  VkResult result =
+      vkAcquireNextImageKHR(device, context.swapChain.swapChain, UINT64_MAX,
+                            commandPool.imageAvailableSemaphores[currentFrame],
+                            VK_NULL_HANDLE, &imageIndex);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    return true;
+  if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+    throw std::runtime_error("failed to acquire swap chain image!");
+  return false;
+}
+
+bool CommandPoolManager::renderFrame(uint32_t &imageIndex,
+                                     bool framebufferResized) {
   auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
   auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
   auto &inFlightFences = commandPool.inFlightFences;
   auto &commandBuffers = commandPool.commandBuffers;
-
-  static uint32_t currentFrame = 0;
-
-  auto device = context.device;
-  vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE,
-                  UINT64_MAX);
-  vkResetFences(device, 1, &inFlightFences[currentFrame]);
-
-  uint32_t imageIndex;
-  vkAcquireNextImageKHR(device, context.swapChain.swapChain, UINT64_MAX,
-                        imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE,
-                        &imageIndex);
+  // Only reset the fence if we are submitting work
+  vkResetFences(context.device, 1, &inFlightFences[currentFrame]);
 
   vkResetCommandBuffer(commandBuffers[currentFrame], 0);
   recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
@@ -185,15 +196,31 @@ void CommandPoolManager::drawFrame() {
   presentInfo.pSwapchains = swapChains;
   presentInfo.pImageIndices = &imageIndex;
   presentInfo.pResults = nullptr; // Optional
-  vkQueuePresentKHR(context.queues.presentQueue, &presentInfo);
+  VkResult result =
+      vkQueuePresentKHR(context.queues.presentQueue, &presentInfo);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
+      framebufferResized)
+    return true;
+  if (result != VK_SUCCESS)
+    throw std::runtime_error("failed to acquire swap chain image!");
   currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+  return false;
+}
+
+bool CommandPoolManager::drawFrame(bool framebufferResized) {
+  uint32_t imageIndex;
+  if (acquireFrame(imageIndex))
+    return true;
+  return renderFrame(imageIndex, framebufferResized);
 }
 
 void CommandPoolManager::cleanup() {
   auto device = context.device;
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    vkDestroySemaphore(device, commandPool.renderFinishedSemaphores[i], nullptr);
-    vkDestroySemaphore(device, commandPool.imageAvailableSemaphores[i], nullptr);
+    vkDestroySemaphore(device, commandPool.renderFinishedSemaphores[i],
+                       nullptr);
+    vkDestroySemaphore(device, commandPool.imageAvailableSemaphores[i],
+                       nullptr);
     vkDestroyFence(device, commandPool.inFlightFences[i], nullptr);
   }
   vkDestroyCommandPool(context.device, commandPool.pool, nullptr);

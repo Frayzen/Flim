@@ -9,8 +9,8 @@ public:
   SurfaceManager(VulkanContext &context) : BaseManager(context) {};
 
   void createSurface();
+
   void setupSwapChainImages();
   void createImageViews();
   void createFramebuffers();
-  void cleanImageviews();
 };

@@ -5,14 +5,11 @@
 
 class DeviceManager : public BaseManager {
 public:
-  DeviceManager(VulkanContext &context)
-      : BaseManager(context), swapChainSupport(context.swapChainSupport) {}
+  DeviceManager(VulkanContext &context) : BaseManager(context) {};
 
   void pickPhysicalDevice();
   void createLogicalDevice();
 
 private:
-  SwapChainSupportDetails &swapChainSupport;
   bool isDeviceSuitable(VkPhysicalDevice device);
-  void querySwapChainSupport(VkPhysicalDevice &device);
 };

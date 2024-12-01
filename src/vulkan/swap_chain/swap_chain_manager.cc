@@ -1,5 +1,7 @@
 #include "swap_chain_manager.hh"
+#include "vulkan/context.hh"
 #include "vulkan/device/device_utils.hh"
+#include "vulkan/swap_chain/swap_chain_utils.hh"
 #include <algorithm>
 #include <iostream>
 #include <limits>
@@ -46,15 +48,9 @@ VkPresentModeKHR SwapChainManager::chooseSwapPresentMode(
     const std::vector<VkPresentModeKHR> &availablePresentModes) {
   for (const auto &availablePresentMode : availablePresentModes) {
     if (availablePresentMode == VK_PRESENT_MODE_FIFO_RELAXED_KHR) {
-#ifndef NDEBUG
-      std::cout << "FIFO relaxed present mode chosen" << std::endl;
-#endif
       return availablePresentMode;
     }
   }
-#ifndef NDEBUG
-  std::cout << "FIFO present mode chosen" << std::endl;
-#endif
   return VK_PRESENT_MODE_FIFO_KHR; // Guaranteed to exists
 }
 
@@ -68,6 +64,7 @@ VkExtent2D SwapChainManager::chooseSwapExtent(
   } else {
     int width, height;
     glfwGetFramebufferSize(context.window, &width, &height);
+    std::cout << width << " x " << height << std::endl;
 
     VkExtent2D actualExtent = {static_cast<uint32_t>(width),
                                static_cast<uint32_t>(height)};
@@ -84,11 +81,12 @@ VkExtent2D SwapChainManager::chooseSwapExtent(
 }
 
 void SwapChainManager::createSwapChain() {
-  auto &swapChainSupport = context.swapChainSupport;
+  SwapChainSupportDetails swapChainSupport =
+      querySwapChainSupport(context, context.physicalDevice);
   VkSurfaceFormatKHR surfaceFormat =
       chooseSwapSurfaceFormat(swapChainSupport.formats);
   VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
-  VkPresentModeKHR presentMode =
+  VkPresentModeKHR presentMode = // static to avoid recomputation
       chooseSwapPresentMode(swapChainSupport.presentModes);
   uint32_t imageCount = swapChainSupport.capabilities.minImageCount;
   if (swapChainSupport.capabilities.maxImageCount > 0 /* 0 = no limit */ &&

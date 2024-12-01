@@ -1,5 +1,7 @@
 #include "device_manager.hh"
+#include "vulkan/context.hh"
 #include "vulkan/device/device_utils.hh"
+#include "vulkan/swap_chain/swap_chain_utils.hh"
 
 #include <cstdint>
 #include <map>
@@ -26,32 +28,6 @@ static bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
   return requiredExtensions.empty();
 }
 
-void DeviceManager::querySwapChainSupport(VkPhysicalDevice &device) {
-  VkSurfaceKHR &surface = context.surface;
-
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
-                                            &swapChainSupport.capabilities);
-
-  uint32_t formatCount;
-  vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
-
-  if (formatCount != 0) {
-    swapChainSupport.formats.resize(formatCount);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
-                                         swapChainSupport.formats.data());
-  }
-  uint32_t presentModeCount;
-  vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount,
-                                            nullptr);
-
-  if (presentModeCount != 0) {
-    swapChainSupport.presentModes.resize(presentModeCount);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(
-        device, surface, &presentModeCount,
-        swapChainSupport.presentModes.data());
-  }
-}
-
 static int rateDeviceSuitability(VkPhysicalDevice device) {
   int score = 0;
   VkPhysicalDeviceProperties deviceProperties;
@@ -72,7 +48,8 @@ bool DeviceManager::isDeviceSuitable(VkPhysicalDevice device) {
       checkDeviceExtensionSupport(device); // Check the extension support
   bool swapChainAdequate = false;          // Check the swap chain support
   if (extensionsSupported) { // Only if swapChain extension is found
-    querySwapChainSupport(device);
+    SwapChainSupportDetails swapChainSupport =
+        querySwapChainSupport(context, device);
     swapChainAdequate = !swapChainSupport.formats.empty() &&
                         !swapChainSupport.presentModes.empty();
   }
@@ -89,8 +66,7 @@ void DeviceManager::pickPhysicalDevice() {
     throw std::runtime_error("failed to find GPUs with Vulkan support!");
   }
   std::vector<VkPhysicalDevice> devices(deviceCount);
-  vkEnumeratePhysicalDevices(context.instance, &deviceCount,
-                             devices.data());
+  vkEnumeratePhysicalDevices(context.instance, &deviceCount, devices.data());
   // Use an ordered map to automatically sort candidates by increasing score
   std::multimap<int, VkPhysicalDevice> candidates;
 

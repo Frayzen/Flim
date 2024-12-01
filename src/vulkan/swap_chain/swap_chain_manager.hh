@@ -12,7 +12,6 @@ public:
       : BaseManager(context), swapChain(context.swapChain) {};
 
   void createSwapChain();
-  void recreateSwapChain();
   void cleanup();
 
 private:

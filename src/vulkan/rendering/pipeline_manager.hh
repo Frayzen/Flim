@@ -13,7 +13,6 @@ public:
 
   void createRenderPass();
   void createGraphicPipeline();
-  void createFramebuffers();
   void cleanFramebuffers();
   void cleanup();
 

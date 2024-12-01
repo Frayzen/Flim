@@ -11,10 +11,12 @@ public:
   void createCommandPool();
   void createCommandBuffers();
   void createSyncObjects();
-  void drawFrame();
+  bool drawFrame(bool framebufferResized); // return if the swap chain is no longer adequate
   void cleanup();
 
 private:
+  bool acquireFrame(uint32_t& imageIndex);
+  bool renderFrame(uint32_t& imageIndex, bool framebufferResized);
   void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-  CommandPool& commandPool;
+  CommandPool &commandPool;
 };
