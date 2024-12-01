@@ -1,11 +1,12 @@
-#include "command_pool.hh"
-#include "vulkan/context_holder.hh"
+#include "command_pool_manager.hh"
+#include "vulkan/device/device_utils.hh"
+
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
-void CommandPool::createCommandPool() {
+void CommandPoolManager::createCommandPool() {
   QueueFamilyIndices queueFamilyIndices =
-      device_manager.findQueueFamilies(getContext().physicalDevice);
+      findQueueFamilies(context, context.physicalDevice);
 
   VkCommandPoolCreateInfo poolInfo{};
   poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -14,13 +15,14 @@ void CommandPool::createCommandPool() {
   poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-  if (vkCreateCommandPool(getContext().device, &poolInfo, nullptr,
-                          &commandPool) != VK_SUCCESS) {
+  if (vkCreateCommandPool(context.device, &poolInfo, nullptr, &commandPool.pool) !=
+      VK_SUCCESS) {
     throw std::runtime_error("failed to create command pool!");
   }
 }
 
-void CommandPool::recordCommandBuffer(VkCommandBuffer commandBuffer,uint32_t imageIndex) {
+void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
+                                             uint32_t imageIndex) {
 
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -33,11 +35,12 @@ void CommandPool::recordCommandBuffer(VkCommandBuffer commandBuffer,uint32_t ima
 
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  renderPassInfo.renderPass = pipeline.renderPass;
-  renderPassInfo.framebuffer = pipeline.swapChainFramebuffers[imageIndex];
+  renderPassInfo.renderPass = context.pipeline.renderPass;
+  renderPassInfo.framebuffer =
+      context.swapChain.swapChainFramebuffers[imageIndex];
   // renderArea defines where shader loads and stores will take place
   renderPassInfo.renderArea.offset = {0, 0};
-  renderPassInfo.renderArea.extent = getContext().swapChainExtent;
+  renderPassInfo.renderArea.extent = context.swapChain.swapChainExtent;
   // define the clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we
   // used as load operation for the color attachment
   VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}}; // Set clear color
@@ -47,20 +50,21 @@ void CommandPool::recordCommandBuffer(VkCommandBuffer commandBuffer,uint32_t ima
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipeline.graphicsPipeline);
+                    context.pipeline.graphicsPipeline);
   // viewport and scissor state for this pipeline are dynamic
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.width = static_cast<float>(getContext().swapChainExtent.width);
-  viewport.height = static_cast<float>(getContext().swapChainExtent.height);
+  viewport.width = static_cast<float>(context.swapChain.swapChainExtent.width);
+  viewport.height =
+      static_cast<float>(context.swapChain.swapChainExtent.height);
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
   VkRect2D scissor{};
   scissor.offset = {0, 0};
-  scissor.extent = getContext().swapChainExtent;
+  scissor.extent = context.swapChain.swapChainExtent;
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
   /*
@@ -82,22 +86,27 @@ void CommandPool::recordCommandBuffer(VkCommandBuffer commandBuffer,uint32_t ima
   }
 }
 
-void CommandPool::createCommandBuffers() {
-  commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+void CommandPoolManager::createCommandBuffers() {
+  commandPool.commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
   VkCommandBufferAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocInfo.commandPool = commandPool;
+  allocInfo.commandPool = commandPool.pool;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+  allocInfo.commandBufferCount = (uint32_t)commandPool.commandBuffers.size();
 
-  if (vkAllocateCommandBuffers(getContext().device, &allocInfo,
-                               commandBuffers.data()) != VK_SUCCESS) {
+  if (vkAllocateCommandBuffers(context.device, &allocInfo,
+                               commandPool.commandBuffers.data()) !=
+      VK_SUCCESS) {
     throw std::runtime_error("failed to allocate command buffers!");
   }
 }
 
-void CommandPool::createSyncObjects() {
+void CommandPoolManager::createSyncObjects() {
+  auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
+  auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
+  auto &inFlightFences = commandPool.inFlightFences;
+
   imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
   renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
   inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
@@ -109,7 +118,7 @@ void CommandPool::createSyncObjects() {
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-  auto device = getContext().device;
+  auto device = context.device;
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     if (vkCreateSemaphore(device, &semaphoreInfo, nullptr,
@@ -125,16 +134,21 @@ void CommandPool::createSyncObjects() {
   }
 }
 
-void CommandPool::drawFrame() {
+void CommandPoolManager::drawFrame() {
+  auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
+  auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
+  auto &inFlightFences = commandPool.inFlightFences;
+  auto &commandBuffers = commandPool.commandBuffers;
+
   static uint32_t currentFrame = 0;
 
-  auto device = getContext().device;
+  auto device = context.device;
   vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE,
                   UINT64_MAX);
   vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
   uint32_t imageIndex;
-  vkAcquireNextImageKHR(device, getContext().swapChain, UINT64_MAX,
+  vkAcquireNextImageKHR(device, context.swapChain.swapChain, UINT64_MAX,
                         imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE,
                         &imageIndex);
 
@@ -156,31 +170,31 @@ void CommandPool::drawFrame() {
   VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
-  if (vkQueueSubmit(getContext().queues.graphicsQueue, 1, &submitInfo,
+  if (vkQueueSubmit(context.queues.graphicsQueue, 1, &submitInfo,
                     inFlightFences[currentFrame]) != VK_SUCCESS) {
     throw std::runtime_error("failed to submit draw command buffer!");
   }
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  // specify which semaphores to wait on before presentation can happen
+  // specify which semaphores to wait on before presentation can hcontext
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores = signalSemaphores;
 
-  VkSwapchainKHR swapChains[] = {getContext().swapChain};
+  VkSwapchainKHR swapChains[] = {context.swapChain.swapChain};
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = swapChains;
   presentInfo.pImageIndices = &imageIndex;
   presentInfo.pResults = nullptr; // Optional
-  vkQueuePresentKHR(getContext().queues.presentQueue, &presentInfo);
+  vkQueuePresentKHR(context.queues.presentQueue, &presentInfo);
   currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void CommandPool::cleanup() {
-  auto device = getContext().device;
+void CommandPoolManager::cleanup() {
+  auto device = context.device;
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-    vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-    vkDestroyFence(device, inFlightFences[i], nullptr);
+    vkDestroySemaphore(device, commandPool.renderFinishedSemaphores[i], nullptr);
+    vkDestroySemaphore(device, commandPool.imageAvailableSemaphores[i], nullptr);
+    vkDestroyFence(device, commandPool.inFlightFences[i], nullptr);
   }
-  vkDestroyCommandPool(getContext().device, commandPool, nullptr);
+  vkDestroyCommandPool(context.device, commandPool.pool, nullptr);
 }

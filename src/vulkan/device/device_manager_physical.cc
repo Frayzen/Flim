@@ -1,11 +1,12 @@
 #include "device_manager.hh"
-#include "vulkan/context_holder.hh"
+#include "vulkan/device/device_utils.hh"
+
 #include <cstdint>
-#include <iostream>
 #include <map>
 #include <set>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
+
 static bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
   uint32_t extensionCount;
   vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount,
@@ -26,7 +27,7 @@ static bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
 }
 
 void DeviceManager::querySwapChainSupport(VkPhysicalDevice &device) {
-  VkSurfaceKHR &surface = getContext().surface;
+  VkSurfaceKHR &surface = context.surface;
 
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
                                             &swapChainSupport.capabilities);
@@ -64,39 +65,9 @@ static int rateDeviceSuitability(VkPhysicalDevice device) {
   return score;
 }
 
-QueueFamilyIndices DeviceManager::findQueueFamilies(VkPhysicalDevice device) {
-  // Verify what kind of queues the device can handle
-  QueueFamilyIndices indices;
-  // Assign index to queue families that could be found
-  uint32_t queueFamilyCount = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-  std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
-                                           queueFamilies.data());
-
-  int i = 0;
-  for (const auto &queueFamily : queueFamilies) {
-    if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-      indices.graphicsFamily = i;
-    }
-    VkBool32 presentSupport = false;
-    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, getContext().surface,
-                                         &presentSupport);
-    if (presentSupport) {
-      indices.presentFamily = i;
-    }
-    if (indices.isComplete())
-      break;
-    i++;
-  }
-
-  return indices;
-}
-
 bool DeviceManager::isDeviceSuitable(VkPhysicalDevice device) {
   QueueFamilyIndices indices =
-      findQueueFamilies(device); // Check the queues capabilities
+      findQueueFamilies(context, device); // Check the queues capabilities
   bool extensionsSupported =
       checkDeviceExtensionSupport(device); // Check the extension support
   bool swapChainAdequate = false;          // Check the swap chain support
@@ -113,12 +84,12 @@ void DeviceManager::pickPhysicalDevice() {
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
   // Retrieve the list of the devices
   uint32_t deviceCount = 0;
-  vkEnumeratePhysicalDevices(getContext().instance, &deviceCount, nullptr);
+  vkEnumeratePhysicalDevices(context.instance, &deviceCount, nullptr);
   if (deviceCount == 0) {
     throw std::runtime_error("failed to find GPUs with Vulkan support!");
   }
   std::vector<VkPhysicalDevice> devices(deviceCount);
-  vkEnumeratePhysicalDevices(getContext().instance, &deviceCount,
+  vkEnumeratePhysicalDevices(context.instance, &deviceCount,
                              devices.data());
   // Use an ordered map to automatically sort candidates by increasing score
   std::multimap<int, VkPhysicalDevice> candidates;
@@ -134,5 +105,5 @@ void DeviceManager::pickPhysicalDevice() {
   } else {
     throw std::runtime_error("failed to find a suitable GPU!");
   }
-  getContext().physicalDevice = physicalDevice;
+  context.physicalDevice = physicalDevice;
 }

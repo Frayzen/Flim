@@ -2,8 +2,6 @@
 
 #include "consts.hh"
 #include "fwd.h"
-#include "vulkan/context_holder.hh"
-#include "vulkan/proxy.hh"
 #include <GLFW/glfw3.h>
 #include <cstdint>
 #include <cstring>
@@ -36,7 +34,7 @@ void ExtensionManager::populateRequiredExtensions() {
 
 void ExtensionManager::cleanUp() {
   if (enableValidationLayers) {
-    VulkanProxy::DestroyDebugUtilsMessengerEXT(getContext().instance,
+    DestroyDebugUtilsMessengerEXT(context.instance,
                                                debugMessenger, nullptr);
   }
 }
@@ -143,9 +141,32 @@ void ExtensionManager::setupDebugMessenger() {
   if (!enableValidationLayers)
     return;
   populateDebugMessengerCreateInfo();
-  if (VulkanProxy::CreateDebugUtilsMessengerEXT(
-          getContext().instance, &debugCreateInfo, nullptr, &debugMessenger) !=
+  if (ExtensionManager::CreateDebugUtilsMessengerEXT(
+          context.instance, &debugCreateInfo, nullptr, &debugMessenger) !=
       VK_SUCCESS) {
     throw std::runtime_error("failed to set up debug messenger!");
+  }
+}
+
+VkResult ExtensionManager::CreateDebugUtilsMessengerEXT(
+    VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+    const VkAllocationCallbacks *pAllocator,
+    VkDebugUtilsMessengerEXT *pDebugMessenger) {
+  auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+      instance, "vkCreateDebugUtilsMessengerEXT");
+  if (func != nullptr) {
+    return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+  } else {
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
+  }
+}
+
+void ExtensionManager::DestroyDebugUtilsMessengerEXT(
+    VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
+    const VkAllocationCallbacks *pAllocator) {
+  auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+      instance, "vkDestroyDebugUtilsMessengerEXT");
+  if (func != nullptr) {
+    func(instance, debugMessenger, pAllocator);
   }
 }

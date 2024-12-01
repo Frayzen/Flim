@@ -1,7 +1,7 @@
-#include "pipeline.hh"
-#include "vulkan/context_holder.hh"
-#include "vulkan/graphics/shader_utils.hh"
-#include "vulkan/surface_manager.hh"
+#include "pipeline_manager.hh"
+
+#include "vulkan/context.hh"
+#include "vulkan/rendering/shader_utils.hh"
 #include <stdexcept>
 
 /*
@@ -18,37 +18,38 @@ be updated at draw time
 Render pass: the attachments referenced by the pipeline stages and their usage
 */
 
-static VkShaderModule createShaderModule(const std::vector<char> &code) {
+static VkShaderModule createShaderModule(VulkanContext &context,
+                                         const std::vector<char> &code) {
   VkShaderModuleCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   createInfo.codeSize = code.size();
   createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
   VkShaderModule shaderModule;
-  if (vkCreateShaderModule(getContext().device, &createInfo, nullptr,
+  if (vkCreateShaderModule(context.device, &createInfo, nullptr,
                            &shaderModule) != VK_SUCCESS) {
     throw std::runtime_error("failed to create shader module!");
   }
   return shaderModule;
 }
 
-void Pipeline::createGraphicPipeline() {
+void PipelineManager::createGraphicPipeline() {
   auto vertShaderCode = readFile("shaders/shader.vert.spv");
   auto fragShaderCode = readFile("shaders/shader.frag.spv");
-  vertShaderModule = createShaderModule(vertShaderCode);
-  fragShaderModule = createShaderModule(fragShaderCode);
+  pipeline.vertShaderModule = createShaderModule(context, vertShaderCode);
+  pipeline.fragShaderModule = createShaderModule(context, fragShaderCode);
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
   vertShaderStageInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-  vertShaderStageInfo.module = vertShaderModule;
+  vertShaderStageInfo.module = pipeline.vertShaderModule;
   vertShaderStageInfo.pName = "main";
 
   VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
   fragShaderStageInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  fragShaderStageInfo.module = fragShaderModule;
+  fragShaderStageInfo.module = pipeline.fragShaderModule;
   fragShaderStageInfo.pName = "main";
 
   VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo,
@@ -168,8 +169,8 @@ void Pipeline::createGraphicPipeline() {
   pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
   pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-  if (vkCreatePipelineLayout(getContext().device, &pipelineLayoutInfo, nullptr,
-                             &pipelineLayout) != VK_SUCCESS) {
+  if (vkCreatePipelineLayout(context.device, &pipelineLayoutInfo, nullptr,
+                             &pipeline.pipelineLayout) != VK_SUCCESS) {
     throw std::runtime_error("failed to create pipeline layout!");
   }
 
@@ -185,28 +186,28 @@ void Pipeline::createGraphicPipeline() {
   pipelineInfo.pDepthStencilState = nullptr; // Optional
   pipelineInfo.pColorBlendState = &colorBlending;
   pipelineInfo.pDynamicState = &dynamicState;
-  pipelineInfo.layout = pipelineLayout;
-  pipelineInfo.renderPass = renderPass;
+  pipelineInfo.layout = pipeline.pipelineLayout;
+  pipelineInfo.renderPass = pipeline.renderPass;
   pipelineInfo.subpass = 0;
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
   pipelineInfo.basePipelineIndex = -1;              // Optional
                                                     //
-  if (vkCreateGraphicsPipelines(getContext().device, VK_NULL_HANDLE, 1,
+  if (vkCreateGraphicsPipelines(context.device, VK_NULL_HANDLE, 1,
                                 &pipelineInfo, nullptr,
-                                &graphicsPipeline) != VK_SUCCESS) {
+                                &pipeline.graphicsPipeline) != VK_SUCCESS) {
     throw std::runtime_error("failed to create graphics pipeline!");
   }
 
-  vkDestroyShaderModule(getContext().device, fragShaderModule, nullptr);
-  vkDestroyShaderModule(getContext().device, vertShaderModule, nullptr);
+  vkDestroyShaderModule(context.device, pipeline.fragShaderModule, nullptr);
+  vkDestroyShaderModule(context.device, pipeline.vertShaderModule, nullptr);
 }
 
-void Pipeline::createRenderPass() {
+void PipelineManager::createRenderPass() {
   // attachment refers to a memory resource (such as an image or buffer) used as
   // an input or output during rendering
 
   VkAttachmentDescription colorAttachment{};
-  colorAttachment.format = getContext().swapChainImageFormat;
+  colorAttachment.format = context.swapChain.swapChainImageFormat;
   // we're not doing anything with multisampling yet, so we'll stick to 1 sample
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   // clear the framebuffer to black before drawing a new frame
@@ -214,7 +215,7 @@ void Pipeline::createRenderPass() {
   // we're interested in seeing the rendered triangle on the screen
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
-  // Our application won't do anything with the stencil buffer, so the results
+  // Our context won't do anything with the stencil buffer, so the results
   // of loading and storing are irrelevant
   colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -252,7 +253,7 @@ void Pipeline::createRenderPass() {
   dependency.srcAccessMask = 0;
   // The operations that should wait on this are in the color attachment stage
   // and involve the writing of the color attachment. These settings will
-  // prevent the transition from happening until it's actually necessary (and
+  // prevent the transition from hcontext until it's actually necessary (and
   // allowed): when we want to start writing colors to it.
   dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
   dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -266,41 +267,39 @@ void Pipeline::createRenderPass() {
   renderPassInfo.dependencyCount = 1;
   renderPassInfo.pDependencies = &dependency;
 
-  if (vkCreateRenderPass(getContext().device, &renderPassInfo, nullptr,
-                         &renderPass) != VK_SUCCESS) {
+  if (vkCreateRenderPass(context.device, &renderPassInfo, nullptr,
+                         &pipeline.renderPass) != VK_SUCCESS) {
     throw std::runtime_error("failed to create render pass!");
   }
 }
 
-void Pipeline::createFramebuffers() {
-  auto &swapChainImageViews = surface_manager.swapChainImageViews;
-  swapChainFramebuffers.resize(swapChainImageViews.size());
+void PipelineManager::createFramebuffers() {
+  auto &swapChainImageViews = context.swapChain.swapChainImageViews;
+  context.swapChain.swapChainFramebuffers.resize(swapChainImageViews.size());
 
   for (size_t i = 0; i < swapChainImageViews.size(); i++) {
     VkImageView attachments[] = {swapChainImageViews[i]};
 
     VkFramebufferCreateInfo framebufferInfo{};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = renderPass;
+    framebufferInfo.renderPass = pipeline.renderPass;
     framebufferInfo.attachmentCount = 1;
     framebufferInfo.pAttachments = attachments;
     // May differ from HEIGHT and WIDTH
-    framebufferInfo.width = getContext().swapChainExtent.width;
-    framebufferInfo.height = getContext().swapChainExtent.height;
+    framebufferInfo.width = context.swapChain.swapChainExtent.width;
+    framebufferInfo.height = context.swapChain.swapChainExtent.height;
     framebufferInfo.layers = 1;
 
-    if (vkCreateFramebuffer(getContext().device, &framebufferInfo, nullptr,
-                            &swapChainFramebuffers[i]) != VK_SUCCESS) {
+    if (vkCreateFramebuffer(context.device, &framebufferInfo, nullptr,
+                            &context.swapChain.swapChainFramebuffers[i]) !=
+        VK_SUCCESS) {
       throw std::runtime_error("failed to create framebuffer!");
     }
   }
 }
 
-void Pipeline::cleanup() {
-  for (auto framebuffer : swapChainFramebuffers) {
-    vkDestroyFramebuffer(getContext().device, framebuffer, nullptr);
-  }
-  vkDestroyPipeline(getContext().device, graphicsPipeline, nullptr);
-  vkDestroyPipelineLayout(getContext().device, pipelineLayout, nullptr);
-  vkDestroyRenderPass(getContext().device, renderPass, nullptr);
+void PipelineManager::cleanup() {
+  vkDestroyPipeline(context.device, pipeline.graphicsPipeline, nullptr);
+  vkDestroyPipelineLayout(context.device, pipeline.pipelineLayout, nullptr);
+  vkDestroyRenderPass(context.device, pipeline.renderPass, nullptr);
 }

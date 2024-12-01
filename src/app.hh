@@ -1,12 +1,13 @@
 #pragma once
 
-#include "fwd.h"
-#include "vulkan/context_holder.hh"
+#include "vulkan/context.hh"
 #include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
-#include "vulkan/graphics/command_pool.hh"
-#include "vulkan/graphics/pipeline.hh"
-#include "vulkan/surface_manager.hh"
+#include "vulkan/rendering/command_pool_manager.hh"
+#include "vulkan/rendering/pipeline_manager.hh"
+#include "vulkan/swap_chain/surface_manager.hh"
+#include "vulkan/swap_chain/swap_chain_manager.hh"
+#include "vulkan/window_manager.hh"
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <cstring>
@@ -16,43 +17,27 @@
 class VulkanApplication {
 public:
   VulkanApplication()
-      : pipeline(surface_manager),
-        command_pool_manager(device_manager, pipeline) {}
+      : window_manager(context), extension_manager(context),
+        swap_chain_manager(context), device_manager(context),
+        surface_manager(context), command_pool_manager(context),
+        pipeline_manager(context) {}
 
   void run() {
-    initWindow();
+    window_manager.initWindow();
     initVulkan();
     mainLoop();
     cleanup();
   }
 
 private:
+  VulkanContext context;
+  WindowManager window_manager;
   ExtensionManager extension_manager;
+  SwapChainManager swap_chain_manager;
   DeviceManager device_manager;
   SurfaceManager surface_manager;
-  CommandPool command_pool_manager;
-  Pipeline pipeline;
-
-  void initWindow() {
-    if (!glfwInit()) {
-      throw std::runtime_error("Failed to initialize GLFW");
-    }
-    if (!glfwVulkanSupported()) {
-      throw std::runtime_error("Vulkan is not supported by GLFW");
-    }
-    glfwWindowHint(GLFW_CLIENT_API,
-                   GLFW_NO_API);                // Disable OpenGL (default API)
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // For later
-    getContext().window =
-        glfwCreateWindow(width, height, "FLIM", nullptr, nullptr);
-    if (!getContext().window) {
-      throw std::runtime_error("Failed to create GLFW window");
-    }
-    const char *desc;
-    if (glfwGetError(&desc)) { // In case an error occured
-      throw std::runtime_error(desc);
-    }
-  }
+  CommandPoolManager command_pool_manager;
+  PipelineManager pipeline_manager;
 
   void createInstance() {
     if (enableValidationLayers &&
@@ -75,50 +60,60 @@ private:
     extension_manager.activateExtensions(createInfo);
     extension_manager.activateDebugExtensions(createInfo);
 
-    if (vkCreateInstance(&createInfo, nullptr, &getContext().instance) !=
+    if (vkCreateInstance(&createInfo, nullptr, &context.instance) !=
         VK_SUCCESS) {
       throw std::runtime_error("Failed to create vulkan instance!");
     }
   }
 
   void initVulkan() {
-    /* extension_manager.listExtensions(); */
     createInstance();
     extension_manager.setupDebugMessenger();
     surface_manager.createSurface();
     device_manager.pickPhysicalDevice();
     device_manager.createLogicalDevice();
-    device_manager.createSwapChain();
+    swap_chain_manager.createSwapChain();
     surface_manager.setupSwapChainImages();
     surface_manager.createImageViews();
-    pipeline.createRenderPass();
-    pipeline.createGraphicPipeline();
-    pipeline.createFramebuffers();
+    pipeline_manager.createRenderPass();
+    pipeline_manager.createGraphicPipeline();
+    pipeline_manager.createFramebuffers();
     command_pool_manager.createCommandPool();
     command_pool_manager.createCommandBuffers();
     command_pool_manager.createSyncObjects();
   }
 
+  void cleanupSwapChain() {
+    pipeline_manager.cleanFramebuffers();
+    surface_manager.cleanImageviews();
+    vkDestroySwapchainKHR(context.device, context.swapChain.swapChain, nullptr);
+  }
+
+  void recreateSwapChain() {
+    vkDeviceWaitIdle(context.device);
+    swap_chain_manager.createSwapChain();
+    surface_manager.createImageViews();
+    surface_manager.createFramebuffers();
+  }
+
   void mainLoop() {
-    while (!glfwWindowShouldClose(getContext().window)) {
+    while (!glfwWindowShouldClose(context.window)) {
       glfwPollEvents();
       command_pool_manager.drawFrame();
     }
-    vkDeviceWaitIdle(getContext().device);
+    vkDeviceWaitIdle(context.device);
   }
   void drawFrame() {}
 
   void cleanup() {
-
+    swap_chain_manager.cleanup();
+    pipeline_manager.cleanup();
     command_pool_manager.cleanup();
-    pipeline.cleanup();
-    surface_manager.cleanup();
-    vkDestroySwapchainKHR(getContext().device, getContext().swapChain, nullptr);
-    vkDestroyDevice(getContext().device, nullptr);
-    vkDestroySurfaceKHR(getContext().instance, getContext().surface, nullptr);
+    vkDestroyDevice(context.device, nullptr);
     extension_manager.cleanUp();
-    vkDestroyInstance(getContext().instance, nullptr);
-    glfwDestroyWindow(getContext().window);
+    vkDestroySurfaceKHR(context.instance, context.surface, nullptr);
+    vkDestroyInstance(context.instance, nullptr);
+    glfwDestroyWindow(context.window);
     glfwTerminate();
   }
 };
