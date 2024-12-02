@@ -283,11 +283,6 @@ void PipelineManager::createRenderPass() {
 }
 
 void PipelineManager::cleanup() {
-  // Buffers
-  vkDestroyBuffer(context.device, context.vertexBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, context.vertexBuffer.bufferMemory, nullptr);
-
-  // Pipeline
   vkDestroyPipeline(context.device, pipeline.graphicsPipeline, nullptr);
   vkDestroyPipelineLayout(context.device, pipeline.pipelineLayout, nullptr);
   vkDestroyRenderPass(context.device, pipeline.renderPass, nullptr);

@@ -57,5 +57,6 @@ public:
   Pipeline pipeline;
   SwapChain swapChain;
   Buffer stagingBuffer;
+  Buffer indexBuffer;
   Buffer vertexBuffer;
 };

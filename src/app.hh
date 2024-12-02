@@ -3,6 +3,7 @@
 #include "vulkan/context.hh"
 #include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
+#include "vulkan/rendering/buffer_manager.hh"
 #include "vulkan/rendering/command_pool_manager.hh"
 #include "vulkan/rendering/pipeline_manager.hh"
 #include "vulkan/swap_chain/surface_manager.hh"
@@ -11,7 +12,6 @@
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -21,7 +21,7 @@ public:
       : window_manager(context), extension_manager(context),
         swap_chain_manager(context), device_manager(context),
         surface_manager(context), command_pool_manager(context),
-        pipeline_manager(context) {}
+        buffer_manager(context), pipeline_manager(context) {}
 
   void run() {
     window_manager.initWindow();
@@ -38,6 +38,7 @@ private:
   DeviceManager device_manager;
   SurfaceManager surface_manager;
   CommandPoolManager command_pool_manager;
+  BufferManager buffer_manager;
   PipelineManager pipeline_manager;
 
   void createInstance() {
@@ -80,7 +81,8 @@ private:
     pipeline_manager.createGraphicPipeline();
     surface_manager.createFramebuffers();
     command_pool_manager.createCommandPool();
-    pipeline_manager.createVertexBuffer();
+    buffer_manager.createVertexBuffer();
+    buffer_manager.createIndexBuffer();
     command_pool_manager.createCommandBuffers();
     command_pool_manager.createSyncObjects();
   }
@@ -113,6 +115,7 @@ private:
 
   void cleanup() {
     swap_chain_manager.cleanup();
+    buffer_manager.cleanup();
     pipeline_manager.cleanup();
     command_pool_manager.cleanup();
     vkDestroyDevice(context.device, nullptr);

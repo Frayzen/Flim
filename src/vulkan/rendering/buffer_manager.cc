@@ -1,3 +1,4 @@
+#include "vulkan/rendering/buffer_manager.hh"
 #include "vulkan/context.hh"
 #include "vulkan/rendering/pipeline_manager.hh"
 #include <cstring>
@@ -50,8 +51,8 @@ static void createBuffer(VulkanContext &context, VkDeviceSize size,
   vkBindBufferMemory(context.device, buffer.buffer, buffer.bufferMemory, 0);
 }
 
-void PipelineManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
-                                 VkDeviceSize size) {
+void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
+                               VkDeviceSize size) {
   // Create the command buffer
   VkCommandBufferAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -95,7 +96,7 @@ void PipelineManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
                        &commandBuffer);
 }
 
-void PipelineManager::createVertexBuffer() {
+void BufferManager::createVertexBuffer() {
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
   createBuffer(
       context, bufferSize,
@@ -122,4 +123,38 @@ void PipelineManager::createVertexBuffer() {
              bufferSize);
   vkDestroyBuffer(context.device, context.stagingBuffer.buffer, nullptr);
   vkFreeMemory(context.device, context.stagingBuffer.bufferMemory, nullptr);
+}
+
+void BufferManager::createIndexBuffer() {
+  VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+  createBuffer(context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               context.stagingBuffer);
+
+  void *data;
+  vkMapMemory(context.device, context.stagingBuffer.bufferMemory, 0, bufferSize,
+              0, &data);
+  memcpy(data, indices.data(), (size_t)bufferSize);
+  vkUnmapMemory(context.device, context.stagingBuffer.bufferMemory);
+
+  createBuffer(context, bufferSize,
+               VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, context.indexBuffer);
+
+  copyBuffer(context.stagingBuffer.buffer, context.indexBuffer.buffer,
+             bufferSize);
+
+  vkDestroyBuffer(context.device, context.stagingBuffer.buffer, nullptr);
+  vkFreeMemory(context.device, context.stagingBuffer.bufferMemory, nullptr);
+}
+
+void BufferManager::cleanup() {
+  vkDestroyBuffer(context.device, context.indexBuffer.buffer, nullptr);
+  vkFreeMemory(context.device, context.indexBuffer.bufferMemory, nullptr);
+
+  vkDestroyBuffer(context.device, context.vertexBuffer.buffer, nullptr);
+  vkFreeMemory(context.device, context.vertexBuffer.bufferMemory, nullptr);
 }
