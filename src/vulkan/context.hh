@@ -56,5 +56,6 @@ public:
   CommandPool commandPool;
   Pipeline pipeline;
   SwapChain swapChain;
+  Buffer stagingBuffer;
   Buffer vertexBuffer;
 };
