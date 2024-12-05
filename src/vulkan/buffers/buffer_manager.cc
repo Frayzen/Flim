@@ -1,7 +1,4 @@
-#include "vulkan/rendering/buffer_manager.hh"
-#include "vulkan/context.hh"
-#include "vulkan/rendering/pipeline_manager.hh"
-#include <cstring>
+#include "buffer_manager.hh"
 #include <stdexcept>
 
 static uint32_t findMemoryType(VulkanContext &context, uint32_t typeFilter,
@@ -19,9 +16,10 @@ static uint32_t findMemoryType(VulkanContext &context, uint32_t typeFilter,
   throw std::runtime_error("failed to find suitable memory type!");
 }
 
-static void createBuffer(VulkanContext &context, VkDeviceSize size,
-                         VkBufferUsageFlags usage,
-                         VkMemoryPropertyFlags properties, Buffer &buffer) {
+void BufferManager::createBuffer(VulkanContext &context, VkDeviceSize size,
+                                 VkBufferUsageFlags usage,
+                                 VkMemoryPropertyFlags properties,
+                                 Buffer &buffer) {
   VkBufferCreateInfo bufferInfo{};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   bufferInfo.size = size;
@@ -94,67 +92,4 @@ void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
   // Clean the command buffer afterward !
   vkFreeCommandBuffers(context.device, context.commandPool.pool, 1,
                        &commandBuffer);
-}
-
-void BufferManager::createVertexBuffer() {
-  VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-  createBuffer(
-      context, bufferSize,
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT, // required to be passed as source
-                                        // in a memory transfer operation
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, // means that the state of the
-                                                // bound buffer reflect the
-                                                // state of the actual buffer
-      context.stagingBuffer);
-  void *data;
-  vkMapMemory(context.device, context.stagingBuffer.bufferMemory, 0, bufferSize,
-              0, &data);
-  memcpy(data, vertices.data(), (size_t)bufferSize);
-  vkUnmapMemory(context.device, context.stagingBuffer.bufferMemory);
-
-  createBuffer(
-      context, bufferSize,
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT | // required to be passed as destination
-                                         // in a memory transfer operation
-          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, context.vertexBuffer);
-  copyBuffer(context.stagingBuffer.buffer, context.vertexBuffer.buffer,
-             bufferSize);
-  vkDestroyBuffer(context.device, context.stagingBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, context.stagingBuffer.bufferMemory, nullptr);
-}
-
-void BufferManager::createIndexBuffer() {
-  VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
-
-  createBuffer(context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               context.stagingBuffer);
-
-  void *data;
-  vkMapMemory(context.device, context.stagingBuffer.bufferMemory, 0, bufferSize,
-              0, &data);
-  memcpy(data, indices.data(), (size_t)bufferSize);
-  vkUnmapMemory(context.device, context.stagingBuffer.bufferMemory);
-
-  createBuffer(context, bufferSize,
-               VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, context.indexBuffer);
-
-  copyBuffer(context.stagingBuffer.buffer, context.indexBuffer.buffer,
-             bufferSize);
-
-  vkDestroyBuffer(context.device, context.stagingBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, context.stagingBuffer.bufferMemory, nullptr);
-}
-
-void BufferManager::cleanup() {
-  vkDestroyBuffer(context.device, context.indexBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, context.indexBuffer.bufferMemory, nullptr);
-
-  vkDestroyBuffer(context.device, context.vertexBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, context.vertexBuffer.bufferMemory, nullptr);
 }

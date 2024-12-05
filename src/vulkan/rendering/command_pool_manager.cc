@@ -1,8 +1,10 @@
 #include "command_pool_manager.hh"
+#include "consts.hh"
 #include "vulkan/device/device_utils.hh"
 #include "vulkan/rendering/pipeline_manager.hh"
 
 #include <cstdint>
+#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -74,7 +76,12 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
   vkCmdBindIndexBuffer(commandBuffer, context.indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT16);
-  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          context.pipeline.pipelineLayout, 0, 1,
+                          &context.descriptorSets[context.currentImage], 0,
+                          nullptr);
+  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0,
+                   0, 0);
 
   /*
     TAKES AS PARAMETER:
@@ -87,7 +94,7 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
     * firstInstance: Used as an offset for instanced rendering, defines the
     lowest value of gl_InstanceIndex
   */
-  vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+  /* vkCmdDraw(commandBuffer, 3, 1, 0, 0); */
   vkCmdEndRenderPass(commandBuffer);
 
   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -143,16 +150,16 @@ void CommandPoolManager::createSyncObjects() {
   }
 }
 
-static uint32_t currentFrame = 0;
+static uint32_t imageIndex;
 
-bool CommandPoolManager::acquireFrame(uint32_t &imageIndex) {
+bool CommandPoolManager::acquireFrame() {
   auto &device = context.device;
-  vkWaitForFences(device, 1, &commandPool.inFlightFences[currentFrame], VK_TRUE,
-                  UINT64_MAX);
-  VkResult result =
-      vkAcquireNextImageKHR(device, context.swapChain.swapChain, UINT64_MAX,
-                            commandPool.imageAvailableSemaphores[currentFrame],
-                            VK_NULL_HANDLE, &imageIndex);
+  vkWaitForFences(device, 1, &commandPool.inFlightFences[context.currentImage],
+                  VK_TRUE, UINT64_MAX);
+  VkResult result = vkAcquireNextImageKHR(
+      device, context.swapChain.swapChain, UINT64_MAX,
+      commandPool.imageAvailableSemaphores[context.currentImage],
+      VK_NULL_HANDLE, &imageIndex);
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
     return true;
   if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -160,35 +167,36 @@ bool CommandPoolManager::acquireFrame(uint32_t &imageIndex) {
   return false;
 }
 
-bool CommandPoolManager::renderFrame(uint32_t &imageIndex,
-                                     bool framebufferResized) {
+bool CommandPoolManager::renderFrame(bool framebufferResized) {
   auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
   auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
   auto &inFlightFences = commandPool.inFlightFences;
   auto &commandBuffers = commandPool.commandBuffers;
   // Only reset the fence if we are submitting work
-  vkResetFences(context.device, 1, &inFlightFences[currentFrame]);
+  vkResetFences(context.device, 1, &inFlightFences[context.currentImage]);
 
-  vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-  recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+  vkResetCommandBuffer(commandBuffers[context.currentImage], 0);
+  recordCommandBuffer(commandBuffers[context.currentImage], imageIndex);
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-  VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+  VkSemaphore waitSemaphores[] = {
+      imageAvailableSemaphores[context.currentImage]};
   VkPipelineStageFlags waitStages[] = {
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   submitInfo.waitSemaphoreCount = 1;
   submitInfo.pWaitSemaphores = waitSemaphores;
   submitInfo.pWaitDstStageMask = waitStages;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+  submitInfo.pCommandBuffers = &commandBuffers[context.currentImage];
 
-  VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+  VkSemaphore signalSemaphores[] = {
+      renderFinishedSemaphores[context.currentImage]};
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
   if (vkQueueSubmit(context.queues.graphicsQueue, 1, &submitInfo,
-                    inFlightFences[currentFrame]) != VK_SUCCESS) {
+                    inFlightFences[context.currentImage]) != VK_SUCCESS) {
     throw std::runtime_error("failed to submit draw command buffer!");
   }
   VkPresentInfoKHR presentInfo{};
@@ -209,15 +217,8 @@ bool CommandPoolManager::renderFrame(uint32_t &imageIndex,
     return true;
   if (result != VK_SUCCESS)
     throw std::runtime_error("failed to acquire swap chain image!");
-  currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+  context.currentImage = (context.currentImage + 1) % MAX_FRAMES_IN_FLIGHT;
   return false;
-}
-
-bool CommandPoolManager::drawFrame(bool framebufferResized) {
-  uint32_t imageIndex;
-  if (acquireFrame(imageIndex))
-    return true;
-  return renderFrame(imageIndex, framebufferResized);
 }
 
 void CommandPoolManager::cleanup() {

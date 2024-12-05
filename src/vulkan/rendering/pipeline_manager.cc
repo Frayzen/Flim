@@ -160,6 +160,8 @@ void PipelineManager::createGraphicPipeline() {
   pipelineLayoutInfo.pSetLayouts = nullptr;         // Optional
   pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
   pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+  pipelineLayoutInfo.setLayoutCount = 1;
+  pipelineLayoutInfo.pSetLayouts = &context.descriptorSetLayout;
 
   if (vkCreatePipelineLayout(context.device, &pipelineLayoutInfo, nullptr,
                              &pipeline.pipelineLayout) != VK_SUCCESS) {
@@ -283,6 +285,7 @@ void PipelineManager::createRenderPass() {
 }
 
 void PipelineManager::cleanup() {
+
   vkDestroyPipeline(context.device, pipeline.graphicsPipeline, nullptr);
   vkDestroyPipelineLayout(context.device, pipeline.pipelineLayout, nullptr);
   vkDestroyRenderPass(context.device, pipeline.renderPass, nullptr);

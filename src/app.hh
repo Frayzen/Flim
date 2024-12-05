@@ -1,9 +1,9 @@
 #pragma once
 
+#include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/context.hh"
 #include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
-#include "vulkan/rendering/buffer_manager.hh"
 #include "vulkan/rendering/command_pool_manager.hh"
 #include "vulkan/rendering/pipeline_manager.hh"
 #include "vulkan/swap_chain/surface_manager.hh"
@@ -21,7 +21,9 @@ public:
       : window_manager(context), extension_manager(context),
         swap_chain_manager(context), device_manager(context),
         surface_manager(context), command_pool_manager(context),
-        buffer_manager(context), pipeline_manager(context) {}
+        buffer_manager(context), pipeline_manager(context) {
+    context.currentImage = 0;
+  }
 
   void run() {
     window_manager.initWindow();
@@ -78,11 +80,15 @@ private:
     surface_manager.setupSwapChainImages();
     surface_manager.createImageViews();
     pipeline_manager.createRenderPass();
+    buffer_manager.createDescriptorSetLayout();
     pipeline_manager.createGraphicPipeline();
     surface_manager.createFramebuffers();
     command_pool_manager.createCommandPool();
     buffer_manager.createVertexBuffer();
     buffer_manager.createIndexBuffer();
+    buffer_manager.createUniformBuffers();
+    buffer_manager.createDescriptorPool();
+    buffer_manager.createDescriptorSets();
     command_pool_manager.createCommandBuffers();
     command_pool_manager.createSyncObjects();
   }
@@ -100,12 +106,19 @@ private:
     surface_manager.setupSwapChainImages();
     surface_manager.createImageViews();
     surface_manager.createFramebuffers();
+    context.currentImage = 0;
   }
 
   void mainLoop() {
     while (!glfwWindowShouldClose(context.window)) {
       glfwPollEvents();
-      if (command_pool_manager.drawFrame(window_manager.framebufferResized)) {
+
+      if (command_pool_manager.acquireFrame()) {
+        recreateSwapChain();
+        continue;
+      }
+      buffer_manager.updateUniformBuffer();
+      if (command_pool_manager.renderFrame(window_manager.framebufferResized)) {
         window_manager.framebufferResized = false;
         recreateSwapChain();
       }

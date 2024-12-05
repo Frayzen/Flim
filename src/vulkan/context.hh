@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fwd.h"
+#include <cstdint>
 #include <vulkan/vulkan_core.h>
 
 typedef struct SwapChainSupportDetails {
@@ -47,6 +48,7 @@ typedef struct Buffer {
 
 class VulkanContext {
 public:
+  uint32_t currentImage;
   VkInstance instance;
   GLFWwindow *window;
   VkPhysicalDevice physicalDevice;
@@ -59,4 +61,8 @@ public:
   Buffer stagingBuffer;
   Buffer indexBuffer;
   Buffer vertexBuffer;
+  Buffer uniformBuffer;
+  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorPool descriptorPool;
+  std::vector<VkDescriptorSet> descriptorSets;
 };
