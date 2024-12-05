@@ -84,6 +84,7 @@ private:
     pipeline_manager.createGraphicPipeline();
     surface_manager.createFramebuffers();
     command_pool_manager.createCommandPool();
+    buffer_manager.createTextureImage();
     buffer_manager.createVertexBuffer();
     buffer_manager.createIndexBuffer();
     buffer_manager.createUniformBuffers();

@@ -23,14 +23,31 @@ public:
   void createDescriptorPool();
   void createDescriptorSets();
 
+  // Texture
+  void createTextureImage();
+
   void cleanup();
 
 private:
   std::vector<Buffer> uniformBuffers;
   std::vector<void *> uniformBuffersMapped;
 
-  void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+  VkCommandBuffer beginSingleTimeCommands();
+  void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+  uint32_t findMemoryType(uint32_t typeFilter,
+                          VkMemoryPropertyFlags properties);
+
+  // Texture
+  void createImage(Image &image, VkFormat format, VkImageTiling tiling,
+                   VkImageUsageFlags usage, VkMemoryPropertyFlags properties);
+  void copyBufferToImage(VkBuffer buffer, Image &image);
+  void transitionImageLayout(VkImage image, VkFormat format,
+                             VkImageLayout oldLayout, VkImageLayout newLayout);
+
+  // Buffer
   void createBuffer(VulkanContext &context, VkDeviceSize size,
                     VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
                     Buffer &buffer);
+  void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 };

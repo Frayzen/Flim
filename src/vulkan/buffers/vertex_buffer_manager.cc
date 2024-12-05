@@ -59,19 +59,3 @@ void BufferManager::createIndexBuffer() {
   vkDestroyBuffer(context.device, context.stagingBuffer.buffer, nullptr);
   vkFreeMemory(context.device, context.stagingBuffer.bufferMemory, nullptr);
 }
-
-void BufferManager::cleanup() {
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    vkDestroyBuffer(context.device, uniformBuffers[i].buffer, nullptr);
-    vkFreeMemory(context.device, uniformBuffers[i].bufferMemory, nullptr);
-  }
-  vkDestroyDescriptorPool(context.device, context.descriptorPool, nullptr);
-  vkDestroyDescriptorSetLayout(context.device, context.descriptorSetLayout,
-                               nullptr);
-
-  vkDestroyBuffer(context.device, context.indexBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, context.indexBuffer.bufferMemory, nullptr);
-
-  vkDestroyBuffer(context.device, context.vertexBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, context.vertexBuffer.bufferMemory, nullptr);
-}

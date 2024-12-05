@@ -46,6 +46,12 @@ typedef struct Buffer {
   VkBuffer buffer;
 } Buffer;
 
+typedef struct Image {
+  VkImage textureImage;
+  VkDeviceMemory textureImageMemory;
+  int width, height;
+} Image;
+
 class VulkanContext {
 public:
   uint32_t currentImage;
@@ -65,4 +71,5 @@ public:
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorPool descriptorPool;
   std::vector<VkDescriptorSet> descriptorSets;
+  std::vector<Image> images;
 };

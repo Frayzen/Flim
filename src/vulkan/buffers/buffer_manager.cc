@@ -1,9 +1,9 @@
 #include "buffer_manager.hh"
+#include <cstddef>
 #include <stdexcept>
 
-static uint32_t findMemoryType(VulkanContext &context, uint32_t typeFilter,
-                               VkMemoryPropertyFlags properties) {
-
+uint32_t BufferManager::findMemoryType(uint32_t typeFilter,
+                                       VkMemoryPropertyFlags properties) {
   VkPhysicalDeviceMemoryProperties memProperties;
   vkGetPhysicalDeviceMemoryProperties(context.physicalDevice, &memProperties);
   for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
@@ -39,7 +39,7 @@ void BufferManager::createBuffer(VulkanContext &context, VkDeviceSize size,
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocInfo.allocationSize = memRequirements.size;
   allocInfo.memoryTypeIndex =
-      findMemoryType(context, memRequirements.memoryTypeBits, properties);
+      findMemoryType(memRequirements.memoryTypeBits, properties);
 
   if (vkAllocateMemory(context.device, &allocInfo, nullptr,
                        &buffer.bufferMemory) != VK_SUCCESS) {
@@ -49,8 +49,8 @@ void BufferManager::createBuffer(VulkanContext &context, VkDeviceSize size,
   vkBindBufferMemory(context.device, buffer.buffer, buffer.bufferMemory, 0);
 }
 
-void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
-                               VkDeviceSize size) {
+VkCommandBuffer BufferManager::beginSingleTimeCommands() {
+  //
   // Create the command buffer
   VkCommandBufferAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -67,13 +67,10 @@ void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-  // Create the CmdCopyBuffer command
-  VkBufferCopy copyRegion{};
-  copyRegion.srcOffset = 0; // Optional
-  copyRegion.dstOffset = 0; // Optional
-  copyRegion.size = size;
-  // Append it to the list
-  vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+  return commandBuffer;
+}
+
+void BufferManager::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
   // End of the commands !
   vkEndCommandBuffer(commandBuffer);
 
@@ -92,4 +89,39 @@ void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
   // Clean the command buffer afterward !
   vkFreeCommandBuffers(context.device, context.commandPool.pool, 1,
                        &commandBuffer);
+}
+
+void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
+                               VkDeviceSize size) {
+  VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+  // Create the CmdCopyBuffer command
+  VkBufferCopy copyRegion{};
+  copyRegion.srcOffset = 0; // Optional
+  copyRegion.dstOffset = 0; // Optional
+  copyRegion.size = size;
+  // Append it to the list
+  vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+  endSingleTimeCommands(commandBuffer);
+}
+
+void BufferManager::cleanup() {
+  for (size_t i = 0; i < context.images.size(); i++) {
+    vkDestroyImage(context.device, context.images[i].textureImage, nullptr);
+    vkFreeMemory(context.device, context.images[i].textureImageMemory, nullptr);
+  }
+  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    vkDestroyBuffer(context.device, uniformBuffers[i].buffer, nullptr);
+    vkFreeMemory(context.device, uniformBuffers[i].bufferMemory, nullptr);
+  }
+  vkDestroyDescriptorPool(context.device, context.descriptorPool, nullptr);
+  vkDestroyDescriptorSetLayout(context.device, context.descriptorSetLayout,
+                               nullptr);
+
+  vkDestroyBuffer(context.device, context.indexBuffer.buffer, nullptr);
+  vkFreeMemory(context.device, context.indexBuffer.bufferMemory, nullptr);
+
+  vkDestroyBuffer(context.device, context.vertexBuffer.buffer, nullptr);
+  vkFreeMemory(context.device, context.vertexBuffer.bufferMemory, nullptr);
 }
