@@ -3,6 +3,7 @@
 #include "vulkan/context.hh"
 #include "vulkan/rendering/shader_utils.hh"
 #include <stdexcept>
+#include <vulkan/vulkan_core.h>
 
 /*
 Shader stages: the shader modules that define the functionality of the
@@ -185,6 +186,21 @@ void PipelineManager::createGraphicPipeline() {
   vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
   vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
+  VkPipelineDepthStencilStateCreateInfo depthStencil{};
+  depthStencil.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  depthStencil.depthTestEnable = VK_TRUE;  // should we discard invalid ones
+  depthStencil.depthWriteEnable = VK_TRUE; // should we overwrite valid ones
+  depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+  // Enabled if depth is relevant only in a certain range
+  depthStencil.depthBoundsTestEnable = VK_FALSE;
+  depthStencil.minDepthBounds = 0.0f; // Optional
+  depthStencil.maxDepthBounds = 1.0f; // Optional
+  // For stencil test
+  depthStencil.stencilTestEnable = VK_FALSE;
+  depthStencil.front = {}; // Optional
+  depthStencil.back = {};  // Optional
+
   VkGraphicsPipelineCreateInfo pipelineInfo{};
   pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipelineInfo.stageCount = 2;
@@ -202,7 +218,8 @@ void PipelineManager::createGraphicPipeline() {
   pipelineInfo.subpass = 0;
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
   pipelineInfo.basePipelineIndex = -1;              // Optional
-                                                    //
+  pipelineInfo.pDepthStencilState = &depthStencil;
+
   if (vkCreateGraphicsPipelines(context.device, VK_NULL_HANDLE, 1,
                                 &pipelineInfo, nullptr,
                                 &pipeline.graphicsPipeline) != VK_SUCCESS) {
@@ -244,10 +261,26 @@ void PipelineManager::createRenderPass() {
   colorAttachmentRef.attachment = 0;
   colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+  VkAttachmentDescription depthAttachment{};
+  depthAttachment.format = findDepthFormat(context);
+  depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depthAttachment.finalLayout =
+      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentReference depthAttachmentRef{};
+  depthAttachmentRef.attachment = 1;
+  depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
   VkSubpassDescription subpass{};
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &colorAttachmentRef;
+  subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
   VkSubpassDependency dependency{};
   // VK_SUBPASS_EXTERNAL refers to the implicit subpass before or after the
@@ -260,19 +293,24 @@ void PipelineManager::createRenderPass() {
   dependency.dstSubpass = 0;
   // We need to wait for the swap chain to finish reading from the image before
   // we can access it
-  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
   dependency.srcAccessMask = 0;
   // The operations that should wait on this are in the color attachment stage
   // and involve the writing of the color attachment. These settings will
   // prevent the transition from hcontext until it's actually necessary (and
   // allowed): when we want to start writing colors to it.
-  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
+  std::array<VkAttachmentDescription, 2> attachments = {colorAttachment,
+                                                        depthAttachment};
   VkRenderPassCreateInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassInfo.attachmentCount = 1;
-  renderPassInfo.pAttachments = &colorAttachment;
+  renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+  renderPassInfo.pAttachments = attachments.data();
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpass;
   renderPassInfo.dependencyCount = 1;

@@ -1,3 +1,4 @@
+#include "vulkan/rendering/shader_utils.hh"
 #define STB_IMAGE_IMPLEMENTATION
 #include "buffer_manager.hh"
 #include "utils/stb_image.h"
@@ -5,6 +6,11 @@
 #include <cstring>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
+
+static bool hasStencilComponent(VkFormat format) {
+  return format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
+         format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
 
 void BufferManager::createImage(Image &image, VkFormat format,
                                 VkImageTiling tiling, VkImageUsageFlags usage,
@@ -82,7 +88,7 @@ void BufferManager::createTextureImage() {
 
   context.images.resize(1);
 
-  Image& image = context.images[0];
+  Image &image = context.images[0];
   image.width = texWidth;
   image.height = texHeight;
   // VK_IMAGE_USAGE_TRANSFER_DST_BIT to be able to copy
@@ -145,6 +151,16 @@ void BufferManager::transitionImageLayout(Image &image,
   VkPipelineStageFlags sourceStage;
   VkPipelineStageFlags destinationStage;
 
+  if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+    if (hasStencilComponent(image.format)) {
+      barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
+  } else {
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  }
+
   if (image.layout == VK_IMAGE_LAYOUT_UNDEFINED &&
       newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
     // In case of transition from undefined to optimal for memcpy
@@ -162,6 +178,24 @@ void BufferManager::transitionImageLayout(Image &image,
 
     sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+      barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+      if (hasStencilComponent(image.format)) {
+        barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+      }
+    } else {
+      barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+
+  } else if (image.layout == VK_IMAGE_LAYOUT_UNDEFINED &&
+             newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+    sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
   } else {
     throw std::invalid_argument("unsupported layout transition!");
   }
@@ -172,16 +206,17 @@ void BufferManager::transitionImageLayout(Image &image,
   endSingleTimeCommands(commandBuffer);
 }
 
-void BufferManager::createImageView(Image &image) {
+void BufferManager::createImageView(Image &image,
+                                    VkImageAspectFlags aspectFlags) {
   VkImageViewCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   createInfo.image = image.textureImage;
-  createInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+  createInfo.format = image.format;
   createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
   // Level map related
   createInfo.subresourceRange.baseMipLevel = 0;
   createInfo.subresourceRange.levelCount = 1;
-  createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  createInfo.subresourceRange.aspectMask = aspectFlags; // eg color or depth bit
   createInfo.subresourceRange.layerCount = 1;
   createInfo.subresourceRange.baseArrayLayer = 0;
   // Optional (VK_COMPONENT_SWIZZLE_IDENTITY is 0)
@@ -200,7 +235,7 @@ void BufferManager::createImageView(Image &image) {
 void BufferManager::createTextureImageView() {
 
   for (auto &image : context.images) {
-    createImageView(image);
+    createImageView(image, VK_IMAGE_ASPECT_COLOR_BIT);
   }
 }
 
@@ -241,4 +276,18 @@ void BufferManager::createTextureSampler() {
       throw std::runtime_error("failed to create texture sampler!");
     }
   }
+}
+
+void BufferManager::createDepthResources() {
+  VkFormat depthFormat = findDepthFormat(context);
+  VkExtent2D &extent = context.swapChain.swapChainExtent;
+  context.depthImage.width = extent.width;
+  context.depthImage.height = extent.height;
+  createImage(context.depthImage, depthFormat, VK_IMAGE_TILING_OPTIMAL,
+              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  createImageView(context.depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+  transitionImageLayout(context.depthImage,
+                        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }

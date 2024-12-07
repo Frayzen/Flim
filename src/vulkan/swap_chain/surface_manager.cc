@@ -1,6 +1,7 @@
 #include "surface_manager.hh"
 
 #include <GLFW/glfw3.h>
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <stdexcept>
@@ -68,13 +69,14 @@ void SurfaceManager::createFramebuffers() {
   context.swapChain.swapChainFramebuffers.resize(swapChainImageViews.size());
 
   for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-    VkImageView attachments[] = {swapChainImageViews[i]};
+    std::array<VkImageView, 2> attachments = {swapChainImageViews[i],
+                                              context.depthImage.view};
 
     VkFramebufferCreateInfo framebufferInfo{};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = context.pipeline.renderPass;
-    framebufferInfo.attachmentCount = 1;
-    framebufferInfo.pAttachments = attachments;
+    framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+    framebufferInfo.pAttachments = attachments.data();
     // May differ from HEIGHT and WIDTH
     framebufferInfo.width = context.swapChain.swapChainExtent.width;
     framebufferInfo.height = context.swapChain.swapChainExtent.height;

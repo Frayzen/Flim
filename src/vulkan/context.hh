@@ -76,4 +76,5 @@ public:
   VkDescriptorPool descriptorPool;
   std::vector<VkDescriptorSet> descriptorSets;
   std::vector<Image> images;
+  Image depthImage;
 };

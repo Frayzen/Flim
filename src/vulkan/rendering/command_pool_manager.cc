@@ -38,6 +38,7 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   }
 
   VkRenderPassBeginInfo renderPassInfo{};
+
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   renderPassInfo.renderPass = context.pipeline.renderPass;
   renderPassInfo.framebuffer =
@@ -45,11 +46,17 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   // renderArea defines where shader loads and stores will take place
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = context.swapChain.swapChainExtent;
+
   // define the clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we
   // used as load operation for the color attachment
-  VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}}; // Set clear color
-  renderPassInfo.clearValueCount = 1;
-  renderPassInfo.pClearValues = &clearColor;
+  std::array<VkClearValue, 2> clearValues{};
+
+  // The order of clearValues should be identical to the order of your
+  // attachments
+  clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  clearValues[1].depthStencil = {1.0f, 0};
+  renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+  renderPassInfo.pClearValues = clearValues.data();
 
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
                        VK_SUBPASS_CONTENTS_INLINE);

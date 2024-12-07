@@ -2,6 +2,7 @@
 
 #include "vulkan/base_manager.hh"
 #include "vulkan/context.hh"
+#include <vulkan/vulkan_core.h>
 
 struct UniformBufferObject {
   glm::mat4 model;
@@ -27,6 +28,7 @@ public:
   void createTextureImage();
   void createTextureImageView();
   void createTextureSampler();
+  void createDepthResources();
 
   void cleanup();
 
@@ -44,8 +46,8 @@ private:
   void createImage(Image &image, VkFormat format, VkImageTiling tiling,
                    VkImageUsageFlags usage, VkMemoryPropertyFlags properties);
   void copyBufferToImage(VkBuffer buffer, Image &image);
-  void transitionImageLayout(Image& image, VkImageLayout newLayout);
-  void createImageView(Image& image);
+  void transitionImageLayout(Image &image, VkImageLayout newLayout);
+  void createImageView(Image &image, VkImageAspectFlags aspectFlags);
 
   // Buffer
   void createBuffer(VulkanContext &context, VkDeviceSize size,

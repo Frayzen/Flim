@@ -154,6 +154,10 @@ void SwapChainManager::createSwapChain() {
 }
 
 void SwapChainManager::cleanup() {
+  vkDestroyImageView(context.device, context.depthImage.view, nullptr);
+  vkDestroyImage(context.device, context.depthImage.textureImage, nullptr);
+  vkFreeMemory(context.device, context.depthImage.textureImageMemory, nullptr);
+
   for (size_t i = 0; i < swapChain.swapChainFramebuffers.size(); i++) {
     vkDestroyFramebuffer(context.device, swapChain.swapChainFramebuffers[i],
                          nullptr);

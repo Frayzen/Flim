@@ -107,6 +107,7 @@ void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
 }
 
 void BufferManager::cleanup() {
+
   for (auto &image : context.images) {
     vkDestroySampler(context.device, image.sampler, nullptr);
     vkDestroyImageView(context.device, image.view, nullptr);

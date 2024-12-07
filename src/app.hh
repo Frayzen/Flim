@@ -82,8 +82,9 @@ private:
     pipeline_manager.createRenderPass();
     buffer_manager.createDescriptorSetLayout();
     pipeline_manager.createGraphicPipeline();
-    surface_manager.createFramebuffers();
     command_pool_manager.createCommandPool();
+    buffer_manager.createDepthResources();
+    surface_manager.createFramebuffers();
     buffer_manager.createTextureImage();
     buffer_manager.createTextureImageView();
     buffer_manager.createTextureSampler();
@@ -108,6 +109,7 @@ private:
     swap_chain_manager.createSwapChain();
     surface_manager.setupSwapChainImages();
     surface_manager.createImageViews();
+    buffer_manager.createDepthResources();
     surface_manager.createFramebuffers();
     context.currentImage = 0;
   }
