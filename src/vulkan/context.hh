@@ -32,6 +32,16 @@ typedef struct Pipeline {
   VkPipeline graphicsPipeline;
 } Pipeline;
 
+typedef struct Image {
+  VkImage textureImage;
+  VkDeviceMemory textureImageMemory;
+  VkImageView view;
+  VkImageLayout layout;
+  VkFormat format;
+  VkSampler sampler;
+  int width, height;
+} Image;
+
 typedef struct SwapChain {
   std::vector<VkImage> swapChainImages;
   std::vector<VkImageView> swapChainImageViews;
@@ -45,12 +55,6 @@ typedef struct Buffer {
   VkDeviceMemory bufferMemory;
   VkBuffer buffer;
 } Buffer;
-
-typedef struct Image {
-  VkImage textureImage;
-  VkDeviceMemory textureImageMemory;
-  int width, height;
-} Image;
 
 class VulkanContext {
 public:

@@ -107,9 +107,11 @@ void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
 }
 
 void BufferManager::cleanup() {
-  for (size_t i = 0; i < context.images.size(); i++) {
-    vkDestroyImage(context.device, context.images[i].textureImage, nullptr);
-    vkFreeMemory(context.device, context.images[i].textureImageMemory, nullptr);
+  for (auto &image : context.images) {
+    vkDestroySampler(context.device, image.sampler, nullptr);
+    vkDestroyImageView(context.device, image.view, nullptr);
+    vkDestroyImage(context.device, image.textureImage, nullptr);
+    vkFreeMemory(context.device, image.textureImageMemory, nullptr);
   }
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     vkDestroyBuffer(context.device, uniformBuffers[i].buffer, nullptr);

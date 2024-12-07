@@ -25,6 +25,8 @@ public:
 
   // Texture
   void createTextureImage();
+  void createTextureImageView();
+  void createTextureSampler();
 
   void cleanup();
 
@@ -42,8 +44,8 @@ private:
   void createImage(Image &image, VkFormat format, VkImageTiling tiling,
                    VkImageUsageFlags usage, VkMemoryPropertyFlags properties);
   void copyBufferToImage(VkBuffer buffer, Image &image);
-  void transitionImageLayout(VkImage image, VkFormat format,
-                             VkImageLayout oldLayout, VkImageLayout newLayout);
+  void transitionImageLayout(Image& image, VkImageLayout newLayout);
+  void createImageView(Image& image);
 
   // Buffer
   void createBuffer(VulkanContext &context, VkDeviceSize size,
