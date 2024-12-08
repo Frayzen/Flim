@@ -5,27 +5,49 @@
 
 namespace Flim {
 
-Mesh MeshUtils::createCube(vec3 size) {
+Mesh MeshUtils::createCube(float side_length) {
   Mesh model;
 
   Vertex vertex;
 
-  // add vertices
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
-      for (int k = 0; k < 2; k++) {
-        vertex.pos =
-            vec3((j - 0.5) * size.x, (i - 0.5) * size.y, (k - 0.5) * size.z);
-        vertex.uv = vec3(i, k, 0);
-        model.vertices.push_back(vertex);
-      }
-    }
+  float half = side_length / 2.0f;
+
+  // Define the 8 vertices of the cube
+  std::vector<glm::vec3> positions = {
+      {-half, -half, half}, {half, -half, half},   {-half, half, half},
+      {half, half, half},   {-half, -half, -half}, {half, -half, -half},
+      {-half, half, -half}, {half, half, -half},
+  };
+
+  // Add vertices to the mesh
+  for (const auto &pos : positions) {
+    vertex.pos = pos;
+    model.vertices.push_back(vertex);
   }
 
-  // add triangles
-  model.indices.push_back(uvec3(0, 1, 2));
-  model.indices.push_back(uvec3(1, 2, 3));
-  // TODO
+  // Define the 12 triangles (2 per face)
+  std::vector<uint16> indices = {// Top
+                                 2, 6, 7, 2, 3, 7,
+
+                                 // Bottom
+                                 0, 4, 5, 0, 1, 5,
+
+                                 // Left
+                                 0, 2, 6, 0, 4, 6,
+
+                                 // Right
+                                 1, 3, 7, 1, 5, 7,
+
+                                 // Front
+                                 0, 2, 3, 0, 1, 3,
+
+                                 // Back
+                                 4, 6, 7, 4, 5, 7};
+
+  // Add indices to the mesh
+  for (const auto &tri : indices) {
+    model.indices.push_back(tri);
+  }
 
   return model;
 }
@@ -62,10 +84,14 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
   for (int i = 0; i < n_slices; ++i) {
     auto i0 = i + 1;
     auto i1 = (i + 1) % n_slices + 1;
-    model.indices.push_back(uvec3(v0, i1, i0));
+    model.indices.push_back(v0);
+    model.indices.push_back(i1);
+    model.indices.push_back(i0);
     i0 = i + n_slices * (n_stacks - 2) + 1;
     i1 = (i + 1) % n_slices + n_slices * (n_stacks - 2) + 1;
-    model.indices.push_back(uvec3(v1, i0, i1));
+    model.indices.push_back(v1);
+    model.indices.push_back(i0);
+    model.indices.push_back(i1);
   }
 
   // add quads per stack / slice
@@ -77,8 +103,13 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
       auto i1 = j0 + (i + 1) % n_slices;
       auto i2 = j1 + (i + 1) % n_slices;
       auto i3 = j1 + i;
-      model.indices.push_back(uvec3(i0, i1, i2));
-      model.indices.push_back(uvec3(i0, i2, i3));
+
+      model.indices.push_back(i0);
+      model.indices.push_back(i1);
+      model.indices.push_back(i2);
+      model.indices.push_back(i0);
+      model.indices.push_back(i2);
+      model.indices.push_back(i3);
     }
   }
   return model;

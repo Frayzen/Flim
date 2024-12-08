@@ -15,13 +15,13 @@ class Mesh {
 
 public:
   const std::vector<Vertex>& getVertices() const;
-  const std::vector<uvec3>& getTriangles() const;
+  const std::vector<uint16>& getTriangles() const;
 
 private:
   Mesh() = default;
 
   std::vector<Vertex> vertices;
-  std::vector<uvec3> indices;
+  std::vector<uint16> indices;
 
   friend class MeshUtils;
 };

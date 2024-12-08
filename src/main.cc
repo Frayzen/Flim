@@ -13,7 +13,7 @@ int main() {
       Shader("shaders/default.frag.spv"),
   };
   scene.defaultRenderer(&renderer);
-  Mesh sphere = MeshUtils(scene).createSphere(1);
+  Mesh sphere = MeshUtils(scene).createCube();
   scene.instantiate(sphere);
   return api.run();
 }

@@ -18,7 +18,7 @@ public:
 
   // Vertices
   void createVertexBuffer(const std::vector<Flim::Vertex> &vertices);
-  void createIndexBuffer(const std::vector<uvec3> indices);
+  void createIndexBuffer(const std::vector<uint16> indices);
   void createDescriptorSetLayout();
   void createUniformBuffers();
 

@@ -1,4 +1,5 @@
 #include <cstring>
+#include <glm/fwd.hpp>
 #include <iostream>
 #include <vulkan/vulkan_core.h>
 
@@ -37,7 +38,7 @@ void BufferManager::createVertexBuffer(
   vkFreeMemory(context.device, context.stagingBuffer.bufferMemory, nullptr);
 }
 
-void BufferManager::createIndexBuffer(const std::vector<uvec3> indices) {
+void BufferManager::createIndexBuffer(const std::vector<uint16> indices) {
   VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
   createBuffer(context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,

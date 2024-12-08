@@ -148,9 +148,9 @@ private:
         continue;
       }
       buffer_manager.updateUniformBuffer();
-      if (command_pool_manager.renderFrame(window_manager.framebufferResized,
-                                           instance->mesh.getTriangles().size() *
-                                               3)) {
+      if (command_pool_manager.renderFrame(
+              window_manager.framebufferResized,
+              instance->mesh.getTriangles().size())) {
         window_manager.framebufferResized = false;
         recreateSwapChain();
       }
