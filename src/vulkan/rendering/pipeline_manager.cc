@@ -1,5 +1,6 @@
 #include "pipeline_manager.hh"
 
+#include "api/parameters.hh"
 #include "vulkan/context.hh"
 #include "vulkan/rendering/shader_utils.hh"
 #include <stdexcept>
@@ -33,25 +34,25 @@ static VkShaderModule createShaderModule(VulkanContext &context,
   return shaderModule;
 }
 
-void PipelineManager::createGraphicPipeline() {
-  auto vertShaderCode = readFile("shaders/shader.vert.spv");
-  auto fragShaderCode = readFile("shaders/shader.frag.spv");
-  pipeline.vertShaderModule = createShaderModule(context, vertShaderCode);
-  pipeline.fragShaderModule = createShaderModule(context, fragShaderCode);
+void PipelineManager::createGraphicPipeline(Flim::Renderer &renderer) {
+  pipeline.vertShaderModule =
+      createShaderModule(context, renderer.vertexShader.code);
+  pipeline.fragShaderModule =
+      createShaderModule(context, renderer.fragmentShader.code);
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
   vertShaderStageInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
   vertShaderStageInfo.module = pipeline.vertShaderModule;
-  vertShaderStageInfo.pName = "main";
+  vertShaderStageInfo.pName = renderer.vertexShader.entry.data();
 
   VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
   fragShaderStageInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
   fragShaderStageInfo.module = pipeline.fragShaderModule;
-  fragShaderStageInfo.pName = "main";
+  fragShaderStageInfo.pName = renderer.fragmentShader.entry.data();
 
   VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo,
                                                     fragShaderStageInfo};

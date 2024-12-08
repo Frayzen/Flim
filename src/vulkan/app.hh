@@ -1,5 +1,7 @@
 #pragma once
 
+#include "api/parameters.hh"
+#include "api/scene.hh"
 #include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/context.hh"
 #include "vulkan/device/device_manager.hh"
@@ -25,12 +27,12 @@ public:
     context.currentImage = 0;
   }
 
-  void run() {
+  void init() {
     window_manager.initWindow();
     initVulkan();
-    mainLoop();
-    cleanup();
   }
+
+  void run() { mainLoop(); }
 
 private:
   VulkanContext context;
@@ -71,19 +73,34 @@ private:
   }
 
   void initVulkan() {
+    // Setup
     createInstance();
     extension_manager.setupDebugMessenger();
     surface_manager.createSurface();
+
+    // Device
     device_manager.pickPhysicalDevice();
     device_manager.createLogicalDevice();
+
+    // Swap chain
     swap_chain_manager.createSwapChain();
     surface_manager.setupSwapChainImages();
     surface_manager.createImageViews();
+
+    // Create command pool
     pipeline_manager.createRenderPass();
     buffer_manager.createDescriptorSetLayout();
-    pipeline_manager.createGraphicPipeline();
     command_pool_manager.createCommandPool();
+
+    // Depth buffer
     buffer_manager.createDepthResources();
+  }
+
+  void setupGraphics(Flim::Scene& scene) {
+    // Graphic pipeline
+    pipeline_manager.createGraphicPipeline(*scene.renderer);
+
+    // Buffers
     surface_manager.createFramebuffers();
     buffer_manager.createTextureImage();
     buffer_manager.createTextureImageView();
@@ -143,4 +160,6 @@ private:
     glfwDestroyWindow(context.window);
     glfwTerminate();
   }
+
+  friend class Flim::FlimAPI;
 };

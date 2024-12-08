@@ -18,5 +18,5 @@ function(add_shaders TARGET_NAME SHADER_SOURCE)
     SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER_SOURCE})
 endfunction()
 
-add_shaders("VertexShader" shader.vert)
-add_shaders("FragmentShader" shader.frag)
+add_shaders("VertexShader" default.vert)
+add_shaders("FragmentShader" default.frag)
