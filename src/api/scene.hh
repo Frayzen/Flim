@@ -13,7 +13,7 @@ class Scene {
 
 public:
   void defaultRenderer(Renderer *renderer);
-  InstanceObject instantiate(Mesh &mesh);
+  InstanceObject& instantiate(Mesh &mesh);
   const RootObject &getRoot();
 
   Renderer *renderer;

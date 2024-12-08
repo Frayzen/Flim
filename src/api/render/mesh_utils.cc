@@ -1,7 +1,13 @@
 #include "mesh_utils.hh"
 #include "api/render/mesh.hh"
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+#include <cstddef>
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
+#include <iostream>
+#include <stdexcept>
 
 namespace Flim {
 
@@ -114,4 +120,45 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
   }
   return model;
 }
+
+Mesh MeshUtils::loadFromFile(std::string path) {
+  std::cout << "Importing " << path << "..." << '\n';
+  static Assimp::Importer importer;
+  const aiScene *scene = importer.ReadFile(
+      path.c_str(),
+      aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
+          aiProcess_GenUVCoords | aiProcess_FlipUVs |
+          aiProcess_RemoveRedundantMaterials |
+          aiProcess_GenSmoothNormals /* or aiProcess_GenNormals */);
+
+  std::cout << scene << std::endl;
+  if (scene == NULL || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
+      scene->mRootNode == NULL)
+    std::runtime_error("Could not load " + path);
+
+  Mesh m;
+  std::cout << " = Creating the mesh..." << '\n';
+
+  for (uint i = 0; i < scene->mNumMeshes; i++) {
+    auto mesh = scene->mMeshes[i];
+    Vertex vtx{};
+    for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
+      auto v = mesh->mVertices[i];
+      vtx.pos = {v.x, v.y, v.z};
+      m.vertices.emplace_back(vtx);
+    }
+    // Retrieve indices (assuming triangles)
+    for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
+      aiFace face = mesh->mFaces[i];
+      if (face.mNumIndices == 3) // Assuming triangles
+      {
+        m.indices.emplace_back(face.mIndices[0]);
+        m.indices.emplace_back(face.mIndices[1]);
+        m.indices.emplace_back(face.mIndices[2]);
+      }
+    }
+  }
+  return m;
+}
+
 }; // namespace Flim

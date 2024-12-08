@@ -13,7 +13,9 @@ int main() {
       Shader("shaders/default.frag.spv"),
   };
   scene.defaultRenderer(&renderer);
-  Mesh sphere = MeshUtils(scene).createCube();
-  scene.instantiate(sphere);
+  Mesh teddy = MeshUtils(scene).loadFromFile("resources/single_file/teddy.obj");
+  auto& obj = scene.instantiate(teddy);
+  obj.transform.position = vec3(6, 0, 0);
+  obj.transform.scale = vec3(0.1f);
   return api.run();
 }

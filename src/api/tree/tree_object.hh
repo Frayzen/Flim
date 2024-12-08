@@ -25,7 +25,7 @@ public:
   vec3 up();
   vec3 right();
 
-  glm::mat4 getViewMatrix() {
+  glm::mat4 getViewMatrix() const {
     glm::mat4 m = glm::translate(glm::mat4(1.0f), position);
     glm::mat4 rot = glm::mat4_cast(rotation);
     m = glm::scale(rot * m, scale);

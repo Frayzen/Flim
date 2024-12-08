@@ -1,4 +1,5 @@
 #include <chrono>
+#include <glm/fwd.hpp>
 
 /* #define GLM_FORCE_LEFT_HANDED */
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE // for perspective projection
@@ -129,7 +130,7 @@ void BufferManager::createDescriptorSets() {
   }
 }
 
-void BufferManager::updateUniformBuffer() {
+void BufferManager::updateUniformBuffer(const glm::mat4 &model) {
   static auto startTime = std::chrono::high_resolution_clock::now();
 
   auto currentTime = std::chrono::high_resolution_clock::now();
@@ -138,17 +139,20 @@ void BufferManager::updateUniformBuffer() {
                    .count();
 
   UniformBufferObject ubo{};
-  ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
-                          glm::vec3(0.0f, 0.0f, 1.0f));
+  /* ubo.model = model * glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), */
+  /*                         glm::vec3(0.0f, 0.0f, 1.0f)); */
+  ubo.model = model * glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
+                          glm::vec3(0.0f, 1.0f, 0.0f));
   ubo.view =
-      glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                  glm::vec3(0.0f, 0.0f, -1.0f));
+      glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f),
+                  glm::vec3(0.0f, 1.0f, 0.0f));
 
   ubo.proj =
       glm::perspective(glm::radians(45.0f),
                        context.swapChain.swapChainExtent.width /
                            (float)context.swapChain.swapChainExtent.height,
                        0.1f, 10.0f);
+  ubo.proj[1][1] *= -1;
 
   memcpy(uniformBuffersMapped[context.currentImage], &ubo, sizeof(ubo));
 }

@@ -4,9 +4,8 @@
 namespace Flim {
 void Scene::defaultRenderer(Renderer *renderer) { this->renderer = renderer; }
 
-InstanceObject Scene::instantiate(Mesh &mesh) {
-  InstanceObject obj = InstanceObject::instantiate(mesh, &root);
-  return obj;
+InstanceObject &Scene::instantiate(Mesh &mesh) {
+  return InstanceObject::instantiate(mesh, &root);
 }
 
 const RootObject &Scene::getRoot() { return root; }

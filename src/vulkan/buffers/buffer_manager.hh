@@ -23,7 +23,7 @@ public:
   void createUniformBuffers();
 
   // Uniform
-  void updateUniformBuffer();
+  void updateUniformBuffer(const glm::mat4& model);
   void createDescriptorPool();
   void createDescriptorSets();
 

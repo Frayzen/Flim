@@ -3,6 +3,7 @@
 #include "api/scene.hh"
 #include "fwd.h"
 #include <glm/fwd.hpp>
+#include <string>
 
 namespace Flim {
 
@@ -12,6 +13,7 @@ public:
   Scene &scene;
   Mesh createCube(float side_length = 1);
   Mesh createSphere(float radius = 1.0f, int n_slices = 10, int n_stacks = 10);
+  Mesh loadFromFile(std::string path);
 };
 
 } // namespace Flim

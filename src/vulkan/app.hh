@@ -147,7 +147,7 @@ private:
         recreateSwapChain();
         continue;
       }
-      buffer_manager.updateUniformBuffer();
+      buffer_manager.updateUniformBuffer(instance->transform.getViewMatrix());
       if (command_pool_manager.renderFrame(
               window_manager.framebufferResized,
               instance->mesh.getTriangles().size())) {
