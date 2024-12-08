@@ -2,7 +2,7 @@
 
 #include "api/parameters.hh"
 #include "vulkan/context.hh"
-#include "vulkan/rendering/shader_utils.hh"
+#include "vulkan/rendering/utils.hh"
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -178,8 +178,8 @@ void PipelineManager::createGraphicPipeline(Flim::Renderer &renderer) {
   vertexInputInfo.vertexAttributeDescriptionCount = 0;
   vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
 
-  auto bindingDescription = Vertex::getBindingDescription();
-  auto attributeDescriptions = Vertex::getAttributeDescriptions();
+  auto bindingDescription = getBindingDescription();
+  auto attributeDescriptions = getAttributeDescriptions();
 
   vertexInputInfo.vertexBindingDescriptionCount = 1;
   vertexInputInfo.vertexAttributeDescriptionCount =

@@ -23,8 +23,8 @@ Mesh MeshUtils::createCube(vec3 size) {
   }
 
   // add triangles
-  model.triangles.push_back(uvec3(0, 1, 2));
-  model.triangles.push_back(uvec3(1, 2, 3));
+  model.indices.push_back(uvec3(0, 1, 2));
+  model.indices.push_back(uvec3(1, 2, 3));
   // TODO
 
   return model;
@@ -62,10 +62,10 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
   for (int i = 0; i < n_slices; ++i) {
     auto i0 = i + 1;
     auto i1 = (i + 1) % n_slices + 1;
-    model.triangles.push_back(uvec3(v0, i1, i0));
+    model.indices.push_back(uvec3(v0, i1, i0));
     i0 = i + n_slices * (n_stacks - 2) + 1;
     i1 = (i + 1) % n_slices + n_slices * (n_stacks - 2) + 1;
-    model.triangles.push_back(uvec3(v1, i0, i1));
+    model.indices.push_back(uvec3(v1, i0, i1));
   }
 
   // add quads per stack / slice
@@ -77,8 +77,8 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
       auto i1 = j0 + (i + 1) % n_slices;
       auto i2 = j1 + (i + 1) % n_slices;
       auto i3 = j1 + i;
-      model.triangles.push_back(uvec3(i0, i1, i2));
-      model.triangles.push_back(uvec3(i0, i2, i3));
+      model.indices.push_back(uvec3(i0, i1, i2));
+      model.indices.push_back(uvec3(i0, i2, i3));
     }
   }
   return model;

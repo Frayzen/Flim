@@ -6,7 +6,7 @@ namespace Flim {
 
 class RootObject : public TreeObject {
 public:
-  RootObject(Scene& scene) : TreeObject(nullptr, scene) {};
+  RootObject(Scene& scene) : TreeObject(scene) {};
 };
 
 } // namespace Flim

@@ -1,7 +1,9 @@
 #pragma once
 
+#include "api/render/mesh.hh"
 #include "vulkan/base_manager.hh"
 #include "vulkan/context.hh"
+#include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
 
 struct UniformBufferObject {
@@ -14,8 +16,9 @@ class BufferManager : public BaseManager {
 public:
   BufferManager(VulkanContext &context) : BaseManager(context) {};
 
-  void createVertexBuffer();
-  void createIndexBuffer();
+  // Vertices
+  void createVertexBuffer(const std::vector<Flim::Vertex> &vertices);
+  void createIndexBuffer(const std::vector<uvec3> indices);
   void createDescriptorSetLayout();
   void createUniformBuffers();
 

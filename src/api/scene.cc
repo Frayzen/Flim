@@ -4,8 +4,11 @@
 namespace Flim {
 void Scene::defaultRenderer(Renderer *renderer) { this->renderer = renderer; }
 
-TreeObject Scene::instantiate(Mesh &mesh) {
-  InstanceObject obj(&root, *this, mesh);
+InstanceObject Scene::instantiate(Mesh &mesh) {
+  InstanceObject obj = InstanceObject::instantiate(mesh, &root);
   return obj;
 }
+
+const RootObject &Scene::getRoot() { return root; }
+
 }; // namespace Flim

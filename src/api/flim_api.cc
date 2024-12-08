@@ -19,7 +19,7 @@ int FlimAPI::run() {
   assert(scene.renderer != nullptr);
   app.setupGraphics(scene);
   try {
-    app.run();
+    app.run(scene);
   } catch (const std::exception &e) {
     std::cerr << e.what() << std::endl;
     return EXIT_FAILURE;

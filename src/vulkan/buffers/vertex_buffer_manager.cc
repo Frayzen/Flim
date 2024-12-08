@@ -1,11 +1,14 @@
-#include <vulkan/vulkan_core.h>
 #include <cstring>
+#include <iostream>
+#include <vulkan/vulkan_core.h>
 
-#include "vulkan/context.hh"
+#include "api/render/mesh.hh"
 #include "vulkan/buffers/buffer_manager.hh"
-#include "vulkan/rendering/pipeline_manager.hh"
+#include "vulkan/context.hh"
 
-void BufferManager::createVertexBuffer() {
+
+void BufferManager::createVertexBuffer(
+    const std::vector<Flim::Vertex> &vertices) {
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
   createBuffer(
       context, bufferSize,
@@ -34,7 +37,7 @@ void BufferManager::createVertexBuffer() {
   vkFreeMemory(context.device, context.stagingBuffer.bufferMemory, nullptr);
 }
 
-void BufferManager::createIndexBuffer() {
+void BufferManager::createIndexBuffer(const std::vector<uvec3> indices) {
   VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
   createBuffer(context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,

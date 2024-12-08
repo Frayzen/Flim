@@ -18,7 +18,8 @@ conda activate $ENV_NAME
 
 cmake . -B build -DCMAKE_BUILD_TYPE=Debug
 rm compile_commands.json
-ln -s ./textures/ ./build/textures
+rm -rf ./build/textures
+ln -s ./textures/ ./build/textures/
 ln -s ./build/compile_commands.json compile_commands.json
 
 echo "Setup DONE"

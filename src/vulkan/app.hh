@@ -1,7 +1,8 @@
 #pragma once
 
-#include "api/parameters.hh"
 #include "api/scene.hh"
+#include "api/tree/instance_object.hh"
+#include "api/tree/tree_object.hh"
 #include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/context.hh"
 #include "vulkan/device/device_manager.hh"
@@ -32,7 +33,7 @@ public:
     initVulkan();
   }
 
-  void run() { mainLoop(); }
+  void run(Flim::Scene &scene) { mainLoop(scene); }
 
 private:
   VulkanContext context;
@@ -91,27 +92,33 @@ private:
     pipeline_manager.createRenderPass();
     buffer_manager.createDescriptorSetLayout();
     command_pool_manager.createCommandPool();
+    command_pool_manager.createCommandBuffers();
+    command_pool_manager.createSyncObjects();
 
-    // Depth buffer
+    // Frame and depth buffer
     buffer_manager.createDepthResources();
+    surface_manager.createFramebuffers();
   }
 
-  void setupGraphics(Flim::Scene& scene) {
+  void setupGraphics(Flim::Scene &scene) {
     // Graphic pipeline
     pipeline_manager.createGraphicPipeline(*scene.renderer);
 
-    // Buffers
-    surface_manager.createFramebuffers();
+    // Texture
     buffer_manager.createTextureImage();
     buffer_manager.createTextureImageView();
     buffer_manager.createTextureSampler();
-    buffer_manager.createVertexBuffer();
-    buffer_manager.createIndexBuffer();
+
+    // Vertices
+    const auto &instance = scene.getRoot().child<Flim::InstanceObject>(0);
+
+    buffer_manager.createVertexBuffer(instance->mesh.getVertices());
+    buffer_manager.createIndexBuffer(instance->mesh.getTriangles());
+
+    // Uniform
     buffer_manager.createUniformBuffers();
     buffer_manager.createDescriptorPool();
     buffer_manager.createDescriptorSets();
-    command_pool_manager.createCommandBuffers();
-    command_pool_manager.createSyncObjects();
   }
 
   void recreateSwapChain() {
@@ -131,7 +138,8 @@ private:
     context.currentImage = 0;
   }
 
-  void mainLoop() {
+  void mainLoop(Flim::Scene &scene) {
+    const auto &instance = scene.getRoot().child<Flim::InstanceObject>(0);
     while (!glfwWindowShouldClose(context.window)) {
       glfwPollEvents();
 
@@ -140,7 +148,9 @@ private:
         continue;
       }
       buffer_manager.updateUniformBuffer();
-      if (command_pool_manager.renderFrame(window_manager.framebufferResized)) {
+      if (command_pool_manager.renderFrame(window_manager.framebufferResized,
+                                           instance->mesh.getTriangles().size() *
+                                               3)) {
         window_manager.framebufferResized = false;
         recreateSwapChain();
       }

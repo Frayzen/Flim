@@ -12,10 +12,10 @@ public:
   void createCommandBuffers();
   void createSyncObjects();
   bool acquireFrame(); // return if the swap chain is no longer adequate
-  bool renderFrame(bool framebufferResized); // return if the swap chain is no longer adequate
+  bool renderFrame(bool framebufferResized, uint32_t numberIndices); // return if the swap chain is no longer adequate
   void cleanup();
 
 private:
-  void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+  void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t numberIndices);
   CommandPool &commandPool;
 };

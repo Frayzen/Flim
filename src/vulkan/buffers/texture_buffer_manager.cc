@@ -1,4 +1,4 @@
-#include "vulkan/rendering/shader_utils.hh"
+#include "vulkan/rendering/utils.hh"
 #define STB_IMAGE_IMPLEMENTATION
 #include "buffer_manager.hh"
 #include "utils/stb_image.h"

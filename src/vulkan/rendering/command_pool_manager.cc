@@ -1,10 +1,9 @@
 #include "command_pool_manager.hh"
 #include "consts.hh"
 #include "vulkan/device/device_utils.hh"
-#include "vulkan/rendering/pipeline_manager.hh"
 
+#include <array>
 #include <cstdint>
-#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -26,7 +25,7 @@ void CommandPoolManager::createCommandPool() {
 }
 
 void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
-                                             uint32_t imageIndex) {
+                                             uint32_t imageIndex, uint32_t numberIndices) {
 
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -87,7 +86,7 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
                           context.pipeline.pipelineLayout, 0, 1,
                           &context.descriptorSets[context.currentImage], 0,
                           nullptr);
-  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0,
+  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(numberIndices), 1, 0,
                    0, 0);
 
   /*
@@ -174,7 +173,7 @@ bool CommandPoolManager::acquireFrame() {
   return false;
 }
 
-bool CommandPoolManager::renderFrame(bool framebufferResized) {
+bool CommandPoolManager::renderFrame(bool framebufferResized, uint32_t numberIndices) {
   auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
   auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
   auto &inFlightFences = commandPool.inFlightFences;
@@ -183,7 +182,7 @@ bool CommandPoolManager::renderFrame(bool framebufferResized) {
   vkResetFences(context.device, 1, &inFlightFences[context.currentImage]);
 
   vkResetCommandBuffer(commandBuffers[context.currentImage], 0);
-  recordCommandBuffer(commandBuffers[context.currentImage], imageIndex);
+  recordCommandBuffer(commandBuffers[context.currentImage], imageIndex, numberIndices);
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

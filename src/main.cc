@@ -9,8 +9,8 @@ int main() {
   Flim::FlimAPI api = FlimAPI::init();
   Scene &scene = api.getScene();
   Renderer renderer = {
-      Shader("shaders/shader.vert.spv"),
-      Shader("shaders/shader.frag.spv"),
+      Shader("shaders/default.vert.spv"),
+      Shader("shaders/default.frag.spv"),
   };
   scene.defaultRenderer(&renderer);
   Mesh sphere = MeshUtils(scene).createSphere(1);

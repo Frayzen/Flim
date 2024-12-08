@@ -9,8 +9,8 @@ namespace Flim {
 class CameraObject : public TreeObject {
 
 public:
-  CameraObject(TreeObject *parent, Scene& scene)
-      : TreeObject(parent, scene), is2D(false), near(0.1f), far(10), fov(90) {};
+  CameraObject(TreeObject *parent)
+      : TreeObject(parent), is2D(false), near(0.1f), far(10), fov(90) {};
 
   bool is2D;
   float near;
