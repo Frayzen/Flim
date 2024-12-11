@@ -1,5 +1,6 @@
 #pragma once
 
+#include "api/transform.hh"
 #include "fwd.h"
 #include <glm/fwd.hpp>
 #include <vector>
@@ -14,6 +15,7 @@ struct Vertex {
 class Mesh {
 
 public:
+  Transform transform;
   const std::vector<Vertex>& getVertices() const;
   const std::vector<uint16>& getTriangles() const;
 

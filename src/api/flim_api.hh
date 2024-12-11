@@ -3,6 +3,7 @@
 #include "api/parameters.hh"
 #include "api/scene.hh"
 #include "vulkan/app.hh"
+#include <GLFW/glfw3.h>
 
 namespace Flim {
 
@@ -15,10 +16,12 @@ public:
   ~FlimAPI();
   Scene& getScene();
 
+  GLFWwindow* getWindow();
+
 private:
   Scene scene;
   VulkanApplication app;
-  FlimAPI() = default;
+  FlimAPI() : scene(*this) {};
 };
 
 } // namespace Flim

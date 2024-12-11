@@ -1,6 +1,7 @@
 #pragma once
 
 #include "api/render/mesh.hh"
+#include "api/tree/free_camera_object.hh"
 #include "vulkan/base_manager.hh"
 #include "vulkan/context.hh"
 #include <glm/fwd.hpp>
@@ -23,7 +24,8 @@ public:
   void createUniformBuffers();
 
   // Uniform
-  void updateUniformBuffer(const glm::mat4& model);
+  void updateUniformBuffer(const glm::mat4 &model,
+                           const Flim::FreeCameraObject *cam);
   void createDescriptorPool();
   void createDescriptorSets();
 

@@ -6,16 +6,21 @@
 #include <glm/trigonometric.hpp>
 namespace Flim {
 
-class CameraObject : public TreeObject {
+class FreeCameraObject : public TreeObject {
 
 public:
-  CameraObject(TreeObject *parent)
-      : TreeObject(parent), is2D(false), near(0.1f), far(10), fov(90) {};
+  FreeCameraObject(TreeObject *parent)
+      : TreeObject(parent), is2D(false), near(0.1f), far(10), fov(90), speed(1),
+        sensivity(1), pitch(0), yaw(0), lockPitch(45) {};
 
   bool is2D;
   float near;
   float far;
-  float fov;
+  float fov; // in degrees
+
+  float speed;
+  float sensivity;
+  float pitch, yaw, lockPitch;
 
   mat4 getProjMat(float screenRatio) {
     if (is2D) {
@@ -28,6 +33,14 @@ public:
     return glm::lookAt(transform.position,
                        transform.position + transform.front(), transform.up());
   }
+
+  void handleInputs(double deltaTime);
+  static void keyCallback(GLFWwindow *window, int key, int scancode, int action,
+                          int mods);
+
+private:
+  void handleInputs3D(double deltaTime);
+  void handleInputs2D(double deltaTime);
 };
 
 } // namespace Flim

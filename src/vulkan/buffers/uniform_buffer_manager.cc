@@ -1,5 +1,8 @@
+#include "api/tree/free_camera_object.hh"
 #include <chrono>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
+#include <glm/matrix.hpp>
 
 /* #define GLM_FORCE_LEFT_HANDED */
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE // for perspective projection
@@ -130,7 +133,8 @@ void BufferManager::createDescriptorSets() {
   }
 }
 
-void BufferManager::updateUniformBuffer(const glm::mat4 &model) {
+void BufferManager::updateUniformBuffer(const glm::mat4 &model,
+                                        const Flim::FreeCameraObject *cam) {
   static auto startTime = std::chrono::high_resolution_clock::now();
 
   auto currentTime = std::chrono::high_resolution_clock::now();
@@ -139,19 +143,21 @@ void BufferManager::updateUniformBuffer(const glm::mat4 &model) {
                    .count();
 
   UniformBufferObject ubo{};
-  /* ubo.model = model * glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), */
+  /* ubo.model = model * glm::rotate(glm::mat4(1.0f), time *
+   * glm::radians(90.0f), */
   /*                         glm::vec3(0.0f, 0.0f, 1.0f)); */
-  ubo.model = model * glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
-                          glm::vec3(0.0f, 1.0f, 0.0f));
-  ubo.view =
-      glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f),
-                  glm::vec3(0.0f, 1.0f, 0.0f));
+  ubo.model = model;
+  /* ubo.model = glm::translate(model, vec3(0, 0, 1.0f * sin(time))); */
+      /** glm::rotate(glm::mat4(1.0f), time
+       * glm::radians(90.0f),
+       * glm::vec3(0.0f, 1.0f, 0.0f))*/
+  ubo.view = cam->transform.getViewMatrix();
 
   ubo.proj =
-      glm::perspective(glm::radians(45.0f),
+      glm::perspective(radians(cam->fov),
                        context.swapChain.swapChainExtent.width /
                            (float)context.swapChain.swapChainExtent.height,
-                       0.1f, 10.0f);
+                       cam->near, cam->far);
   ubo.proj[1][1] *= -1;
 
   memcpy(uniformBuffersMapped[context.currentImage], &ubo, sizeof(ubo));

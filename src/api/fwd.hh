@@ -7,7 +7,7 @@ class FlimAPI;       // API class, entry point
 class Scene;      // Create a scene
 
 class TreeObject; // For arborescence
-class CameraObject; // For arborescence
+class FreeCameraObject; // For arborescence
 
 // Sub Tree Object
 class Renderable;

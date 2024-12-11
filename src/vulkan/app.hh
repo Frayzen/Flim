@@ -35,6 +35,8 @@ public:
 
   void run(Flim::Scene &scene) { mainLoop(scene); }
 
+  void setKeyCallback() {}
+
 private:
   VulkanContext context;
   WindowManager window_manager;
@@ -110,7 +112,7 @@ private:
     buffer_manager.createTextureSampler();
 
     // Vertices
-    const auto &instance = scene.getRoot().child<Flim::InstanceObject>(0);
+    const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
 
     buffer_manager.createVertexBuffer(instance->mesh.getVertices());
     buffer_manager.createIndexBuffer(instance->mesh.getTriangles());
@@ -138,25 +140,26 @@ private:
     context.currentImage = 0;
   }
 
-  void mainLoop(Flim::Scene &scene) {
-    const auto &instance = scene.getRoot().child<Flim::InstanceObject>(0);
-    while (!glfwWindowShouldClose(context.window)) {
-      glfwPollEvents();
+  bool mainLoop(Flim::Scene &scene) {
+    const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
+    glfwPollEvents();
 
-      if (command_pool_manager.acquireFrame()) {
-        recreateSwapChain();
-        continue;
-      }
-      buffer_manager.updateUniformBuffer(instance->transform.getViewMatrix());
-      if (command_pool_manager.renderFrame(
-              window_manager.framebufferResized,
-              instance->mesh.getTriangles().size())) {
-        window_manager.framebufferResized = false;
-        recreateSwapChain();
-      }
+    if (command_pool_manager.acquireFrame()) {
+      recreateSwapChain();
+      return false;
     }
-    vkDeviceWaitIdle(context.device);
+    buffer_manager.updateUniformBuffer(instance->transform.getViewMatrix(),
+                                       scene.mainCamera);
+    if (command_pool_manager.renderFrame(
+            window_manager.framebufferResized,
+            instance->mesh.getTriangles().size())) {
+      window_manager.framebufferResized = false;
+      recreateSwapChain();
+    }
+    return glfwWindowShouldClose(context.window);
   }
+
+  void finish() { vkDeviceWaitIdle(context.device); }
 
   void cleanup() {
     swap_chain_manager.cleanup();

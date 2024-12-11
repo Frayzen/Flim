@@ -4,5 +4,6 @@
 #include <GLFW/glfw3.h>
 #include <consts.hh>
 #include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 using namespace glm;

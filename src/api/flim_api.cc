@@ -1,4 +1,5 @@
 #include "flim_api.hh"
+#include <GLFW/glfw3.h>
 #include <cassert>
 #include <iostream>
 
@@ -19,12 +20,23 @@ int FlimAPI::run() {
   assert(scene.renderer != nullptr);
   app.setupGraphics(scene);
   try {
-    app.run(scene);
+    double lastTime = glfwGetTime();
+    while (true) {
+      if (app.mainLoop(scene))
+        break;
+      double curTime = glfwGetTime();
+      double deltaTime = lastTime - curTime;
+      scene.mainCamera->handleInputs(deltaTime);
+      lastTime = curTime;
+    }
+    app.finish();
   } catch (const std::exception &e) {
     std::cerr << e.what() << std::endl;
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
 }
+
+GLFWwindow *FlimAPI::getWindow() { return app.context.window; }
 
 } // namespace Flim

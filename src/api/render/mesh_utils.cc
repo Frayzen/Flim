@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 #include <iostream>
 #include <stdexcept>
 
@@ -121,6 +123,42 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
   return model;
 }
 
+static Transform getMeshTransformFromScene(const aiScene *scene) {
+  int upAxis = 0;
+  int upAxisSign = 1;
+  int frontAxis = 0;
+  int frontAxisSign = 1;
+  int coordAxis = 0;
+  int coordAxisSign = 1;
+  scene->mMetaData->Get<int>("UpAxis", upAxis);
+  scene->mMetaData->Get<int>("UpAxisSign", upAxisSign);
+  scene->mMetaData->Get<int>("FrontAxis", upAxis);
+  scene->mMetaData->Get<int>("FrontAxisSign", upAxisSign);
+  scene->mMetaData->Get<int>("CoordAxis", upAxis);
+  scene->mMetaData->Get<int>("CoordAxisSign", upAxisSign);
+  std::cout << upAxis << " " << upAxisSign << std::endl;
+  aiVector3D upVec = upAxis == 0   ? aiVector3D(upAxisSign, 0, 0)
+                     : upAxis == 1 ? aiVector3D(0, upAxisSign, 0)
+                                   : aiVector3D(0, 0, upAxisSign);
+  aiVector3D forwardVec = frontAxis == 0 ? aiVector3D(frontAxisSign, 0, 0)
+
+                          : frontAxis == 1 ? aiVector3D(0, frontAxisSign, 0)
+
+                                           : aiVector3D(0, 0, frontAxisSign);
+
+  aiVector3D rightVec = coordAxis == 0   ? aiVector3D(coordAxisSign, 0, 0)
+                        : coordAxis == 1 ? aiVector3D(0, coordAxisSign, 0)
+                                         : aiVector3D(0, 0, coordAxisSign);
+
+  aiMatrix4x4 mat(rightVec.x, rightVec.y, rightVec.z, 0.0f, upVec.x, upVec.y,
+
+                  upVec.z, 0.0f, forwardVec.x, forwardVec.y, forwardVec.z, 0.0f,
+                  0.0f, 0.0f, 0.0f, 1.0f);
+  Transform t;
+  t.rotation = *((mat4 *)&mat);
+  return t;
+}
+
 Mesh MeshUtils::loadFromFile(std::string path) {
   std::cout << "Importing " << path << "..." << '\n';
   static Assimp::Importer importer;
@@ -131,7 +169,10 @@ Mesh MeshUtils::loadFromFile(std::string path) {
           aiProcess_RemoveRedundantMaterials |
           aiProcess_GenSmoothNormals /* or aiProcess_GenNormals */);
 
+  mat4 rot = *((mat4 *)&scene->mRootNode->mTransformation);
+  std::cout << glm::to_string(rot) << std::endl;
   std::cout << scene << std::endl;
+
   if (scene == NULL || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       scene->mRootNode == NULL)
     std::runtime_error("Could not load " + path);
@@ -158,6 +199,7 @@ Mesh MeshUtils::loadFromFile(std::string path) {
       }
     }
   }
+  /* m.transform = getMeshTransformFromScene(scene); */
   return m;
 }
 

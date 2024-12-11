@@ -40,6 +40,7 @@ typedef struct Image {
   VkFormat format;
   VkSampler sampler;
   int width, height;
+  uint32_t mipLevels;
 } Image;
 
 typedef struct SwapChain {

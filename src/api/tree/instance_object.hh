@@ -10,7 +10,9 @@ public:
       : TreeObject(parent), mesh(mesh) {};
   static InstanceObject &instantiate(Mesh &mesh, TreeObject *parent) {
     parent->children.push_back(std::make_shared<InstanceObject>(parent, mesh));
-    return *std::dynamic_pointer_cast<InstanceObject>(parent->children.back());
+    InstanceObject& instance = *std::dynamic_pointer_cast<InstanceObject>(parent->children.back());
+    instance.transform = mesh.transform;
+    return instance;
   }
 
   const Mesh &mesh;

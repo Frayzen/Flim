@@ -1,6 +1,7 @@
 #pragma once
 
 #include "api/fwd.hh"
+#include "api/transform.hh"
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
@@ -8,53 +9,59 @@
 #include <glm/fwd.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <memory>
+#include <vector>
+#include <type_traits>
+#include <utility>
 
 namespace Flim {
-
-class Transform {
-
-public:
-  Transform()
-      : position({0, 0, 0}), rotation({quat(1, 0, 0, 0)}),
-        scale(vec3(1, 1, 1)) {};
-  vec3 position;
-  quat rotation;
-  vec3 scale;
-
-  vec3 front();
-  vec3 up();
-  vec3 right();
-
-  glm::mat4 getViewMatrix() const {
-    glm::mat4 m = glm::translate(glm::mat4(1.0f), position);
-    glm::mat4 rot = glm::mat4_cast(rotation);
-    m = glm::scale(rot * m, scale);
-    return m;
-  };
-};
-
 class TreeObject {
 public:
   Scene &scene;
   Transform transform;
-  template <typename T>
-  std::shared_ptr<const T> child(size_t i) const {
-    assert(children.size() > i);
-    return std::dynamic_pointer_cast<const T>(children[i]);
+
+  template <typename T> T *findAny() const {
+    for (auto &c : children) {
+      if (auto cast = std::dynamic_pointer_cast<T>(c))
+        return cast.get();
+    }
+    return nullptr;
   }
+
+  template <typename T, typename... Args>
+    requires std::is_base_of_v<TreeObject, T>
+  T &append(Args &&...args) {
+    auto shared = std::make_shared<T>(this, std::forward(args)...);
+    children.push_back(shared);
+    return *shared.get();
+  }
+
+  template <typename T>
+    requires std::is_base_of_v<TreeObject, T>
+  T &append(T *obj) {
+    children.push_back(std::make_shared(obj));
+    return *obj;
+  }
+
+  template <typename T>
+    requires std::is_base_of_v<TreeObject, T>
+  T &append(T &obj) {
+    children.push_back(std::make_shared(obj));
+    return obj;
+  }
+
   size_t nbChildren() const { return children.size(); }
 
   virtual ~TreeObject() = default;
 
 protected:
-  TreeObject(TreeObject *parent)
-      : parent(parent), scene(parent->scene) {};
+  TreeObject(TreeObject *parent) : parent(parent), scene(parent->scene) {};
 
-  TreeObject(Scene& scene)
-      : parent(nullptr), scene(scene) {};
+  TreeObject(Scene &scene) : parent(nullptr), scene(scene) {};
   TreeObject *parent;
   std::vector<std::shared_ptr<TreeObject>> children;
+
   friend class InstanceObject;
 };
+
 
 } // namespace Flim
