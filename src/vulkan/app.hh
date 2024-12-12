@@ -106,14 +106,14 @@ private:
     // Graphic pipeline
     pipeline_manager.createGraphicPipeline(*scene.renderer);
 
+    const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
+
     // Texture
     buffer_manager.createTextureImage();
     buffer_manager.createTextureImageView();
     buffer_manager.createTextureSampler();
 
     // Vertices
-    const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
-
     buffer_manager.createVertexBuffer(instance->mesh.getVertices());
     buffer_manager.createIndexBuffer(instance->mesh.getTriangles());
 
@@ -148,8 +148,7 @@ private:
       recreateSwapChain();
       return false;
     }
-    buffer_manager.updateUniformBuffer(instance->transform.getViewMatrix(),
-                                       scene.mainCamera);
+    buffer_manager.updateUniformBuffer(instance->mesh, scene.mainCamera);
     if (command_pool_manager.renderFrame(
             window_manager.framebufferResized,
             instance->mesh.getTriangles().size())) {

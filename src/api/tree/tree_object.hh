@@ -11,7 +11,6 @@
 #include <memory>
 #include <vector>
 #include <type_traits>
-#include <utility>
 
 namespace Flim {
 class TreeObject {
@@ -30,7 +29,7 @@ public:
   template <typename T, typename... Args>
     requires std::is_base_of_v<TreeObject, T>
   T &append(Args &&...args) {
-    auto shared = std::make_shared<T>(this, std::forward(args)...);
+    auto shared = std::make_shared<T>(this, args...);
     children.push_back(shared);
     return *shared.get();
   }

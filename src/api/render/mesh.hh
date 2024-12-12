@@ -1,5 +1,6 @@
 #pragma once
 
+#include "api/render/material.hh"
 #include "api/transform.hh"
 #include "fwd.h"
 #include <glm/fwd.hpp>
@@ -16,12 +17,15 @@ class Mesh {
 
 public:
   Transform transform;
-  const std::vector<Vertex>& getVertices() const;
-  const std::vector<uint16>& getTriangles() const;
+  const Material &getMaterial() const;
+  const std::vector<Vertex> &getVertices() const;
+  const std::vector<uint16> &getTriangles() const;
+  void attachMaterial(Material m);
 
 private:
   Mesh() = default;
 
+  Material material;
   std::vector<Vertex> vertices;
   std::vector<uint16> indices;
 

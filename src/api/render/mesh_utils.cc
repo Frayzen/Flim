@@ -177,10 +177,10 @@ Mesh MeshUtils::loadFromFile(std::string path) {
       scene->mRootNode == NULL)
     std::runtime_error("Could not load " + path);
 
-  Mesh m;
-  std::cout << " = Creating the mesh..." << '\n';
-
   for (uint i = 0; i < scene->mNumMeshes; i++) {
+    Mesh m;
+    std::cout << " = Creating the mesh..." << '\n';
+
     auto mesh = scene->mMeshes[i];
     Vertex vtx{};
     for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
@@ -198,9 +198,12 @@ Mesh MeshUtils::loadFromFile(std::string path) {
         m.indices.emplace_back(face.mIndices[2]);
       }
     }
+    m.attachMaterial(
+        Material::createFrom(scene->mMaterials[mesh->mMaterialIndex]));
+    /* m.transform = getMeshTransformFromScene(scene); */
+    return m;
   }
-  /* m.transform = getMeshTransformFromScene(scene); */
-  return m;
+  return Mesh();
 }
 
 }; // namespace Flim

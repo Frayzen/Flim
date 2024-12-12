@@ -18,9 +18,10 @@ int main() {
   Mesh teddy =
       MeshUtils(scene).loadFromFile("resources/single_file/teddy.obj");
   auto &obj = scene.instantiate(teddy);
-  obj.transform.translate(vec3(0, 0, -8));
+  obj.transform.position = vec3(0, 0, 30);
   obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
   scene.mainCamera->speed = 5;
+  scene.mainCamera->transform.position = vec3(0, 0, -30);
   scene.mainCamera->sensivity = 5;
   /* obj.transform.rotation = glm::identity<quat>(); */
   return api.run();

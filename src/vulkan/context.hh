@@ -72,7 +72,6 @@ public:
   Buffer stagingBuffer;
   Buffer indexBuffer;
   Buffer vertexBuffer;
-  Buffer uniformBuffer;
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorPool descriptorPool;
   std::vector<VkDescriptorSet> descriptorSets;
