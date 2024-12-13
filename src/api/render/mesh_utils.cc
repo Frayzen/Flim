@@ -167,7 +167,7 @@ Mesh MeshUtils::loadFromFile(std::string path) {
       aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
           aiProcess_GenUVCoords | aiProcess_FlipUVs |
           aiProcess_RemoveRedundantMaterials |
-          aiProcess_GenSmoothNormals /* or aiProcess_GenNormals */);
+          aiProcess_GenNormals /* or aiProcess_GenSmoothNormals */);
 
   mat4 rot = *((mat4 *)&scene->mRootNode->mTransformation);
   std::cout << glm::to_string(rot) << std::endl;
@@ -185,9 +185,12 @@ Mesh MeshUtils::loadFromFile(std::string path) {
     Vertex vtx{};
     for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
       auto v = mesh->mVertices[i];
+      auto n = mesh->mNormals[i];
       vtx.pos = {v.x, v.y, v.z};
+      vtx.normal = {n.x, n.y, n.z};
       m.vertices.emplace_back(vtx);
     }
+
     // Retrieve indices (assuming triangles)
     for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
       aiFace face = mesh->mFaces[i];

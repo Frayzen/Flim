@@ -20,9 +20,9 @@ int main() {
   auto &obj = scene.instantiate(teddy);
   obj.transform.position = vec3(0, 0, 30);
   obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
-  scene.mainCamera->speed = 5;
+  scene.mainCamera->speed = 30;
   scene.mainCamera->transform.position = vec3(0, 0, -30);
-  scene.mainCamera->sensivity = 5;
+  scene.mainCamera->sensivity = 8;
   /* obj.transform.rotation = glm::identity<quat>(); */
   return api.run();
 }

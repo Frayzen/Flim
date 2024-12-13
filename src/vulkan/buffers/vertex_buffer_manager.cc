@@ -1,6 +1,5 @@
 #include <cstring>
 #include <glm/fwd.hpp>
-#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 #include "api/render/mesh.hh"
@@ -63,3 +62,4 @@ void BufferManager::createIndexBuffer(const std::vector<uint16> indices) {
   vkDestroyBuffer(context.device, context.stagingBuffer.buffer, nullptr);
   vkFreeMemory(context.device, context.stagingBuffer.bufferMemory, nullptr);
 }
+

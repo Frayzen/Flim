@@ -4,9 +4,9 @@ namespace Flim {
 Material Material::createFrom(aiMaterial *aiMat) {
   Material m(aiMat->GetName().C_Str());
 
-  aiColor3D amb(0.2f, 0.2f, 0.2f);
-  aiColor3D dif(0.6f, 0.6f, 0.6f);
-  aiColor3D spec(0.2f, 0.2f, 0.2f);
+  aiColor3D amb(0.15f);
+  aiColor3D dif(0.7f);
+  aiColor3D spec(0.1f);
 
   /* float shine = 32.0; */
   /* aiMat->Get(AI_MATKEY_COLOR_AMBIENT, amb); */
