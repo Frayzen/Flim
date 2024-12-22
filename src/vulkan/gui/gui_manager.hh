@@ -10,7 +10,8 @@ public:
   GUIManager(VulkanContext &context) : BaseManager(context) {}
   void setup();
   void cleanup();
-  void frameUpdate();
+  void beginFrame();
+  void endFrame();
 
 private:
   VkCommandBuffer guiCommandBuffer;

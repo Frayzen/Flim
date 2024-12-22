@@ -4,6 +4,7 @@
 #include "api/scene.hh"
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
+#include <imgui.h>
 
 using namespace Flim;
 
@@ -11,14 +12,12 @@ int main() {
   Flim::FlimAPI api = FlimAPI::init();
   Scene &scene = api.getScene();
   Renderer renderer = {
-      Shader("shaders/default.vert.spv"),
-      Shader("shaders/default.frag.spv"),
+      Shader("shaders/default.vert.spv"), Shader("shaders/default.frag.spv"),
       /* RendererMode::RENDERER_MODE_LINE, */
   };
   scene.defaultRenderer(&renderer);
 
-  Mesh teddy =
-      MeshUtils(scene).loadFromFile("resources/single_file/teddy.obj");
+  Mesh teddy = MeshUtils(scene).loadFromFile("resources/single_file/teddy.obj");
   auto &obj = scene.instantiate(teddy);
   obj.transform.position = vec3(0, 0, 30);
   obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
@@ -31,5 +30,10 @@ int main() {
   scene.mainCamera->transform.position = vec3(0, 0, -30);
   scene.mainCamera->sensivity = 8;
   /* obj.transform.rotation = glm::identity<quat>(); */
-  return api.run();
+  float a;
+  return api.run([&] {
+    ImGui::Button("Test");
+
+    ImGui::InputFloat2("Ok", &a);
+  });
 }

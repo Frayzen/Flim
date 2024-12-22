@@ -16,13 +16,13 @@ Scene &FlimAPI::getScene() { return scene; }
 
 FlimAPI::~FlimAPI() { app.cleanup(); }
 
-int FlimAPI::run() {
+int FlimAPI::run(const std::function<void()> &renderMethod) {
   assert(scene.renderer != nullptr);
   app.setupGraphics(scene);
   try {
     double lastTime = glfwGetTime();
     while (true) {
-      if (app.mainLoop(scene))
+      if (app.mainLoop(renderMethod, scene))
         break;
       double curTime = glfwGetTime();
       double deltaTime = lastTime - curTime;

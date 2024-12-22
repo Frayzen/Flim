@@ -69,14 +69,14 @@ void GUIManager::setup() {
   ImGui_ImplVulkan_DestroyFontsTexture();
 }
 
-void GUIManager::frameUpdate() {
+void GUIManager::beginFrame() {
   // Start a new ImGui frame
   ImGui_ImplVulkan_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
+}
 
-  // Add UI elements here
-  ImGui::Button("Test");
+void GUIManager::endFrame() {
 
   // Render ImGui
   ImGui::Render();

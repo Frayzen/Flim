@@ -16,6 +16,7 @@
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -34,8 +35,6 @@ public:
     window_manager.initWindow();
     initVulkan();
   }
-
-  void run(Flim::Scene &scene) { mainLoop(scene); }
 
   void setKeyCallback() {}
 
@@ -145,7 +144,7 @@ private:
     context.currentImage = 0;
   }
 
-  bool mainLoop(Flim::Scene &scene) {
+  bool mainLoop(const std::function<void()> &renderMethod, Flim::Scene &scene) {
     const auto &instance = scene.getRoot().findAll<Flim::InstanceObject>();
     glfwPollEvents();
 
@@ -155,7 +154,9 @@ private:
     }
     buffer_manager.updateUniformBuffer(instance->mesh, scene.mainCamera);
     command_pool_manager.renderFrame(instance->mesh.getTriangles().size());
-    gui_manager.frameUpdate();
+    gui_manager.beginFrame();
+    renderMethod();
+    gui_manager.endFrame();
     if (command_pool_manager.submitFrame(window_manager.framebufferResized)) {
       window_manager.framebufferResized = false;
       recreateSwapChain();
