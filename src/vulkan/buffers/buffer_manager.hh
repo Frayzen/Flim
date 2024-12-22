@@ -36,7 +36,7 @@ public:
   void createDescriptorSets();
 
   // Texture
-  void createTextureImage();
+  void createTextureImage(const std::string &imgPath);
   void createTextureImageView();
   void createTextureSampler();
   void createDepthResources();

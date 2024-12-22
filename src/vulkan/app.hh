@@ -109,7 +109,7 @@ private:
     const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
 
     // Texture
-    buffer_manager.createTextureImage();
+    buffer_manager.createTextureImage(instance->mesh.getMaterial().texturePath);
     buffer_manager.createTextureImageView();
     buffer_manager.createTextureSampler();
 

@@ -1,4 +1,6 @@
 #include "vulkan/rendering/utils.hh"
+#include <iostream>
+#include <string>
 #define STB_IMAGE_IMPLEMENTATION
 #include "buffer_manager.hh"
 #include "utils/stb_image.h"
@@ -64,15 +66,22 @@ void BufferManager::createImage(Image &image, VkFormat format,
                     image.textureImageMemory, 0);
 }
 
-void BufferManager::createTextureImage() {
+void BufferManager::createTextureImage(const std::string &imgPath) {
   int texWidth, texHeight, texChannels;
-  stbi_uc *pixels = stbi_load("textures/texture.jpg", &texWidth, &texHeight,
+  stbi_uc *pixels = stbi_load(imgPath.c_str(), &texWidth, &texHeight,
                               &texChannels, STBI_rgb_alpha);
+  bool loaded = pixels != nullptr;
+  if (!loaded) {
+    texWidth = 1;
+    texHeight = 1;
+    texChannels = 3;
+    pixels = new stbi_uc[4]{255, 255, 255};
+    if (imgPath.length() != 0)
+      std::cerr << "failed to load texture image '" + imgPath + "' !"
+                << std::endl;
+  }
   VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-  if (!pixels) {
-    throw std::runtime_error("failed to load texture image!");
-  }
   Buffer staging;
 
   createBuffer(context, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -84,7 +93,10 @@ void BufferManager::createTextureImage() {
   vkMapMemory(context.device, staging.bufferMemory, 0, imageSize, 0, &data);
   memcpy(data, pixels, static_cast<size_t>(imageSize));
   vkUnmapMemory(context.device, staging.bufferMemory);
-  stbi_image_free(pixels);
+  if (loaded)
+    stbi_image_free(pixels);
+  else
+    delete pixels;
 
   context.images.resize(1);
 
