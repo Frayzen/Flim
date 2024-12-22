@@ -25,7 +25,8 @@ void CommandPoolManager::createCommandPool() {
 }
 
 void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
-                                             uint32_t imageIndex, uint32_t numberIndices) {
+                                             uint32_t imageIndex,
+                                             uint32_t numberIndices) {
 
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -86,8 +87,8 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
                           context.pipeline.pipelineLayout, 0, 1,
                           &context.descriptorSets[context.currentImage], 0,
                           nullptr);
-  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(numberIndices), 1, 0,
-                   0, 0);
+  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(numberIndices), 1, 0, 0,
+                   0);
 
   /*
     TAKES AS PARAMETER:
@@ -101,11 +102,6 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
     lowest value of gl_InstanceIndex
   */
   /* vkCmdDraw(commandBuffer, 3, 1, 0, 0); */
-  vkCmdEndRenderPass(commandBuffer);
-
-  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-    throw std::runtime_error("failed to record command buffer!");
-  }
 }
 
 void CommandPoolManager::createCommandBuffers() {
@@ -173,7 +169,7 @@ bool CommandPoolManager::acquireFrame() {
   return false;
 }
 
-bool CommandPoolManager::renderFrame(bool framebufferResized, uint32_t numberIndices) {
+void CommandPoolManager::renderFrame(uint32_t numberIndices) {
   auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
   auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
   auto &inFlightFences = commandPool.inFlightFences;
@@ -182,7 +178,22 @@ bool CommandPoolManager::renderFrame(bool framebufferResized, uint32_t numberInd
   vkResetFences(context.device, 1, &inFlightFences[context.currentImage]);
 
   vkResetCommandBuffer(commandBuffers[context.currentImage], 0);
-  recordCommandBuffer(commandBuffers[context.currentImage], imageIndex, numberIndices);
+  recordCommandBuffer(commandBuffers[context.currentImage], imageIndex,
+                      numberIndices);
+}
+
+bool CommandPoolManager::submitFrame(bool framebufferResized) {
+
+  auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
+  auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
+  auto &inFlightFences = commandPool.inFlightFences;
+  auto &commandBuffers = commandPool.commandBuffers;
+
+  vkCmdEndRenderPass(commandBuffers[context.currentImage]);
+
+  if (vkEndCommandBuffer(commandBuffers[context.currentImage]) != VK_SUCCESS) {
+    throw std::runtime_error("failed to record command buffer!");
+  }
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

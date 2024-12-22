@@ -7,6 +7,7 @@
 #include "vulkan/context.hh"
 #include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
+#include "vulkan/gui/gui_manager.hh"
 #include "vulkan/rendering/command_pool_manager.hh"
 #include "vulkan/rendering/pipeline_manager.hh"
 #include "vulkan/swap_chain/surface_manager.hh"
@@ -24,7 +25,8 @@ public:
       : window_manager(context), extension_manager(context),
         swap_chain_manager(context), device_manager(context),
         surface_manager(context), command_pool_manager(context),
-        buffer_manager(context), pipeline_manager(context) {
+        buffer_manager(context), pipeline_manager(context),
+        gui_manager(context) {
     context.currentImage = 0;
   }
 
@@ -47,6 +49,7 @@ private:
   CommandPoolManager command_pool_manager;
   BufferManager buffer_manager;
   PipelineManager pipeline_manager;
+  GUIManager gui_manager;
 
   void createInstance() {
     if (enableValidationLayers &&
@@ -100,6 +103,8 @@ private:
     // Frame and depth buffer
     buffer_manager.createDepthResources();
     surface_manager.createFramebuffers();
+
+    gui_manager.setup();
   }
 
   void setupGraphics(Flim::Scene &scene) {
@@ -149,9 +154,9 @@ private:
       return false;
     }
     buffer_manager.updateUniformBuffer(instance->mesh, scene.mainCamera);
-    if (command_pool_manager.renderFrame(
-            window_manager.framebufferResized,
-            instance->mesh.getTriangles().size())) {
+    command_pool_manager.renderFrame(instance->mesh.getTriangles().size());
+    gui_manager.frameUpdate();
+    if (command_pool_manager.submitFrame(window_manager.framebufferResized)) {
       window_manager.framebufferResized = false;
       recreateSwapChain();
     }
@@ -161,6 +166,7 @@ private:
   void finish() { vkDeviceWaitIdle(context.device); }
 
   void cleanup() {
+    gui_manager.cleanup();
     swap_chain_manager.cleanup();
     buffer_manager.cleanup();
     pipeline_manager.cleanup();
