@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <vector>
 #include <vulkan/vulkan_core.h>
-const uint32_t width = 800;
-const uint32_t height = 600;
+const uint32_t width = 1600;
+const uint32_t height = 900;
 
 const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation",

@@ -141,7 +141,7 @@ private:
   }
 
   bool mainLoop(Flim::Scene &scene) {
-    const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
+    const auto &instance = scene.getRoot().findAll<Flim::InstanceObject>();
     glfwPollEvents();
 
     if (command_pool_manager.acquireFrame()) {

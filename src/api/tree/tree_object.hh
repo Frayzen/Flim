@@ -26,6 +26,14 @@ public:
     return nullptr;
   }
 
+  template <typename T> T *findAll() const {
+    for (auto &c : children) {
+      if (auto cast = std::dynamic_pointer_cast<T>(c))
+        return cast.get();
+    }
+    return nullptr;
+  }
+
   template <typename T, typename... Args>
     requires std::is_base_of_v<TreeObject, T>
   T &append(Args &&...args) {

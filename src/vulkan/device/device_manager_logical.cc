@@ -37,6 +37,8 @@ void DeviceManager::createLogicalDevice() {
   // Specify the feature the context is using by setting them to VK_TRUE
   VkPhysicalDeviceFeatures deviceFeatures{};
   deviceFeatures.samplerAnisotropy = VK_TRUE;
+  deviceFeatures.fillModeNonSolid = VK_TRUE;
+  deviceFeatures.wideLines = VK_TRUE;
 
   // Create the logical device
   VkDeviceCreateInfo createInfo{};

@@ -57,7 +57,7 @@ bool DeviceManager::isDeviceSuitable(VkPhysicalDevice device) {
   VkPhysicalDeviceFeatures supportedFeatures;
   vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
   return indices.isComplete() && extensionsSupported && swapChainAdequate &&
-         supportedFeatures.samplerAnisotropy;
+         supportedFeatures.samplerAnisotropy && supportedFeatures.wideLines && supportedFeatures.fillModeNonSolid;
 }
 
 void DeviceManager::pickPhysicalDevice() {

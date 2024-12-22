@@ -102,10 +102,12 @@ void PipelineManager::createGraphicPipeline(Flim::Renderer &renderer) {
   //  VK_POLYGON_MODE_FILL: fill the area of the polygon with fragments
   //  VK_POLYGON_MODE_LINE: polygon edges are drawn as lines
   //  VK_POLYGON_MODE_POINT: polygon vertices are drawn as points
-  rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+  /* rasterizer.polygonMode = VK_POLYGON_MODE_FILL; */
+  rasterizer.polygonMode = renderModeToPolygonMode(renderer.mode);
+  /* rasterizer.polygonMode = VK_POLYGON_MODE_POINT; */
 
   // any line thicker than 1.0f requires you to enable the wideLines GPU feature
-  rasterizer.lineWidth = 1.0f;
+  rasterizer.lineWidth = 3.0f;
 
   // cullMode variable determines the type of face culling to use
   rasterizer.cullMode = VK_CULL_MODE_NONE;

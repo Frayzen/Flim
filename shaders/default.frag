@@ -12,6 +12,17 @@ layout(binding = 1) uniform UniformMaterialObject {
   vec3 specular;
 } material;
 
+const vec4 colors[] = {
+  vec4(0,0,1,1),
+  vec4(0,1,0,1),
+  vec4(0,1,1,1),
+  vec4(1,0,0,1),
+  vec4(1,0,1,1),
+  vec4(1,1,0,1),
+  vec4(1,1,1,1),
+};
+
+
 layout(binding = 2) uniform sampler2D texSampler;
 
 
@@ -23,5 +34,6 @@ void main() {
 
     outColor = vec4(material.ambient + max(0, dot(-lightDirection, normalize(fragNormal))) * material.diffuse, 1.0);
 
-    // outColor = vec4(material.ambient, 1.0);
+    // int col = gl_PrimitiveID;
+    // outColor = colors[col * 3 % 8];
 }
