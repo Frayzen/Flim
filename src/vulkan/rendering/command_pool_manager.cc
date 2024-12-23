@@ -28,7 +28,6 @@ void CommandPoolManager::createCommandPool() {
 void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
                                              uint32_t imageIndex,
                                              uint32_t numberIndices) {
-
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = 0;                  // Optional
@@ -38,7 +37,35 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
     throw std::runtime_error("failed to begin recording command buffer!");
   }
 
-  std::cout << "OK" << std::endl;
+  VkImageMemoryBarrier barrier{};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = context.swapChain.swapChainImages[imageIndex]; // Image handle
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+
+  // Define access masks
+  barrier.srcAccessMask =
+      VK_ACCESS_NONE_KHR; // For VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+  barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+  // Pipeline stages
+  vkCmdPipelineBarrier(
+      commandBuffer,
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Source stage
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Destination stage
+      0,                                             // Flags
+      0, nullptr,                                    // Memory barriers
+      0, nullptr,                                    // Buffer memory barriers
+      1, &barrier                                    // Image memory barrier
+  );
+
   VkRenderingAttachmentInfoKHR attachmentInfoKHR{};
   attachmentInfoKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
   attachmentInfoKHR.imageView =
@@ -50,7 +77,6 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   // used as load operation for the color attachment
   attachmentInfoKHR.clearValue = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
-  std::cout << "OK" << std::endl;
   VkRenderingInfoKHR renderInfo{};
   renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
   renderInfo.renderArea.offset = {0, 0};
@@ -65,10 +91,8 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   vkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
   // Draw calls here
 
-  std::cout << "OK" << std::endl;
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     context.pipeline.graphicsPipeline);
-  std::cout << "OK" << std::endl;
 
   // viewport and scissor state for this pipeline are dynamic
   VkViewport viewport{};
@@ -86,23 +110,17 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   scissor.extent = context.swapChain.swapChainExtent;
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-  std::cout << "OK" << std::endl;
   VkBuffer vertexBuffers[] = {context.vertexBuffer.buffer};
   VkDeviceSize offsets[] = {0};
-  std::cout << "OK" << std::endl;
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-  std::cout << "OK" << std::endl;
   vkCmdBindIndexBuffer(commandBuffer, context.indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT16);
-  std::cout << "OK" << std::endl;
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           context.pipeline.pipelineLayout, 0, 1,
                           &context.descriptorSets[context.currentImage], 0,
                           nullptr);
-  std::cout << "OK" << std::endl;
   vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(numberIndices), 1, 0, 0,
                    0);
-  std::cout << "OK" << std::endl;
 
   /* VkRenderPassBeginInfo renderPassInfo{}; */
 
@@ -228,12 +246,46 @@ bool CommandPoolManager::submitFrame(bool framebufferResized) {
   auto &inFlightFences = commandPool.inFlightFences;
   auto &commandBuffers = commandPool.commandBuffers;
 
-  auto vkCmdEndRenderingKHR =
-      (PFN_vkCmdEndRenderingKHR)vkGetInstanceProcAddr(
-          context.instance, "vkCmdEndRenderingKHR");
-  vkCmdEndRenderingKHR(commandBuffers[context.currentImage]);
+  auto& commandBuffer = commandBuffers[context.currentImage];
+  auto vkCmdEndRenderingKHR = (PFN_vkCmdEndRenderingKHR)vkGetInstanceProcAddr(
+      context.instance, "vkCmdEndRenderingKHR");
+  vkCmdEndRenderingKHR(commandBuffer);
 
-  if (vkEndCommandBuffer(commandBuffers[context.currentImage]) != VK_SUCCESS) {
+
+
+  VkImageMemoryBarrier barrier;
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = context.swapChain.swapChainImages[imageIndex]; // Image handle
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+
+  // Define access masks
+  barrier.srcAccessMask =
+      VK_ACCESS_NONE_KHR; // For VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+  barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier.dstAccessMask = VK_ACCESS_NONE_KHR;
+
+  vkCmdPipelineBarrier(
+      commandBuffer,
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Source stage
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Destination stage
+      VK_DEPENDENCY_BY_REGION_BIT,                   // Flags
+      0, nullptr,                                    // Memory barriers
+      0, nullptr,                                    // Buffer memory barriers
+      1, &barrier                                    // Image memory barrier
+  );
+
+  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
     throw std::runtime_error("failed to record command buffer!");
   }
 
