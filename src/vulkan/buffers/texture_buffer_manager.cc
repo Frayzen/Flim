@@ -96,7 +96,7 @@ void BufferManager::createTextureImage(const std::string &imgPath) {
   if (loaded)
     stbi_image_free(pixels);
   else
-    delete pixels;
+    delete[] pixels;
 
   context.images.resize(1);
 

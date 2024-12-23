@@ -28,7 +28,7 @@ void GUIManager::setup() {
   init_info.PhysicalDevice = context.physicalDevice;
   init_info.Device = context.device;
   init_info.Queue = context.queues.graphicsQueue;
-  init_info.RenderPass = context.pipeline.renderPass;
+  /* init_info.RenderPass = context.pipeline.renderPass; */
   init_info.DescriptorPoolSize = 1;
   init_info.MinImageCount = 3;
   init_info.ImageCount = 3;

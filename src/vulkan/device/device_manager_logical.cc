@@ -1,15 +1,16 @@
 #include "device_manager.hh"
 
 #include "vulkan/device/device_utils.hh"
+#include <iostream>
 #include <set>
 #include <stdexcept>
+#include <vulkan/vulkan_core.h>
 
 // SWAP CHAIN
 
-
 // LOGICAL DEVICE CREATION
 
-static void setupQueues(VulkanContext& context, QueueFamilyIndices &indices) {
+static void setupQueues(VulkanContext &context, QueueFamilyIndices &indices) {
   vkGetDeviceQueue(context.device, indices.graphicsFamily.value(), 0,
                    &context.queues.graphicsQueue);
   vkGetDeviceQueue(context.device, indices.presentFamily.value(), 0,
@@ -34,6 +35,13 @@ void DeviceManager::createLogicalDevice() {
     queueCreateInfos.push_back(queueCreateInfo);
   }
 
+  // specify dynamic rendering
+  VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeature{};
+  dynamicRenderingFeature.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+  dynamicRenderingFeature.dynamicRendering = VK_TRUE;
+
+
   // Specify the feature the context is using by setting them to VK_TRUE
   VkPhysicalDeviceFeatures deviceFeatures{};
   deviceFeatures.samplerAnisotropy = VK_TRUE;
@@ -46,14 +54,15 @@ void DeviceManager::createLogicalDevice() {
   createInfo.pQueueCreateInfos = queueCreateInfos.data();
   createInfo.queueCreateInfoCount =
       static_cast<uint32_t>(queueCreateInfos.size());
-
   createInfo.pEnabledFeatures = &deviceFeatures;
   createInfo.enabledExtensionCount =
       static_cast<uint32_t>(deviceExtensions.size());
   createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-  if (vkCreateDevice(physicalDevice, &createInfo, nullptr,
-                     &context.device) != VK_SUCCESS) {
+  createInfo.pNext = &dynamicRenderingFeature;
+
+  if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &context.device) !=
+      VK_SUCCESS) {
     throw std::runtime_error("failed to create logical device!");
   }
 

@@ -4,6 +4,7 @@
 #include "vulkan/swap_chain/swap_chain_utils.hh"
 
 #include <cstdint>
+#include <iostream>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -22,8 +23,16 @@ static bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
                                            deviceExtensions.end());
 
   for (const auto &extension : availableExtensions) {
-    requiredExtensions.erase(extension.extensionName);
+    if (requiredExtensions.erase(extension.extensionName)) {
+#ifndef NDEBUG
+      std::cout << "Check extentsion " << extension.extensionName << std::endl;
+#endif
+    }
   }
+
+#ifndef NDEBUG
+  std::cout << "------------------" << std::endl;
+#endif
 
   return requiredExtensions.empty();
 }
@@ -57,7 +66,8 @@ bool DeviceManager::isDeviceSuitable(VkPhysicalDevice device) {
   VkPhysicalDeviceFeatures supportedFeatures;
   vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
   return indices.isComplete() && extensionsSupported && swapChainAdequate &&
-         supportedFeatures.samplerAnisotropy && supportedFeatures.wideLines && supportedFeatures.fillModeNonSolid;
+         supportedFeatures.samplerAnisotropy && supportedFeatures.wideLines &&
+         supportedFeatures.fillModeNonSolid;
 }
 
 void DeviceManager::pickPhysicalDevice() {
@@ -80,7 +90,7 @@ void DeviceManager::pickPhysicalDevice() {
   }
 
   // Check if the best candidate is suitable at all
-  if (candidates.rbegin()->first > 0) {
+  if (!candidates.empty()) {
     physicalDevice = candidates.rbegin()->second;
   } else {
     throw std::runtime_error("failed to find a suitable GPU!");

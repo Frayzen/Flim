@@ -19,4 +19,5 @@ void main() {
     fragColor = inPosition;
     fragNormal = inNormal;
     fragTexCoord = inTexCoord;
+    gl_PointSize = 10.0f;
 }

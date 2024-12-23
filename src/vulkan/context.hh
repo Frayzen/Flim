@@ -28,7 +28,7 @@ typedef struct Pipeline {
   VkShaderModule vertShaderModule;
   VkShaderModule fragShaderModule;
   VkPipelineLayout pipelineLayout;
-  VkRenderPass renderPass;
+  /* VkRenderPass renderPass; */
   VkPipeline graphicsPipeline;
 } Pipeline;
 
@@ -46,7 +46,7 @@ typedef struct Image {
 typedef struct SwapChain {
   std::vector<VkImage> swapChainImages;
   std::vector<VkImageView> swapChainImageViews;
-  std::vector<VkFramebuffer> swapChainFramebuffers;
+  /* std::vector<VkFramebuffer> swapChainFramebuffers; */
   VkSwapchainKHR swapChain;
   VkFormat swapChainImageFormat;
   VkExtent2D swapChainExtent;

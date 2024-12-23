@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cstdint>
+#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -37,31 +38,38 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
     throw std::runtime_error("failed to begin recording command buffer!");
   }
 
-  VkRenderPassBeginInfo renderPassInfo{};
-
-  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  renderPassInfo.renderPass = context.pipeline.renderPass;
-  renderPassInfo.framebuffer =
-      context.swapChain.swapChainFramebuffers[imageIndex];
-  // renderArea defines where shader loads and stores will take place
-  renderPassInfo.renderArea.offset = {0, 0};
-  renderPassInfo.renderArea.extent = context.swapChain.swapChainExtent;
-
+  std::cout << "OK" << std::endl;
+  VkRenderingAttachmentInfoKHR attachmentInfoKHR{};
+  attachmentInfoKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+  attachmentInfoKHR.imageView =
+      context.swapChain.swapChainImageViews[imageIndex];
+  attachmentInfoKHR.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  attachmentInfoKHR.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachmentInfoKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   // define the clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we
   // used as load operation for the color attachment
-  std::array<VkClearValue, 2> clearValues{};
+  attachmentInfoKHR.clearValue = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
-  // The order of clearValues should be identical to the order of your
-  // attachments
-  clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-  clearValues[1].depthStencil = {1.0f, 0};
-  renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-  renderPassInfo.pClearValues = clearValues.data();
+  std::cout << "OK" << std::endl;
+  VkRenderingInfoKHR renderInfo{};
+  renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+  renderInfo.renderArea.offset = {0, 0};
+  renderInfo.renderArea.extent = context.swapChain.swapChainExtent;
+  renderInfo.layerCount = 1;
+  renderInfo.colorAttachmentCount = 1;
+  renderInfo.pColorAttachments = &attachmentInfoKHR;
 
-  vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
-                       VK_SUBPASS_CONTENTS_INLINE);
+  auto vkCmdBeginRenderingKHR =
+      (PFN_vkCmdBeginRenderingKHR)vkGetInstanceProcAddr(
+          context.instance, "vkCmdBeginRenderingKHR");
+  vkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
+  // Draw calls here
+
+  std::cout << "OK" << std::endl;
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     context.pipeline.graphicsPipeline);
+  std::cout << "OK" << std::endl;
+
   // viewport and scissor state for this pipeline are dynamic
   VkViewport viewport{};
   viewport.x = 0.0f;
@@ -78,17 +86,48 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   scissor.extent = context.swapChain.swapChainExtent;
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+  std::cout << "OK" << std::endl;
   VkBuffer vertexBuffers[] = {context.vertexBuffer.buffer};
   VkDeviceSize offsets[] = {0};
+  std::cout << "OK" << std::endl;
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+  std::cout << "OK" << std::endl;
   vkCmdBindIndexBuffer(commandBuffer, context.indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT16);
+  std::cout << "OK" << std::endl;
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           context.pipeline.pipelineLayout, 0, 1,
                           &context.descriptorSets[context.currentImage], 0,
                           nullptr);
+  std::cout << "OK" << std::endl;
   vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(numberIndices), 1, 0, 0,
                    0);
+  std::cout << "OK" << std::endl;
+
+  /* VkRenderPassBeginInfo renderPassInfo{}; */
+
+  /* renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO; */
+  /* renderPassInfo.renderPass = context.pipeline.renderPass; */
+  /* renderPassInfo.framebuffer = */
+  /*     context.swapChain.swapChainFramebuffers[imageIndex]; */
+  /* // renderArea defines where shader loads and stores will take place */
+  /* renderPassInfo.renderArea.offset = {0, 0}; */
+  /* renderPassInfo.renderArea.extent = context.swapChain.swapChainExtent; */
+
+  // define the clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we
+  // used as load operation for the color attachment
+  /* std::array<VkClearValue, 2> clearValues{}; */
+
+  // The order of clearValues should be identical to the order of your
+  // attachments
+  /* clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}}; */
+  /* clearValues[1].depthStencil = {1.0f, 0}; */
+  /* renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+   */
+  /* renderPassInfo.pClearValues = clearValues.data(); */
+
+  /* vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, */
+  /*                      VK_SUBPASS_CONTENTS_INLINE); */
 
   /*
     TAKES AS PARAMETER:
@@ -189,7 +228,10 @@ bool CommandPoolManager::submitFrame(bool framebufferResized) {
   auto &inFlightFences = commandPool.inFlightFences;
   auto &commandBuffers = commandPool.commandBuffers;
 
-  vkCmdEndRenderPass(commandBuffers[context.currentImage]);
+  auto vkCmdEndRenderingKHR =
+      (PFN_vkCmdEndRenderingKHR)vkGetInstanceProcAddr(
+          context.instance, "vkCmdEndRenderingKHR");
+  vkCmdEndRenderingKHR(commandBuffers[context.currentImage]);
 
   if (vkEndCommandBuffer(commandBuffers[context.currentImage]) != VK_SUCCESS) {
     throw std::runtime_error("failed to record command buffer!");

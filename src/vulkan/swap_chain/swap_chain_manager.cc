@@ -158,10 +158,10 @@ void SwapChainManager::cleanup() {
   vkDestroyImage(context.device, context.depthImage.textureImage, nullptr);
   vkFreeMemory(context.device, context.depthImage.textureImageMemory, nullptr);
 
-  for (size_t i = 0; i < swapChain.swapChainFramebuffers.size(); i++) {
-    vkDestroyFramebuffer(context.device, swapChain.swapChainFramebuffers[i],
-                         nullptr);
-  }
+  /* for (size_t i = 0; i < swapChain.swapChainFramebuffers.size(); i++) { */
+  /*   vkDestroyFramebuffer(context.device, swapChain.swapChainFramebuffers[i], */
+  /*                        nullptr); */
+  /* } */
 
   for (size_t i = 0; i < swapChain.swapChainImageViews.size(); i++) {
     vkDestroyImageView(context.device, swapChain.swapChainImageViews[i],

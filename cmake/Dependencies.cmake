@@ -1,4 +1,4 @@
-find_package(glfw3 REQUIRED)
+find_package(glfw3 REQUIRED 1.3)
 find_package(Vulkan REQUIRED)
 find_package(imgui REQUIRED)
 find_package(glm REQUIRED)
