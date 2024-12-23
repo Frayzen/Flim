@@ -209,6 +209,7 @@ void PipelineManager::createGraphicPipeline(Flim::Renderer &renderer) {
   pipelinInfoKHR.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
   pipelinInfoKHR.colorAttachmentCount = 1;
   pipelinInfoKHR.pColorAttachmentFormats = &context.swapChain.swapChainImageFormat;
+  pipelinInfoKHR.depthAttachmentFormat = context.depthImage.format;
 
   VkGraphicsPipelineCreateInfo pipelineInfo{};
   pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

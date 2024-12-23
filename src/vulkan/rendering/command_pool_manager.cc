@@ -73,6 +73,14 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                            context.swapChain.swapChainImages[imageIndex]);
 
+  VkRenderingAttachmentInfo depthInfo{};
+  depthInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+  depthInfo.imageView = context.depthImage.view;
+  depthInfo.imageLayout = context.depthImage.layout;
+  depthInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  depthInfo.clearValue.depthStencil.depth = 1.0f;
+
   VkRenderingAttachmentInfoKHR attachmentInfoKHR{};
   attachmentInfoKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
   attachmentInfoKHR.imageView =
@@ -91,6 +99,7 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   renderInfo.layerCount = 1;
   renderInfo.colorAttachmentCount = 1;
   renderInfo.pColorAttachments = &attachmentInfoKHR;
+  renderInfo.pDepthAttachment = &depthInfo;
 
   auto vkCmdBeginRenderingKHR =
       (PFN_vkCmdBeginRenderingKHR)vkGetInstanceProcAddr(
