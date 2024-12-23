@@ -63,29 +63,3 @@ void SurfaceManager::createImageViews() {
     }
   }
 }
-
-/* void SurfaceManager::createFramebuffers() { */
-/*   auto &swapChainImageViews = context.swapChain.swapChainImageViews; */
-/*   context.swapChain.swapChainFramebuffers.resize(swapChainImageViews.size()); */
-
-/*   for (size_t i = 0; i < swapChainImageViews.size(); i++) { */
-/*     std::array<VkImageView, 2> attachments = {swapChainImageViews[i], */
-/*                                               context.depthImage.view}; */
-
-/*     VkFramebufferCreateInfo framebufferInfo{}; */
-/*     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO; */
-/*     framebufferInfo.renderPass = context.pipeline.renderPass; */
-/*     framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size()); */
-/*     framebufferInfo.pAttachments = attachments.data(); */
-/*     // May differ from HEIGHT and WIDTH */
-/*     framebufferInfo.width = context.swapChain.swapChainExtent.width; */
-/*     framebufferInfo.height = context.swapChain.swapChainExtent.height; */
-/*     framebufferInfo.layers = 1; */
-
-/*     if (vkCreateFramebuffer(context.device, &framebufferInfo, nullptr, */
-/*                             &context.swapChain.swapChainFramebuffers[i]) != */
-/*         VK_SUCCESS) { */
-/*       throw std::runtime_error("failed to create framebuffer!"); */
-/*     } */
-/*   } */
-/* } */

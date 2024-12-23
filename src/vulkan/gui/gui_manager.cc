@@ -28,10 +28,15 @@ void GUIManager::setup() {
   init_info.PhysicalDevice = context.physicalDevice;
   init_info.Device = context.device;
   init_info.Queue = context.queues.graphicsQueue;
-  /* init_info.RenderPass = context.pipeline.renderPass; */
-  init_info.DescriptorPoolSize = 1;
+  init_info.PipelineRenderingCreateInfo = {};
+  init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+  init_info.PipelineRenderingCreateInfo.depthAttachmentFormat = context.depthImage.format;
+  init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &context.swapChain.swapChainImageFormat;
+  init_info.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
+  init_info.DescriptorPoolSize = 10;
   init_info.MinImageCount = 3;
   init_info.ImageCount = 3;
+  init_info.UseDynamicRendering = true;
   init_info.MinAllocationSize = 1024 * 1024;
   init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 

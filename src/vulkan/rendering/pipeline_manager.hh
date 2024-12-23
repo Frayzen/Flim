@@ -13,7 +13,6 @@ public:
   PipelineManager(VulkanContext &context)
       : BaseManager(context), pipeline(context.pipeline) {}
 
-  /* void createRenderPass(); */
   void createGraphicPipeline(Flim::Renderer &renderer);
   void cleanup();
 

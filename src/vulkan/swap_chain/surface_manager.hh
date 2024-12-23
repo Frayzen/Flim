@@ -12,5 +12,4 @@ public:
 
   void setupSwapChainImages();
   void createImageViews();
-  /* void createFramebuffers(); */
 };

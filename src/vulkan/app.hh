@@ -26,8 +26,8 @@ public:
       : window_manager(context), extension_manager(context),
         swap_chain_manager(context), device_manager(context),
         surface_manager(context), command_pool_manager(context),
-        buffer_manager(context), pipeline_manager(context)
-  /*gui_manager(context)*/ {
+        buffer_manager(context), pipeline_manager(context),
+        gui_manager(context) {
     context.currentImage = 0;
   }
 
@@ -48,7 +48,7 @@ private:
   CommandPoolManager command_pool_manager;
   BufferManager buffer_manager;
   PipelineManager pipeline_manager;
-  /* GUIManager gui_manager; */
+  GUIManager gui_manager;
 
   void createInstance() {
     if (enableValidationLayers &&
@@ -93,7 +93,6 @@ private:
     surface_manager.createImageViews();
 
     // Create command pool
-    /* pipeline_manager.createRenderPass(); */
     buffer_manager.createDescriptorSetLayout();
     command_pool_manager.createCommandPool();
     command_pool_manager.createCommandBuffers();
@@ -101,9 +100,7 @@ private:
 
     // Frame and depth buffer
     buffer_manager.createDepthResources();
-    /* surface_manager.createFramebuffers(); */
-
-    /* gui_manager.setup(); */
+    gui_manager.setup();
   }
 
   void setupGraphics(Flim::Scene &scene) {
@@ -140,12 +137,11 @@ private:
     surface_manager.setupSwapChainImages();
     surface_manager.createImageViews();
     buffer_manager.createDepthResources();
-    /* surface_manager.createFramebuffers(); */
     context.currentImage = 0;
   }
 
   bool mainLoop(const std::function<void()> &renderMethod, Flim::Scene &scene) {
-    (void) renderMethod;
+    (void)renderMethod;
     const auto &instance = scene.getRoot().findAll<Flim::InstanceObject>();
     glfwPollEvents();
 
@@ -155,9 +151,9 @@ private:
     }
     buffer_manager.updateUniformBuffer(instance->mesh, scene.mainCamera);
     command_pool_manager.renderFrame(instance->mesh.getTriangles().size());
-    /* gui_manager.beginFrame(); */
-    /* renderMethod(); */
-    /* gui_manager.endFrame(); */
+    gui_manager.beginFrame();
+    renderMethod();
+    gui_manager.endFrame();
     if (command_pool_manager.submitFrame(window_manager.framebufferResized)) {
       window_manager.framebufferResized = false;
       recreateSwapChain();
@@ -168,7 +164,7 @@ private:
   void finish() { vkDeviceWaitIdle(context.device); }
 
   void cleanup() {
-    /* gui_manager.cleanup(); */
+    gui_manager.cleanup();
     swap_chain_manager.cleanup();
     buffer_manager.cleanup();
     pipeline_manager.cleanup();

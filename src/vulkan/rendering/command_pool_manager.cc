@@ -2,9 +2,7 @@
 #include "consts.hh"
 #include "vulkan/device/device_utils.hh"
 
-#include <array>
 #include <cstdint>
-#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -90,7 +88,7 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   attachmentInfoKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   // define the clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we
   // used as load operation for the color attachment
-  attachmentInfoKHR.clearValue = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  attachmentInfoKHR.clearValue = {{0, 0, 0, 1.0f}};
 
   VkRenderingInfoKHR renderInfo{};
   renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
@@ -267,7 +265,8 @@ bool CommandPoolManager::submitFrame(bool framebufferResized) {
       context.instance, "vkCmdEndRenderingKHR");
   vkCmdEndRenderingKHR(commandBuffer);
 
-  createImageMemoryBarrier(commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+  createImageMemoryBarrier(commandBuffer,
+                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                            context.swapChain.swapChainImages[imageIndex]);
 
