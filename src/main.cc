@@ -6,7 +6,6 @@
 #include <glm/fwd.hpp>
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <iostream>
 
 using namespace Flim;
 
@@ -15,7 +14,6 @@ int main() {
   Scene &scene = api.getScene();
   Renderer renderer = {
       Shader("shaders/default.vert.spv"), Shader("shaders/default.frag.spv"),
-      /* RendererMode::RENDERER_MODE_POINTS, */
   };
   scene.defaultRenderer(&renderer);
 

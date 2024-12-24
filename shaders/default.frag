@@ -30,10 +30,24 @@ void main() {
     // outColor = vec4(fragColor * texture(texSampler, fragTexCoord).rgb, 1.0);
     // outColor = vec4(fragColor.rgb * 0.1f, 1.0);
 
+    // int col = gl_PrimitiveID;
+    // outColor = colors[col * 3 % 8];
+
+    if (length(gl_PointCoord) != 0)
+    {
+      vec2 pointCoord = gl_PointCoord - vec2(0.5);
+      float distance = length(pointCoord);
+
+      // Discard fragments outside the circle
+      if (distance > 0.5) {
+          discard;
+      }
+
+      outColor = vec4(material.ambient, 1.0); 
+      return;
+    }
+
     vec3 lightDirection = normalize(vec3(1, -2, 1));
 
     outColor = vec4(material.ambient + max(0, dot(-lightDirection, normalize(fragNormal))) * material.diffuse, 1.0);
-
-    // int col = gl_PrimitiveID;
-    // outColor = colors[col * 3 % 8];
 }
