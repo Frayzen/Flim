@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fwd.h"
+#include <fwd.hh>
 #include <assimp/material.h>
 #include <string>
 

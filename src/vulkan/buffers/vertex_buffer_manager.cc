@@ -4,6 +4,7 @@
 
 #include "api/render/mesh.hh"
 #include "vulkan/buffers/buffer_manager.hh"
+#include "vulkan/buffers/buffer_utils.hh"
 #include "vulkan/context.hh"
 
 
@@ -11,7 +12,7 @@ void BufferManager::createVertexBuffer(
     const std::vector<Flim::Vertex> &vertices) {
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
   createBuffer(
-      context, bufferSize,
+      bufferSize,
       VK_BUFFER_USAGE_TRANSFER_SRC_BIT, // required to be passed as source
                                         // in a memory transfer operation
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -26,7 +27,7 @@ void BufferManager::createVertexBuffer(
   vkUnmapMemory(context.device, context.stagingBuffer.bufferMemory);
 
   createBuffer(
-      context, bufferSize,
+      bufferSize,
       VK_BUFFER_USAGE_TRANSFER_DST_BIT | // required to be passed as destination
                                          // in a memory transfer operation
           VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -40,7 +41,7 @@ void BufferManager::createVertexBuffer(
 void BufferManager::createIndexBuffer(const std::vector<uint16> indices) {
   VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
-  createBuffer(context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+  createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                context.stagingBuffer);
@@ -51,7 +52,7 @@ void BufferManager::createIndexBuffer(const std::vector<uint16> indices) {
   memcpy(data, indices.data(), (size_t)bufferSize);
   vkUnmapMemory(context.device, context.stagingBuffer.bufferMemory);
 
-  createBuffer(context, bufferSize,
+  createBuffer(bufferSize,
                VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, context.indexBuffer);

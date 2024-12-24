@@ -1,7 +1,7 @@
 #pragma once
 
 #include "api/render/mesh.hh"
-#include "fwd.h"
+#include <fwd.hh>
 #include "vulkan/context.hh"
 #include <array>
 #include <stdexcept>

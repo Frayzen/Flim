@@ -1,7 +1,7 @@
 #include "extension_manager.hh"
 
 #include "consts.hh"
-#include "fwd.h"
+#include "vulkan/context.hh"
 #include <GLFW/glfw3.h>
 #include <cstdint>
 #include <cstring>
@@ -141,6 +141,8 @@ void ExtensionManager::setupDebugMessenger() {
   if (!enableValidationLayers)
     return;
   populateDebugMessengerCreateInfo();
+  std::cout << &context << std::endl;
+  std::cout << context.instance << std::endl;
   if (ExtensionManager::CreateDebugUtilsMessengerEXT(
           context.instance, &debugCreateInfo, nullptr, &debugMessenger) !=
       VK_SUCCESS) {

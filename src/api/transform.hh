@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fwd.h"
+#include <fwd.hh>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/quaternion_common.hpp>
 

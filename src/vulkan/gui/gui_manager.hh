@@ -1,13 +1,12 @@
 #pragma once
 
-#include "vulkan/base_manager.hh"
-#include "vulkan/context.hh"
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <vulkan/vulkan_core.h>
 
-class GUIManager : public BaseManager {
+class GUIManager {
 public:
-  GUIManager(VulkanContext &context) : BaseManager(context) {}
+  GUIManager() = default;
   void setup();
   void cleanup();
   void beginFrame();

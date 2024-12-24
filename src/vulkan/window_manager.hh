@@ -1,11 +1,8 @@
 #pragma once
 
-#include "vulkan/base_manager.hh"
-#include "vulkan/context.hh"
-#include <GLFW/glfw3.h>
-class WindowManager : public BaseManager {
+class WindowManager {
 public:
-  WindowManager(VulkanContext &context) : BaseManager(context) {};
+  WindowManager() = default;
   void initWindow();
   bool framebufferResized = false;
 };

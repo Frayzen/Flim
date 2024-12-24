@@ -1,15 +1,13 @@
 #pragma once
 
-#include <fwd.h>
+#include <fwd.hh>
 
-#include "vulkan/base_manager.hh"
 #include "vulkan/context.hh"
 
-class SwapChainManager : public BaseManager {
+class SwapChainManager {
 
 public:
-  SwapChainManager(VulkanContext &context)
-      : BaseManager(context), swapChain(context.swapChain) {};
+  SwapChainManager() : swapChain(context.swapChain) {};
 
   void createSwapChain();
   void cleanup();

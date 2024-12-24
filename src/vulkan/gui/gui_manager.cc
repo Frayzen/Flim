@@ -1,4 +1,5 @@
 #include "gui_manager.hh"
+#include "vulkan/context.hh"
 
 #include <imconfig.h>
 #include <imgui.h>

@@ -2,7 +2,7 @@
 
 #include "api/render/material.hh"
 #include "api/transform.hh"
-#include "fwd.h"
+#include <fwd.hh>
 #include <glm/fwd.hpp>
 #include <vector>
 

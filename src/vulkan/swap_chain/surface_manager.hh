@@ -1,12 +1,10 @@
 #pragma once
 
-#include "vulkan/base_manager.hh"
-#include "vulkan/context.hh"
-#include <fwd.h>
+#include <fwd.hh>
 
-class SurfaceManager : BaseManager {
+class SurfaceManager {
 public:
-  SurfaceManager(VulkanContext &context) : BaseManager(context) {};
+  SurfaceManager() {};
 
   void createSurface();
 

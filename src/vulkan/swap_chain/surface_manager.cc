@@ -1,7 +1,7 @@
 #include "surface_manager.hh"
+#include "vulkan/context.hh"
 
 #include <GLFW/glfw3.h>
-#include <array>
 #include <cassert>
 #include <cstdint>
 #include <stdexcept>

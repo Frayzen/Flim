@@ -1,9 +1,9 @@
 #pragma once
 
+#include <fwd.hh>
 #include "api/parameters.hh"
-#include "fwd.h"
-#include <cstdint>
 #include <vulkan/vulkan_core.h>
+#include <cstdint>
 
 typedef struct SwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;
@@ -79,4 +79,4 @@ public:
   std::vector<Image> images;
   Image depthImage;
   Flim::Renderer* renderer;
-};
+} extern context;

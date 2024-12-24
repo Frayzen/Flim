@@ -1,14 +1,12 @@
 #pragma once
 
-#include "vulkan/base_manager.hh"
-#include "vulkan/context.hh"
 #include <csignal>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
-class ExtensionManager : public BaseManager {
+class ExtensionManager {
 public:
-  ExtensionManager(VulkanContext &context) : BaseManager(context) {};
+  ExtensionManager() = default;
   void cleanUp();
   void listExtensions(); // For debug purposes only
   bool checkValidationLayerSupport();

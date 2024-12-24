@@ -1,9 +1,12 @@
 #include "window_manager.hh"
+#include "vulkan/context.hh"
 #include <GLFW/glfw3.h>
 #include <stdexcept>
 
 static void framebufferResizeCallback(GLFWwindow *window, int width,
                                       int height) {
+  (void)width;
+  (void)height;
   auto windowManager =
       reinterpret_cast<WindowManager *>(glfwGetWindowUserPointer(window));
   windowManager->framebufferResized = true;

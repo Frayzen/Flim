@@ -41,6 +41,6 @@ int FlimAPI::run(const std::function<void()> &renderMethod) {
   return EXIT_SUCCESS;
 }
 
-GLFWwindow *FlimAPI::getWindow() { return app.context.window; }
+GLFWwindow *FlimAPI::getWindow() { return context.window; }
 
 } // namespace Flim

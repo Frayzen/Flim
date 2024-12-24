@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fwd.h"
+#include <fwd.hh>
 
 namespace Flim {
 class FlimAPI;       // API class, entry point

@@ -1,10 +1,10 @@
 #include "api/render/mesh.hh"
 #include "api/tree/free_camera_object.hh"
+#include "vulkan/buffers/buffer_utils.hh"
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
 #include <glm/matrix.hpp>
-#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 /* #define GLM_FORCE_LEFT_HANDED */
@@ -48,7 +48,7 @@ void BufferManager::createDescriptorSetLayout() {
   // skeleton for skeletal animation, for example
   locationLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   locationLayoutBinding.pImmutableSamplers = nullptr; // Optional
-                                                 
+
   VkDescriptorSetLayoutBinding materialLayoutBinding{};
   // linked to the binding property of the vert shader
   materialLayoutBinding.binding = 1;
@@ -88,19 +88,19 @@ void BufferManager::createUniformBuffers() {
   uniformMaterialBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    createBuffer(context, locationBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+    createBuffer(locationBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                  uniformLocationBuffers[i]);
-    vkMapMemory(context.device, uniformLocationBuffers[i].bufferMemory, 0, locationBufferSize,
-                0, &uniformLocationBuffersMapped[i]);
+    vkMapMemory(context.device, uniformLocationBuffers[i].bufferMemory, 0,
+                locationBufferSize, 0, &uniformLocationBuffersMapped[i]);
 
-    createBuffer(context, materialBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+    createBuffer(materialBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                  uniformMaterialBuffers[i]);
-    vkMapMemory(context.device, uniformMaterialBuffers[i].bufferMemory, 0, materialBufferSize,
-                0, &uniformMaterialBuffersMapped[i]);
+    vkMapMemory(context.device, uniformMaterialBuffers[i].bufferMemory, 0,
+                materialBufferSize, 0, &uniformMaterialBuffersMapped[i]);
   }
 }
 
@@ -189,8 +189,8 @@ void BufferManager::updateUniformBuffer(const Flim::Mesh &mesh,
                            (float)context.swapChain.swapChainExtent.height,
                        cam->near, cam->far);
   location.proj[1][1] *= -1;
-  memcpy(uniformLocationBuffersMapped[context.currentImage], &location, sizeof(location));
-
+  memcpy(uniformLocationBuffersMapped[context.currentImage], &location,
+         sizeof(location));
 
   UniformMaterialObject material{};
   material.ambient = mesh.getMaterial().ambient;
@@ -205,5 +205,6 @@ void BufferManager::updateUniformBuffer(const Flim::Mesh &mesh,
   /* std::cout << glm::to_string(material.specular) << std::endl; */
   /* std::cout << glm::to_string(mesh.getMaterial().specular) << std::endl; */
 
-  memcpy(uniformMaterialBuffersMapped[context.currentImage], &material, sizeof(material));
+  memcpy(uniformMaterialBuffersMapped[context.currentImage], &material,
+         sizeof(material));
 }

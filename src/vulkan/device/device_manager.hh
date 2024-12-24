@@ -1,11 +1,10 @@
 #pragma once
 
-#include "vulkan/base_manager.hh"
 #include <vulkan/vulkan_core.h>
 
-class DeviceManager : public BaseManager {
+class DeviceManager {
 public:
-  DeviceManager(VulkanContext &context) : BaseManager(context) {};
+  DeviceManager() = default;
 
   void pickPhysicalDevice();
   void createLogicalDevice();

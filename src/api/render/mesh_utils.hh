@@ -1,7 +1,7 @@
 #pragma once
 #include "api/render/mesh.hh"
 #include "api/scene.hh"
-#include "fwd.h"
+#include <fwd.hh>
 #include <glm/fwd.hpp>
 #include <string>
 
