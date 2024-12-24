@@ -24,6 +24,10 @@ int FlimAPI::run(const std::function<void()> &renderMethod) {
     while (true) {
       if (app.mainLoop(renderMethod, scene))
         break;
+      if (scene.invalidatedRenderer) {
+        app.updateGraphics(scene);
+        scene.invalidatedRenderer = false;
+      }
       double curTime = glfwGetTime();
       double deltaTime = lastTime - curTime;
       scene.mainCamera->handleInputs(deltaTime);

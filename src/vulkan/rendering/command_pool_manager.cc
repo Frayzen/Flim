@@ -104,7 +104,7 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
           context.instance, "vkCmdBeginRenderingKHR");
   vkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
   // Draw calls here
-
+  
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     context.pipeline.graphicsPipeline);
 

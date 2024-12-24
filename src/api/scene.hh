@@ -18,13 +18,16 @@ public:
   InstanceObject &instantiate(Mesh &mesh);
   const RootObject &getRoot();
 
-  FlimAPI& api;
+  FlimAPI &api;
   Renderer *renderer;
   FreeCameraObject *mainCamera;
+  void invalidateRenderer();
 
 private:
+  bool invalidatedRenderer;
   RootObject root;
-  Scene(FlimAPI& api) : api(api), root(*this), mainCamera() {
+  Scene(FlimAPI &api)
+      : api(api), root(*this), mainCamera(), invalidatedRenderer(false) {
     mainCamera = &root.append<FreeCameraObject>();
   };
   friend class FlimAPI;

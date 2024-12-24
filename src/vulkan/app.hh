@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -103,9 +104,17 @@ private:
     gui_manager.setup();
   }
 
+  void updateGraphics(Flim::Scene &scene, bool setup = false) {
+    context.renderer = scene.renderer;
+    if (!setup) {
+      vkDeviceWaitIdle(context.device);
+      pipeline_manager.cleanup();
+    }
+    pipeline_manager.createGraphicPipeline();
+  }
+
   void setupGraphics(Flim::Scene &scene) {
-    // Graphic pipeline
-    pipeline_manager.createGraphicPipeline(*scene.renderer);
+    updateGraphics(scene, true);
 
     const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
 

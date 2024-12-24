@@ -5,6 +5,8 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
 #include <imgui.h>
+#include <imgui_internal.h>
+#include <iostream>
 
 using namespace Flim;
 
@@ -22,18 +24,18 @@ int main() {
   obj.transform.position = vec3(0, 0, 30);
   obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
 
-  auto &obj2 = scene.instantiate(teddy);
-  obj2.transform.position = vec3(30, 0, 30);
-  obj2.transform.scale = vec3(0.2f, 0.2f, 0.2f);
-
   scene.mainCamera->speed = 30;
   scene.mainCamera->transform.position = vec3(0, 0, -30);
   scene.mainCamera->sensivity = 8;
   /* obj.transform.rotation = glm::identity<quat>(); */
   float a;
   return api.run([&] {
-    ImGui::Button("Test");
-
-    ImGui::InputFloat2("Ok", &a);
+    const char *items[] = {"Triangles", "Bars", "Dots"};
+    if (ImGui::Combo("Rendering type", ((int *)&renderer.mode), items,
+                     IM_ARRAYSIZE(items))) {
+      scene.invalidateRenderer();
+    }
+    ImGui::SliderFloat3("Ambient color", (float*) &obj.mesh.getMaterial().ambient, 0.0f, 1.0f);
+    ImGui::SliderFloat3("Diffuse color", (float*) &obj.mesh.getMaterial().diffuse, 0.0f, 1.0f);
   });
 }

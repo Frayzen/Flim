@@ -1,6 +1,5 @@
 #pragma once
 
-#include "api/parameters.hh"
 #include "fwd.h"
 #include "vulkan/base_manager.hh"
 #include <vulkan/vulkan_core.h>
@@ -13,7 +12,7 @@ public:
   PipelineManager(VulkanContext &context)
       : BaseManager(context), pipeline(context.pipeline) {}
 
-  void createGraphicPipeline(Flim::Renderer &renderer);
+  void createGraphicPipeline();
   void cleanup();
 
 private:

@@ -35,7 +35,8 @@ static VkShaderModule createShaderModule(VulkanContext &context,
   return shaderModule;
 }
 
-void PipelineManager::createGraphicPipeline(Flim::Renderer &renderer) {
+void PipelineManager::createGraphicPipeline() {
+  auto &renderer = *context.renderer;
   pipeline.vertShaderModule =
       createShaderModule(context, renderer.vertexShader.code);
   pipeline.fragShaderModule =
@@ -104,7 +105,7 @@ void PipelineManager::createGraphicPipeline(Flim::Renderer &renderer) {
   //  VK_POLYGON_MODE_LINE: polygon edges are drawn as lines
   //  VK_POLYGON_MODE_POINT: polygon vertices are drawn as points
   /* rasterizer.polygonMode = VK_POLYGON_MODE_FILL; */
-  rasterizer.polygonMode = renderModeToPolygonMode(renderer.mode);
+  rasterizer.polygonMode = Flim::renderModeToPolygonMode(renderer.mode);
   /* rasterizer.polygonMode = VK_POLYGON_MODE_POINT; */
 
   // any line thicker than 1.0f requires you to enable the wideLines GPU feature
@@ -205,10 +206,11 @@ void PipelineManager::createGraphicPipeline(Flim::Renderer &renderer) {
   depthStencil.front = {}; // Optional
   depthStencil.back = {};  // Optional
 
-  VkPipelineRenderingCreateInfoKHR pipelinInfoKHR;
+  VkPipelineRenderingCreateInfoKHR pipelinInfoKHR{};
   pipelinInfoKHR.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
   pipelinInfoKHR.colorAttachmentCount = 1;
-  pipelinInfoKHR.pColorAttachmentFormats = &context.swapChain.swapChainImageFormat;
+  pipelinInfoKHR.pColorAttachmentFormats =
+      &context.swapChain.swapChainImageFormat;
   pipelinInfoKHR.depthAttachmentFormat = context.depthImage.format;
 
   VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -236,7 +238,7 @@ void PipelineManager::createGraphicPipeline(Flim::Renderer &renderer) {
                                 &pipeline.graphicsPipeline) != VK_SUCCESS) {
     throw std::runtime_error("failed to create graphics pipeline!");
   }
-  std::cout << "Graphic pipeline created" << std::endl;
+  std::cout << "Graphic pipeline (re)created" << std::endl;
 
   vkDestroyShaderModule(context.device, pipeline.fragShaderModule, nullptr);
   vkDestroyShaderModule(context.device, pipeline.vertShaderModule, nullptr);
