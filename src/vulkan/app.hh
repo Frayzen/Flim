@@ -2,6 +2,7 @@
 
 #include "api/scene.hh"
 #include "vulkan/buffers/buffer_manager.hh"
+#include "vulkan/buffers/descriptors_manager.hh"
 #include "vulkan/context.hh"
 #include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
@@ -31,6 +32,7 @@ private:
   CommandPoolManager command_pool_manager;
   BufferManager buffer_manager;
   PipelineManager pipeline_manager;
+  DescriptorsManager descriptors_manager;
   GUIManager gui_manager;
 
   void createInstance();
