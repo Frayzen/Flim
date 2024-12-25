@@ -71,14 +71,15 @@ void VulkanApplication::initVulkan() {
 }
 
 void VulkanApplication::updateGraphics(Flim::Scene &scene, bool setup) {
-  context.renderer = scene.renderer;
+  context.renderer = &scene.renderer;
   if (!setup) {
     vkDeviceWaitIdle(context.device);
     pipeline_manager.cleanup();
     vkDestroyDescriptorSetLayout(context.device, context.descriptorSetLayout,
                                  nullptr);
   }
-  buffer_manager.createDescriptorSetLayout();
+  descriptors_manager.createDescriptorSetLayout();
+  /* buffer_manager.createDescriptorSetLayout(); */
   pipeline_manager.createGraphicPipeline();
 }
 
@@ -91,16 +92,19 @@ void VulkanApplication::setupGraphics(Flim::Scene &scene) {
   buffer_manager.createVertexBuffer(instance->mesh.getVertices());
   buffer_manager.createIndexBuffer(instance->mesh.getTriangles());
 
-  // Texture
-  buffer_manager.createTextureImage(instance->mesh.getMaterial().texturePath);
-  buffer_manager.createTextureImageView();
-  buffer_manager.createTextureSampler();
+  descriptors_manager.setupUniforms();
+  descriptors_manager.createDescriptorPool();
+  descriptors_manager.createDescriptorSets();
+  /*   // Texture */
+  /*   buffer_manager.createTextureImage(instance->mesh.getMaterial().texturePath);
+   */
+  /*   buffer_manager.createTextureImageView(); */
+  /*   buffer_manager.createTextureSampler(); */
 
-
-  // Uniform
-  buffer_manager.createUniformBuffers();
-  buffer_manager.createDescriptorPool();
-  buffer_manager.createDescriptorSets();
+  /*   // Uniform */
+  /*   buffer_manager.createUniformBuffers(); */
+  /*   buffer_manager.createDescriptorPool(); */
+  /*   buffer_manager.createDescriptorSets(); */
 }
 
 void VulkanApplication::recreateSwapChain() {
@@ -121,15 +125,17 @@ void VulkanApplication::recreateSwapChain() {
 
 bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
                                  Flim::Scene &scene) {
-  const auto &instance = scene.getRoot().findAll<Flim::InstanceObject>();
+  const auto &instance = *scene.getRoot().findAny<Flim::InstanceObject>();
+  const auto &camera = *scene.mainCamera;
   glfwPollEvents();
 
   if (command_pool_manager.acquireFrame()) {
     recreateSwapChain();
     return false;
   }
-  buffer_manager.updateUniformBuffer(instance->mesh, scene.mainCamera);
-  command_pool_manager.renderFrame(instance->mesh.getTriangles().size());
+  descriptors_manager.updateUniforms(instance, camera);
+  /* buffer_manager.updateUniformBuffer(instance->mesh, scene.mainCamera); */
+  command_pool_manager.renderFrame(instance.mesh.getTriangles().size());
   gui_manager.beginFrame();
   renderMethod();
   gui_manager.endFrame();
@@ -143,9 +149,10 @@ bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
 void VulkanApplication::finish() { vkDeviceWaitIdle(context.device); }
 
 void VulkanApplication::cleanup() {
+  descriptors_manager.cleanup();
   gui_manager.cleanup();
   swap_chain_manager.cleanup();
-  buffer_manager.cleanup();
+  /* buffer_manager.cleanup(); */
   pipeline_manager.cleanup();
   command_pool_manager.cleanup();
   vkDestroyDevice(context.device, nullptr);

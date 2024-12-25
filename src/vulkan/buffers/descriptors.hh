@@ -1,8 +1,9 @@
 #pragma once
 
-#include "api/tree/free_camera_object.hh"
+#include "api/tree/camera_object.hh"
 #include "api/tree/instance_object.hh"
 #include "vulkan/context.hh"
+#include <cassert>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -56,31 +57,36 @@ public:
   VkWriteDescriptorSet getDescriptor(int i) override;
 
   void setup() override;
-  void update(const Flim::InstanceObject &object,
-              const Flim::CameraObject &cam) override {
-    (void)object;
-    (void)cam;
-  };
+  void update(const Flim::InstanceObject &,
+              const Flim::CameraObject &) override {};
+
+  void cleanup() override;
 
 private:
   Image image;
   std::string path;
 };
 
+// Concept to check for a specific method signature
+template <typename T>
+concept HasUpdateMethod = requires(const Flim::InstanceObject &instance,
+                                   const Flim::CameraObject &cam, T *ptr) {
+  { T::update(instance, cam, ptr) } -> std::same_as<void>;
+};
+
 class GeneralDescriptor : public BaseDescriptor {
 
 public:
   GeneralDescriptor(int binding)
-      : BaseDescriptor(binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {};
+      : BaseDescriptor(binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER),
+        bufferSize(0) {};
 
-  template <typename T>
-  GeneralDescriptor &attach(std::function<void(const Flim::InstanceObject &,
-                                               const Flim::CameraObject &, T &)>
-                                updateFn) {
+  template <HasUpdateMethod T> GeneralDescriptor &attach() {
     bufferSize = sizeof(T);
-    updateFunction = [&](const Flim::InstanceObject &obj,
-                         const Flim::CameraObject &cam) {
-      updateFn(obj, cam, *((T *)mappedBuffers[context.currentImage]));
+    // Cast to T::update<void(T*)>
+    updateFunction = [](const Flim::InstanceObject &istc,
+                        const Flim::CameraObject &cam, void *ptr) {
+      T::update(istc, cam, static_cast<T *>(ptr));
     };
     return *this;
   };
@@ -91,15 +97,11 @@ public:
 
   virtual void update(const Flim::InstanceObject &object,
                       const Flim::CameraObject &cam) override {
-    updateFunction(object, cam);
+    void *curBuf = mappedBuffers[context.currentImage];
+    updateFunction(object, cam, curBuf);
   };
 
-  void cleanup() override {
-    for (size_t i = 0; i < buffers.size(); i++) {
-      vkDestroyBuffer(context.device, buffers[i].buffer, nullptr);
-      vkFreeMemory(context.device, buffers[i].bufferMemory, nullptr);
-    }
-  };
+  void cleanup() override;
 
 protected:
   size_t bufferSize;
@@ -107,8 +109,12 @@ protected:
   std::vector<void *> mappedBuffers;
   std::vector<Buffer> buffers;
 
-  std::function<void(const Flim::InstanceObject &, const Flim::CameraObject &)>
+  std::function<void(const Flim::InstanceObject &, const Flim::CameraObject &,
+                     void *)>
       updateFunction;
 
   friend class DescriptorsManager;
+
+private:
+  VkDescriptorBufferInfo bufferInfo;
 };

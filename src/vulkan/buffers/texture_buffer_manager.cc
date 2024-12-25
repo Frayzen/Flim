@@ -3,6 +3,7 @@
 #include "vulkan/buffers/texture_utils.hh"
 #include "vulkan/rendering/utils.hh"
 #include <iostream>
+#include <utils/stb_image.h>
 
 #include "vulkan/context.hh"
 #include <cstring>

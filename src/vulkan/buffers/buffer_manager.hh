@@ -1,7 +1,7 @@
 #pragma once
 
 #include "api/render/mesh.hh"
-#include "api/tree/free_camera_object.hh"
+#include "api/tree/camera_object.hh"
 
 #include "vulkan/context.hh"
 #include <glm/fwd.hpp>

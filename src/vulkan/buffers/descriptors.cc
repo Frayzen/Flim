@@ -2,6 +2,7 @@
 #include "vulkan/buffers/buffer_utils.hh"
 #include "vulkan/buffers/texture_utils.hh"
 #include "vulkan/context.hh"
+#include <cassert>
 #include <fwd.hh>
 #include <iostream>
 #include <vulkan/vulkan_core.h>
@@ -100,14 +101,13 @@ void ImageDescriptor::setup() {
 }
 
 VkWriteDescriptorSet ImageDescriptor::getDescriptor(int i) {
-  (void)i;
   static VkDescriptorImageInfo imageInfo{};
   imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   imageInfo.imageView = image.view;
   imageInfo.sampler = image.sampler;
   VkWriteDescriptorSet descriptor{};
   descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  // dstSet is ignored on purpose
+  descriptor.dstSet = context.descriptorSets[i];
   descriptor.dstBinding = binding;
   descriptor.dstArrayElement = 0;
   descriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -116,9 +116,21 @@ VkWriteDescriptorSet ImageDescriptor::getDescriptor(int i) {
   return descriptor;
 }
 
+void ImageDescriptor::cleanup() {
+  for (auto &image : context.images) {
+    vkDestroySampler(context.device, image.sampler, nullptr);
+    vkDestroyImageView(context.device, image.view, nullptr);
+    vkDestroyImage(context.device, image.textureImage, nullptr);
+    vkFreeMemory(context.device, image.textureImageMemory, nullptr);
+  }
+}
+
 void GeneralDescriptor::setup() {
+  assert(bufferSize != 0);
+
   mappedBuffers.resize(MAX_FRAMES_IN_FLIGHT);
   buffers.resize(MAX_FRAMES_IN_FLIGHT);
+
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -130,17 +142,24 @@ void GeneralDescriptor::setup() {
 }
 
 VkWriteDescriptorSet GeneralDescriptor::getDescriptor(int i) {
-  static VkDescriptorBufferInfo bufferInfo{};
+  assert(bufferSize != 0);
   bufferInfo.buffer = buffers[i].buffer;
   bufferInfo.offset = 0;
   bufferInfo.range = bufferSize;
   VkWriteDescriptorSet descriptor{};
   descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  // dstSet is ignored on purpose
+  descriptor.dstSet = context.descriptorSets[i];
   descriptor.dstBinding = binding;
   descriptor.dstArrayElement = 0;
   descriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   descriptor.descriptorCount = 1;
   descriptor.pBufferInfo = &bufferInfo;
   return descriptor;
+}
+
+void GeneralDescriptor::cleanup() {
+  for (size_t i = 0; i < buffers.size(); i++) {
+    vkDestroyBuffer(context.device, buffers[i].buffer, nullptr);
+    vkFreeMemory(context.device, buffers[i].bufferMemory, nullptr);
+  }
 }

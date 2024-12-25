@@ -5,12 +5,12 @@
 class DescriptorsManager {
 public:
   DescriptorsManager() = default;
-  void createDescriptorPool();
   void createDescriptorSetLayout();
-  void createUniformBuffers();
+  void setupUniforms();
+  void cleanup();
   void createDescriptorSets();
-  void updateUniformBuffer(const Flim::InstanceObject &object,
-                           const Flim::CameraObject *cam);
-  void updateDescriptors();
-  Flim::DescriptorList* descriptors;
+  void createDescriptorPool();
+  void updateUniforms(const Flim::InstanceObject &obj,
+                      const Flim::CameraObject &cam);
+  Flim::DescriptorList *descriptors;
 };

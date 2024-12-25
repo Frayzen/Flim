@@ -17,7 +17,7 @@ Scene &FlimAPI::getScene() { return scene; }
 FlimAPI::~FlimAPI() { app.cleanup(); }
 
 int FlimAPI::run(const std::function<void()> &renderMethod) {
-  assert(scene.renderer != nullptr);
+  assert(scene.renderer.valid());
   app.setupGraphics(scene);
   try {
     double lastTime = glfwGetTime();

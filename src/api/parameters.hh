@@ -2,6 +2,7 @@
 
 #include "api/shaders/shader.hh"
 #include "vulkan/buffers/descriptors.hh"
+#include <iostream>
 #include <memory>
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -31,9 +32,13 @@ struct Renderer {
 
   std::shared_ptr<GeneralDescriptor> addGeneralDescriptor(int binding) {
     std::shared_ptr<GeneralDescriptor> ptr =
-        std::make_shared<GeneralDescriptor>(binding);
+        std::make_unique<GeneralDescriptor>(binding);
     descriptors.push_back(ptr);
     return ptr;
+  }
+
+  bool valid() {
+    return !vertexShader.code.empty() && !fragmentShader.code.empty();
   }
 
   DescriptorList descriptors = DescriptorList();

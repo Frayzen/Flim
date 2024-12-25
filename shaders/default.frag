@@ -23,7 +23,7 @@ const vec4 colors[] = {
 };
 
 
-layout(binding = 2) uniform sampler2D texSampler;
+// layout(binding = 2) uniform sampler2D texSampler;
 
 
 void main() {

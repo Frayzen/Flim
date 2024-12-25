@@ -1,5 +1,5 @@
 #include "api/render/mesh.hh"
-#include "api/tree/free_camera_object.hh"
+#include "api/tree/camera_object.hh"
 #include "vulkan/buffers/buffer_utils.hh"
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>

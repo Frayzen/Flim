@@ -1,17 +1,17 @@
 #include "descriptors_manager.hh"
+#include "api/tree/camera_object.hh"
+#include "api/tree/instance_object.hh"
 #include "vulkan/context.hh"
 #include <cassert>
-
-void DescriptorsManager::updateDescriptors() {
-  descriptors = &context.renderer->descriptors;
-}
+#include <iostream>
 
 void DescriptorsManager::createDescriptorSetLayout() {
+  descriptors = &context.renderer->descriptors;
   assert(descriptors != nullptr);
   std::vector<VkDescriptorSetLayoutBinding> bindings(descriptors->size());
   int i = 0;
   for (auto desc : *descriptors) {
-    VkDescriptorSetLayoutBinding locationLayoutBinding{};
+    bindings[i] = {};
     bindings[i].binding = desc->binding;
     bindings[i].descriptorType = desc->type;
     bindings[i].descriptorCount = 1;
@@ -48,13 +48,10 @@ void DescriptorsManager::createDescriptorPool() {
   }
 }
 
-void DescriptorsManager::createUniformBuffers() {
+void DescriptorsManager::setupUniforms() {
   assert(descriptors != nullptr);
   for (auto desc : *descriptors) {
-    if (auto genDesc = std::dynamic_pointer_cast<GeneralDescriptor>(desc)) {
-      VkDeviceSize bufferSize = genDesc->bufferSize;
-      genDesc->setup();
-    }
+    desc->setup();
   }
 }
 
@@ -81,9 +78,7 @@ void DescriptorsManager::createDescriptorSets() {
 
     int cur = 0;
     for (auto desc : *descriptors) {
-      // set dstSet
       descriptorWrites[cur++] = desc->getDescriptor(i);
-      descriptorWrites[cur++].dstSet = context.descriptorSets[i];
     }
     vkUpdateDescriptorSets(context.device,
                            static_cast<uint32_t>(descriptorWrites.size()),
@@ -91,10 +86,25 @@ void DescriptorsManager::createDescriptorSets() {
   }
 }
 
-void DescriptorsManager::updateUniformBuffer(const Flim::InstanceObject &object,
-                                             const Flim::CameraObject *cam) {
-  assert(descriptors != nullptr);
+void DescriptorsManager::updateUniforms(const Flim::InstanceObject &obj,
+                                        const Flim::CameraObject &cam) {
   for (auto desc : *descriptors) {
-    desc->update(object, *cam);
+    desc->update(obj, cam);
   }
+}
+
+void DescriptorsManager::cleanup() {
+  assert(descriptors != nullptr);
+  for (auto desc : context.renderer->descriptors) {
+    desc->cleanup();
+  }
+  vkDestroyDescriptorPool(context.device, context.descriptorPool, nullptr);
+  vkDestroyDescriptorSetLayout(context.device, context.descriptorSetLayout,
+                               nullptr);
+
+  vkDestroyBuffer(context.device, context.indexBuffer.buffer, nullptr);
+  vkFreeMemory(context.device, context.indexBuffer.bufferMemory, nullptr);
+
+  vkDestroyBuffer(context.device, context.vertexBuffer.buffer, nullptr);
+  vkFreeMemory(context.device, context.vertexBuffer.bufferMemory, nullptr);
 }

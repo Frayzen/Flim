@@ -1,4 +1,4 @@
-#include "free_camera_object.hh"
+#include "camera_object.hh"
 #include "api/flim_api.hh"
 #include "api/scene.hh"
 #include <GLFW/glfw3.h>

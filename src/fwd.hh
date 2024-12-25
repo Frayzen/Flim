@@ -8,7 +8,6 @@
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
-#include <utils/stb_image.h>
 
 typedef struct SwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;

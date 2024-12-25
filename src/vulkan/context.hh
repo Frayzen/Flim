@@ -5,6 +5,7 @@
 #include <vulkan/vulkan_core.h>
 
 namespace Flim {
+
 class Renderer;
 };
 class VulkanContext {
@@ -27,5 +28,5 @@ public:
   std::vector<VkDescriptorSet> descriptorSets;
   std::vector<Image> images;
   Image depthImage;
-  Flim::Renderer *renderer;
+  Flim::Renderer* renderer;
 } extern context;
