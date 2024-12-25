@@ -2,6 +2,9 @@
 #include "api/parameters.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/scene.hh"
+#include "api/tree/free_camera_object.hh"
+#include "api/tree/instance_object.hh"
+#include "vulkan/buffers/descriptors.hh"
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
 #include <imgui.h>
@@ -9,12 +12,30 @@
 
 using namespace Flim;
 
+struct LocationUniform {
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 proj;
+};
+
+struct MaterialUniform {
+  alignas(16) glm::vec3 ambient;
+  alignas(16) glm::vec3 diffuse;
+  alignas(16) glm::vec3 specular;
+};
+void test(const Flim::InstanceObject &, const Flim::CameraObject &,
+          LocationUniform &) {}
+
 int main() {
   Flim::FlimAPI api = FlimAPI::init();
   Scene &scene = api.getScene();
   Renderer renderer = {
-      Shader("shaders/default.vert.spv"), Shader("shaders/default.frag.spv"),
+      Shader("shaders/default.vert.spv"),
+      Shader("shaders/default.frag.spv"),
   };
+  ;
+  renderer.addGeneralDescriptor(0)->attach<LocationUniform>(&test);
+
   scene.defaultRenderer(&renderer);
 
   Mesh teddy = MeshUtils(scene).loadFromFile("resources/single_file/teddy.obj");
@@ -33,7 +54,9 @@ int main() {
                      IM_ARRAYSIZE(items))) {
       scene.invalidateRenderer();
     }
-    ImGui::SliderFloat3("Ambient color", (float*) &obj.mesh.getMaterial().ambient, 0.0f, 1.0f);
-    ImGui::SliderFloat3("Diffuse color", (float*) &obj.mesh.getMaterial().diffuse, 0.0f, 1.0f);
+    ImGui::SliderFloat3("Ambient color",
+                        (float *)&obj.mesh.getMaterial().ambient, 0.0f, 1.0f);
+    ImGui::SliderFloat3("Diffuse color",
+                        (float *)&obj.mesh.getMaterial().diffuse, 0.0f, 1.0f);
   });
 }

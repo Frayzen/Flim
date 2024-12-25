@@ -1,63 +1,12 @@
 #pragma once
 
-#include <fwd.hh>
-#include "api/parameters.hh"
-#include <vulkan/vulkan_core.h>
 #include <cstdint>
+#include <fwd.hh>
+#include <vulkan/vulkan_core.h>
 
-typedef struct SwapChainSupportDetails {
-  VkSurfaceCapabilitiesKHR capabilities;
-  std::vector<VkSurfaceFormatKHR> formats;
-  std::vector<VkPresentModeKHR> presentModes;
-} SwapChainSupportDetails;
-
-typedef struct Queues {
-  VkQueue presentQueue;
-  VkQueue graphicsQueue;
-} Queues;
-
-typedef struct CommandPool {
-  VkCommandPool pool = {};
-  std::vector<VkCommandBuffer> commandBuffers;
-
-  std::vector<VkSemaphore> imageAvailableSemaphores;
-  std::vector<VkSemaphore> renderFinishedSemaphores;
-  std::vector<VkFence> inFlightFences;
-} CommandPool;
-
-typedef struct Pipeline {
-  VkShaderModule vertShaderModule;
-  VkShaderModule fragShaderModule;
-  VkPipelineLayout pipelineLayout;
-  /* VkRenderPass renderPass; */
-  VkPipeline graphicsPipeline;
-} Pipeline;
-
-typedef struct Image {
-  VkImage textureImage;
-  VkDeviceMemory textureImageMemory;
-  VkImageView view;
-  VkImageLayout layout;
-  VkFormat format;
-  VkSampler sampler;
-  int width, height;
-  uint32_t mipLevels;
-} Image;
-
-typedef struct SwapChain {
-  std::vector<VkImage> swapChainImages;
-  std::vector<VkImageView> swapChainImageViews;
-  /* std::vector<VkFramebuffer> swapChainFramebuffers; */
-  VkSwapchainKHR swapChain;
-  VkFormat swapChainImageFormat;
-  VkExtent2D swapChainExtent;
-} SwapChain;
-
-typedef struct Buffer {
-  VkDeviceMemory bufferMemory;
-  VkBuffer buffer;
-} Buffer;
-
+namespace Flim {
+class Renderer;
+};
 class VulkanContext {
 public:
   uint32_t currentImage;
@@ -78,5 +27,5 @@ public:
   std::vector<VkDescriptorSet> descriptorSets;
   std::vector<Image> images;
   Image depthImage;
-  Flim::Renderer* renderer;
+  Flim::Renderer *renderer;
 } extern context;

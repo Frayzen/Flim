@@ -87,14 +87,15 @@ void VulkanApplication::setupGraphics(Flim::Scene &scene) {
 
   const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
 
+  // Vertices
+  buffer_manager.createVertexBuffer(instance->mesh.getVertices());
+  buffer_manager.createIndexBuffer(instance->mesh.getTriangles());
+
   // Texture
   buffer_manager.createTextureImage(instance->mesh.getMaterial().texturePath);
   buffer_manager.createTextureImageView();
   buffer_manager.createTextureSampler();
 
-  // Vertices
-  buffer_manager.createVertexBuffer(instance->mesh.getVertices());
-  buffer_manager.createIndexBuffer(instance->mesh.getTriangles());
 
   // Uniform
   buffer_manager.createUniformBuffers();

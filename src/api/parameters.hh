@@ -1,6 +1,9 @@
 #pragma once
 
 #include "api/shaders/shader.hh"
+#include "vulkan/buffers/descriptors.hh"
+#include <memory>
+#include <vector>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
 enum RendererMode {
@@ -20,10 +23,20 @@ inline VkPolygonMode renderModeToPolygonMode(RendererMode mode) {
   }
 }
 
+typedef std::vector<std::shared_ptr<BaseDescriptor>> DescriptorList;
 struct Renderer {
   Shader vertexShader;
   Shader fragmentShader;
   RendererMode mode = RendererMode::RENDERER_MODE_TRIS;
+
+  std::shared_ptr<GeneralDescriptor> addGeneralDescriptor(int binding) {
+    std::shared_ptr<GeneralDescriptor> ptr =
+        std::make_shared<GeneralDescriptor>(binding);
+    descriptors.push_back(ptr);
+    return ptr;
+  }
+
+  DescriptorList descriptors = DescriptorList();
 };
 
 struct FlimParameters {};
