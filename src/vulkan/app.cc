@@ -71,7 +71,7 @@ void VulkanApplication::initVulkan() {
 }
 
 void VulkanApplication::updateGraphics(Flim::Scene &scene, bool setup) {
-  context.renderer = &scene.renderer;
+  context.renderer = scene.renderer;
   if (!setup) {
     vkDeviceWaitIdle(context.device);
     pipeline_manager.cleanup();
@@ -79,7 +79,6 @@ void VulkanApplication::updateGraphics(Flim::Scene &scene, bool setup) {
                                  nullptr);
   }
   descriptors_manager.createDescriptorSetLayout();
-  /* buffer_manager.createDescriptorSetLayout(); */
   pipeline_manager.createGraphicPipeline();
 }
 
@@ -152,7 +151,6 @@ void VulkanApplication::cleanup() {
   descriptors_manager.cleanup();
   gui_manager.cleanup();
   swap_chain_manager.cleanup();
-  /* buffer_manager.cleanup(); */
   pipeline_manager.cleanup();
   command_pool_manager.cleanup();
   vkDestroyDevice(context.device, nullptr);

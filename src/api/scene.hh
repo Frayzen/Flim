@@ -10,8 +10,6 @@
 
 namespace Flim {
 
-extern Renderer emptyRenderer;
-
 class Scene {
 
 public:
@@ -21,15 +19,16 @@ public:
   const RootObject &getRoot();
 
   FlimAPI &api;
-  Renderer &renderer;
   CameraObject *mainCamera;
   void invalidateRenderer();
+  Renderer *renderer;
 
 private:
   bool invalidatedRenderer;
   RootObject root;
   Scene(FlimAPI &api)
-      : api(api), root(*this), mainCamera(), renderer(emptyRenderer), invalidatedRenderer(false) {
+      : api(api), root(*this), mainCamera(), renderer(nullptr),
+        invalidatedRenderer(false) {
     mainCamera = &root.append<CameraObject>();
   };
   friend class FlimAPI;

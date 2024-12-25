@@ -4,12 +4,10 @@
 
 namespace Flim {
 
-Renderer emptyRenderer{};
-
 void Scene::invalidateRenderer() { invalidatedRenderer = true; }
 
 void Scene::defaultRenderer(Renderer &renderer) {
-  this->renderer = renderer;
+  this->renderer = &renderer;
 }
 
 InstanceObject &Scene::instantiate(Mesh &mesh) {

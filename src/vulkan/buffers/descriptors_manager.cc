@@ -3,7 +3,6 @@
 #include "api/tree/instance_object.hh"
 #include "vulkan/context.hh"
 #include <cassert>
-#include <iostream>
 
 void DescriptorsManager::createDescriptorSetLayout() {
   descriptors = &context.renderer->descriptors;
@@ -94,10 +93,6 @@ void DescriptorsManager::updateUniforms(const Flim::InstanceObject &obj,
 }
 
 void DescriptorsManager::cleanup() {
-  assert(descriptors != nullptr);
-  for (auto desc : context.renderer->descriptors) {
-    desc->cleanup();
-  }
   vkDestroyDescriptorPool(context.device, context.descriptorPool, nullptr);
   vkDestroyDescriptorSetLayout(context.device, context.descriptorSetLayout,
                                nullptr);

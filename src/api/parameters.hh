@@ -31,6 +31,12 @@ struct Renderer {
   Shader fragmentShader;
   RendererMode mode = RendererMode::RENDERER_MODE_TRIS;
 
+  ~Renderer() {
+    for (auto desc : descriptors) {
+      desc->cleanup();
+    }
+  }
+
   std::shared_ptr<GeneralDescriptor> addGeneralDescriptor(int binding) {
     std::shared_ptr<GeneralDescriptor> ptr =
         std::make_unique<GeneralDescriptor>(binding);
