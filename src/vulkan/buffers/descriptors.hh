@@ -98,6 +98,22 @@ public:
     return *this;
   };
 
+  template <typename T> GeneralDescriptor &attach(T &ref) {
+    static_assert(
+        std::is_scalar<T>() || alignof(T) % 2 == 0,
+        "Non-scalar descriptor attchement should be aligned on 2 bytes. Please "
+        "consider adding 'alignas(16)' after the struct keyword. Also check "
+        "that every values in the struct are all individually also aligned on "
+        "2 bytes. Please consider adding 'alignas(16)' before each attributes");
+    bufferSize = sizeof(T);
+    // Cast to T::update<void(T*)>
+    updateFunction = [&](const Flim::InstanceObject &,
+                         const Flim::CameraObject &, void *ptr) {
+      memcpy(static_cast<T *>(ptr), &ref, bufferSize);
+    };
+    return *this;
+  };
+
   VkWriteDescriptorSet getDescriptor(int i) override;
 
   void setup() override;

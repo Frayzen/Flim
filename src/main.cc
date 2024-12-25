@@ -41,6 +41,11 @@ struct MaterialUniform {
   }
 };
 
+struct PointUniform {
+  float pointSize = 5.0f;
+  bool applyDiffuse = true;
+} pointDesc;
+
 int main() {
   Flim::FlimAPI api = FlimAPI::init();
   Scene &scene = api.getScene();
@@ -48,11 +53,13 @@ int main() {
       Shader("shaders/default.vert.spv"),
       Shader("shaders/default.frag.spv"),
   };
+
   renderer.addGeneralDescriptor(0)->attach<LocationUniform>();
   renderer.addGeneralDescriptor(1)->attach<MaterialUniform>();
+  renderer.addGeneralDescriptor(2)->attach<PointUniform>(pointDesc);
 
   Mesh teddy = MeshUtils(scene).loadFromFile("resources/single_file/teddy.obj");
-  renderer.addImageDescriptor(2, teddy.getMaterial().texturePath);
+  renderer.addImageDescriptor(3, teddy.getMaterial().texturePath);
 
   scene.defaultRenderer(renderer);
 
@@ -76,5 +83,9 @@ int main() {
                         (float *)&obj.mesh.getMaterial().ambient, 0.0f, 1.0f);
     ImGui::SliderFloat3("Diffuse color",
                         (float *)&obj.mesh.getMaterial().diffuse, 0.0f, 1.0f);
+    if (renderer.mode == RendererMode::RENDERER_MODE_POINTS) {
+      ImGui::SliderFloat("Point size", &pointDesc.pointSize, 0.0f, 20.0f);
+      ImGui::Checkbox("Point diffuse color", &pointDesc.applyDiffuse);
+    }
   });
 }
