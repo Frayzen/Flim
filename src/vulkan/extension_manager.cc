@@ -141,8 +141,6 @@ void ExtensionManager::setupDebugMessenger() {
   if (!enableValidationLayers)
     return;
   populateDebugMessengerCreateInfo();
-  std::cout << &context << std::endl;
-  std::cout << context.instance << std::endl;
   if (ExtensionManager::CreateDebugUtilsMessengerEXT(
           context.instance, &debugCreateInfo, nullptr, &debugMessenger) !=
       VK_SUCCESS) {

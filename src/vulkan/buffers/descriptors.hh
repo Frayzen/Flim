@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <format>
 #include <functional>
 #include <stdexcept>
 #include <string>
@@ -82,6 +83,12 @@ public:
         bufferSize(0) {};
 
   template <HasUpdateMethod T> GeneralDescriptor &attach() {
+    static_assert(
+        std::is_scalar<T>() || alignof(T) % 2 == 0,
+        "Non-scalar descriptor attchement should be aligned on 2 bytes. Please "
+        "consider adding 'alignas(16)' after the struct keyword. Also check "
+        "that every values in the struct are all individually also aligned on "
+        "2 bytes. Please consider adding 'alignas(16)' before each attributes");
     bufferSize = sizeof(T);
     // Cast to T::update<void(T*)>
     updateFunction = [](const Flim::InstanceObject &istc,

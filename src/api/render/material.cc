@@ -20,8 +20,6 @@ Material Material::createFrom(aiMaterial *aiMat) {
 
   aiMat->Get(AI_MATKEY_SHININESS, m.shininess);
   aiMat->Get(AI_MATKEY_SHININESS_STRENGTH, m.shininess_strength);
-  std::cout << aiMat->GetTextureCount(aiTextureType_DIFFUSE) << std::endl;
-  std::cout << aiMat->GetTextureCount(aiTextureType_AMBIENT) << std::endl;
   for (unsigned int i = 0; i < aiMat->GetTextureCount(aiTextureType_DIFFUSE);
        i++) {
     aiString textureName;

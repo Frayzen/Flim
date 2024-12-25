@@ -27,6 +27,9 @@ void ImageDescriptor::setup() {
     pixels = new stbi_uc[4]{255, 255, 255};
     if (path.length() != 0)
       std::cerr << "failed to load texture image '" + path + "' !" << std::endl;
+    else
+      std::cerr << "Warning: empty path for texture (binding " << binding << ")"
+                << std::endl;
   }
   VkDeviceSize imageSize = texWidth * texHeight * 4;
 

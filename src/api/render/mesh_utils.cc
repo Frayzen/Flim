@@ -136,7 +136,6 @@ static Transform getMeshTransformFromScene(const aiScene *scene) {
   scene->mMetaData->Get<int>("FrontAxisSign", upAxisSign);
   scene->mMetaData->Get<int>("CoordAxis", upAxis);
   scene->mMetaData->Get<int>("CoordAxisSign", upAxisSign);
-  std::cout << upAxis << " " << upAxisSign << std::endl;
   aiVector3D upVec = upAxis == 0   ? aiVector3D(upAxisSign, 0, 0)
                      : upAxis == 1 ? aiVector3D(0, upAxisSign, 0)
                                    : aiVector3D(0, 0, upAxisSign);
@@ -170,8 +169,6 @@ Mesh MeshUtils::loadFromFile(std::string path) {
           aiProcess_GenNormals /* or aiProcess_GenSmoothNormals */);
 
   mat4 rot = *((mat4 *)&scene->mRootNode->mTransformation);
-  std::cout << glm::to_string(rot) << std::endl;
-  std::cout << scene << std::endl;
 
   if (scene == NULL || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       scene->mRootNode == NULL)
@@ -179,8 +176,8 @@ Mesh MeshUtils::loadFromFile(std::string path) {
 
   for (uint i = 0; i < scene->mNumMeshes; i++) {
     Mesh m;
-    std::cout << " = Creating the mesh..." << '\n';
-
+    std::cout << " = [MESH " << i << "] Creating mesh" << std::endl;
+    std::cout << " | Retrieving vertices" << std::endl;
     auto mesh = scene->mMeshes[i];
     Vertex vtx{};
     for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
@@ -191,6 +188,7 @@ Mesh MeshUtils::loadFromFile(std::string path) {
       m.vertices.emplace_back(vtx);
     }
 
+    std::cout << " | Retrieving indices" << std::endl;
     // Retrieve indices (assuming triangles)
     for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
       aiFace face = mesh->mFaces[i];
@@ -201,9 +199,12 @@ Mesh MeshUtils::loadFromFile(std::string path) {
         m.indices.emplace_back(face.mIndices[2]);
       }
     }
+    std::cout << " | Attaching material" << std::endl;
     m.attachMaterial(
         Material::createFrom(scene->mMaterials[mesh->mMaterialIndex]));
     /* m.transform = getMeshTransformFromScene(scene); */
+
+    std::cout << " = [MESH " << i << "] Finished creating" << std::endl;
     return m;
   }
   return Mesh();

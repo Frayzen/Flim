@@ -50,11 +50,12 @@ int main() {
   };
   renderer.addGeneralDescriptor(0)->attach<LocationUniform>();
   renderer.addGeneralDescriptor(1)->attach<MaterialUniform>();
-  renderer.addImageDescriptor(2, "textures/texture.jpg");
+
+  Mesh teddy = MeshUtils(scene).loadFromFile("resources/single_file/teddy.obj");
+  renderer.addImageDescriptor(2, teddy.getMaterial().texturePath);
 
   scene.defaultRenderer(renderer);
 
-  Mesh teddy = MeshUtils(scene).loadFromFile("resources/single_file/teddy.obj");
   auto &obj = scene.instantiate(teddy);
   obj.transform.position = vec3(0, 0, -11);
   obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
@@ -63,6 +64,7 @@ int main() {
   scene.mainCamera->transform.position = vec3(0, 0, 0);
   scene.mainCamera->sensivity = 8;
   /* obj.transform.rotation = glm::identity<quat>(); */
+
   float a;
   return api.run([&] {
     const char *items[] = {"Triangles", "Bars", "Dots"};
