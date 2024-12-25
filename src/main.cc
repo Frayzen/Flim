@@ -50,6 +50,7 @@ int main() {
   };
   renderer.addGeneralDescriptor(0)->attach<LocationUniform>();
   renderer.addGeneralDescriptor(1)->attach<MaterialUniform>();
+  renderer.addImageDescriptor(2, "textures/texture.jpg");
 
   scene.defaultRenderer(renderer);
 

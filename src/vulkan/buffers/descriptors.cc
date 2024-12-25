@@ -117,12 +117,10 @@ VkWriteDescriptorSet ImageDescriptor::getDescriptor(int i) {
 }
 
 void ImageDescriptor::cleanup() {
-  for (auto &image : context.images) {
-    vkDestroySampler(context.device, image.sampler, nullptr);
-    vkDestroyImageView(context.device, image.view, nullptr);
-    vkDestroyImage(context.device, image.textureImage, nullptr);
-    vkFreeMemory(context.device, image.textureImageMemory, nullptr);
-  }
+  vkDestroySampler(context.device, image.sampler, nullptr);
+  vkDestroyImageView(context.device, image.view, nullptr);
+  vkDestroyImage(context.device, image.textureImage, nullptr);
+  vkFreeMemory(context.device, image.textureImageMemory, nullptr);
 }
 
 void GeneralDescriptor::setup() {

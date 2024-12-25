@@ -4,6 +4,7 @@
 #include "vulkan/buffers/descriptors.hh"
 #include <iostream>
 #include <memory>
+#include <string>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
@@ -33,6 +34,14 @@ struct Renderer {
   std::shared_ptr<GeneralDescriptor> addGeneralDescriptor(int binding) {
     std::shared_ptr<GeneralDescriptor> ptr =
         std::make_unique<GeneralDescriptor>(binding);
+    descriptors.push_back(ptr);
+    return ptr;
+  }
+
+  std::shared_ptr<ImageDescriptor> addImageDescriptor(int binding,
+                                                      std::string path) {
+    std::shared_ptr<ImageDescriptor> ptr =
+        std::make_unique<ImageDescriptor>(binding, path);
     descriptors.push_back(ptr);
     return ptr;
   }
