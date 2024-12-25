@@ -31,7 +31,7 @@ public:
 
   // Uniform
   void updateUniformBuffer(const Flim::Mesh &mesh,
-                           const Flim::FreeCameraObject *cam);
+                           const Flim::CameraObject *cam);
   void createDescriptorPool();
   void createDescriptorSets();
 

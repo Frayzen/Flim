@@ -6,10 +6,10 @@
 #include <glm/trigonometric.hpp>
 namespace Flim {
 
-class FreeCameraObject : public TreeObject {
+class CameraObject : public TreeObject {
 
 public:
-  FreeCameraObject(TreeObject *parent)
+  CameraObject(TreeObject *parent)
       : TreeObject(parent), is2D(false), near(0.1f), far(1000), fov(90), speed(1),
         sensivity(1), pitch(0), yaw(0), lockPitch(45) {};
 

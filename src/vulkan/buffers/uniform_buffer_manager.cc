@@ -171,7 +171,7 @@ void BufferManager::createDescriptorSets() {
 }
 
 void BufferManager::updateUniformBuffer(const Flim::Mesh &mesh,
-                                        const Flim::FreeCameraObject *cam) {
+                                        const Flim::CameraObject *cam) {
   static auto startTime = std::chrono::high_resolution_clock::now();
 
   auto currentTime = std::chrono::high_resolution_clock::now();

@@ -20,7 +20,7 @@ public:
 
   FlimAPI &api;
   Renderer *renderer;
-  FreeCameraObject *mainCamera;
+  CameraObject *mainCamera;
   void invalidateRenderer();
 
 private:
@@ -28,7 +28,7 @@ private:
   RootObject root;
   Scene(FlimAPI &api)
       : api(api), root(*this), mainCamera(), invalidatedRenderer(false) {
-    mainCamera = &root.append<FreeCameraObject>();
+    mainCamera = &root.append<CameraObject>();
   };
   friend class FlimAPI;
 };
