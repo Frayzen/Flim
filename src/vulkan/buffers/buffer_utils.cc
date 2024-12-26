@@ -103,7 +103,8 @@ void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
   endSingleTimeCommands(commandBuffer);
 }
 
-void populateBufferFromData(Buffer &buffer, void *data, size_t dataSize) {
+void populateBufferFromData(Buffer &buffer, VkBufferUsageFlags usage,
+                            void *data, size_t dataSize) {
   Buffer stagingBuffer;
   createBuffer(
       dataSize,
@@ -114,17 +115,16 @@ void populateBufferFromData(Buffer &buffer, void *data, size_t dataSize) {
                                                 // bound buffer reflect the
                                                 // state of the actual buffer
       stagingBuffer);
+  void *mapped;
   vkMapMemory(context.device, stagingBuffer.bufferMemory, 0, dataSize, 0,
-              &data);
-  memcpy(data, data, (size_t)dataSize);
+              &mapped);
+  memcpy(mapped, data, (size_t)dataSize);
   vkUnmapMemory(context.device, stagingBuffer.bufferMemory);
+  
+// VK_BUFFER_USAGE_TRANSFER_DST_BIT required to be passed as destination in a memory transfer operation
 
-  createBuffer(
-      dataSize,
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT | // required to be passed as destination
-                                         // in a memory transfer operation
-          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer);
+  createBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer);
   copyBuffer(stagingBuffer.buffer, buffer.buffer, dataSize);
   vkDestroyBuffer(context.device, stagingBuffer.buffer, nullptr);
   vkFreeMemory(context.device, stagingBuffer.bufferMemory, nullptr);

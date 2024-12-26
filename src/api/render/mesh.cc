@@ -16,10 +16,12 @@ void Mesh::updateBuffers() {
     cleanup();
   assert(vertices.size() > 0);
   assert(indices.size() > 0);
-  populateBufferFromData(vertexBuffer, vertices.data(),
+
+  populateBufferFromData(vertexBuffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                         vertices.data(),
                          vertices.size() * sizeof(vertices[0]));
-  populateBufferFromData(indexBuffer, indices.data(),
-                         indices.size() * sizeof(indices[0]));
+  populateBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                         indices.data(), indices.size() * sizeof(indices[0]));
   bufferCreated = true;
 }
 

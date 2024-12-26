@@ -6,6 +6,8 @@
 #include <glm/fwd.hpp>
 #include <vector>
 
+class CommandPoolManager;
+
 namespace Flim {
 
 struct Vertex {
@@ -24,7 +26,7 @@ public:
   void attachMaterial(Material m);
   ~Mesh();
 
-private:
+protected:
   Mesh() : bufferCreated(false) {};
 
   Material material;
@@ -33,12 +35,13 @@ private:
 
   void updateBuffers();
 
-protected:
   bool bufferCreated;
   Buffer indexBuffer;
   Buffer vertexBuffer;
   void cleanup();
 
   friend class MeshUtils;
+  friend class ::CommandPoolManager;
 };
+
 }; // namespace Flim

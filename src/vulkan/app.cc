@@ -88,9 +88,6 @@ void VulkanApplication::setupGraphics(Flim::Scene &scene) {
   const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
 
   // Vertices
-  buffer_manager.createVertexBuffer(instance->mesh.getVertices());
-  buffer_manager.createIndexBuffer(instance->mesh.getTriangles());
-
   descriptors_manager.setupUniforms();
   descriptors_manager.createDescriptorPool();
   descriptors_manager.createDescriptorSets();
@@ -134,7 +131,7 @@ bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
   }
   descriptors_manager.updateUniforms(instance, camera);
   /* buffer_manager.updateUniformBuffer(instance->mesh, scene.mainCamera); */
-  command_pool_manager.renderFrame(instance.mesh.getTriangles().size());
+  command_pool_manager.renderFrame(instance.mesh);
   gui_manager.beginFrame();
   renderMethod();
   gui_manager.endFrame();

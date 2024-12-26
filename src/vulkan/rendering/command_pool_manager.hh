@@ -1,5 +1,6 @@
 #pragma once
 
+#include "api/render/mesh.hh"
 #include "vulkan/context.hh"
 #include <vulkan/vulkan_core.h>
 
@@ -10,13 +11,13 @@ public:
   void createCommandBuffers();
   void createSyncObjects();
   bool acquireFrame(); // return if the swap chain is no longer adequate
-  void renderFrame(uint32_t numberIndices);
+  void renderFrame(const Flim::Mesh &mesh);
   bool submitFrame(bool framebufferResized); // return if the swap chain is no
                                              // longer adequate
   void cleanup();
 
 private:
   void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex,
-                           uint32_t numberIndices);
+                           const Flim::Mesh &mesh);
   CommandPool &commandPool;
 };

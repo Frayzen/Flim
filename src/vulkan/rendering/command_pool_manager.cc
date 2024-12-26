@@ -1,4 +1,5 @@
 #include "command_pool_manager.hh"
+#include "api/render/mesh.hh"
 #include "consts.hh"
 #include "vulkan/device/device_utils.hh"
 
@@ -56,8 +57,8 @@ static void createImageMemoryBarrier(const VkCommandBuffer &commandBuffer,
 }
 
 void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
-                                             uint32_t imageIndex,
-                                             uint32_t numberIndices) {
+                                             uint32_t swapChainIndex,
+                                             const Flim::Mesh &mesh) {
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = 0;                  // Optional
@@ -69,7 +70,7 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
 
   createImageMemoryBarrier(commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED,
                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                           context.swapChain.swapChainImages[imageIndex]);
+                           context.swapChain.swapChainImages[swapChainIndex]);
 
   VkRenderingAttachmentInfo depthInfo{};
   depthInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
@@ -82,7 +83,7 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   VkRenderingAttachmentInfoKHR attachmentInfoKHR{};
   attachmentInfoKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
   attachmentInfoKHR.imageView =
-      context.swapChain.swapChainImageViews[imageIndex];
+      context.swapChain.swapChainImageViews[swapChainIndex];
   attachmentInfoKHR.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   attachmentInfoKHR.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   attachmentInfoKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -104,7 +105,7 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
           context.instance, "vkCmdBeginRenderingKHR");
   vkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
   // Draw calls here
-  
+
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     context.pipeline.graphicsPipeline);
 
@@ -124,55 +125,17 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   scissor.extent = context.swapChain.swapChainExtent;
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-  VkBuffer vertexBuffers[] = {context.vertexBuffer.buffer};
+  VkBuffer vertexBuffers[] = {mesh.vertexBuffer.buffer};
   VkDeviceSize offsets[] = {0};
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-  vkCmdBindIndexBuffer(commandBuffer, context.indexBuffer.buffer, 0,
+  vkCmdBindIndexBuffer(commandBuffer, mesh.indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT16);
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           context.pipeline.pipelineLayout, 0, 1,
                           &context.descriptorSets[context.currentImage], 0,
                           nullptr);
-  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(numberIndices), 1, 0, 0,
-                   0);
-
-  /* VkRenderPassBeginInfo renderPassInfo{}; */
-
-  /* renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO; */
-  /* renderPassInfo.renderPass = context.pipeline.renderPass; */
-  /* renderPassInfo.framebuffer = */
-  /*     context.swapChain.swapChainFramebuffers[imageIndex]; */
-  /* // renderArea defines where shader loads and stores will take place */
-  /* renderPassInfo.renderArea.offset = {0, 0}; */
-  /* renderPassInfo.renderArea.extent = context.swapChain.swapChainExtent; */
-
-  // define the clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we
-  // used as load operation for the color attachment
-  /* std::array<VkClearValue, 2> clearValues{}; */
-
-  // The order of clearValues should be identical to the order of your
-  // attachments
-  /* clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}}; */
-  /* clearValues[1].depthStencil = {1.0f, 0}; */
-  /* renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-   */
-  /* renderPassInfo.pClearValues = clearValues.data(); */
-
-  /* vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, */
-  /*                      VK_SUBPASS_CONTENTS_INLINE); */
-
-  /*
-    TAKES AS PARAMETER:
-    * vertexCount: Even though we don't have a vertex buffer, we technically
-    still have 3 vertices to draw.
-    * instanceCount: Used for instanced rendering, use 1 if you're not doing
-    that.
-    * firstVertex: Used as an offset into the vertex buffer, defines the lowest
-    value of gl_VertexIndex.
-    * firstInstance: Used as an offset for instanced rendering, defines the
-    lowest value of gl_InstanceIndex
-  */
-  /* vkCmdDraw(commandBuffer, 3, 1, 0, 0); */
+  uint32_t nbIndices = static_cast<uint32_t>(mesh.indices.size());
+  vkCmdDrawIndexed(commandBuffer, nbIndices, 1, 0, 0, 0);
 }
 
 void CommandPoolManager::createCommandBuffers() {
@@ -240,7 +203,7 @@ bool CommandPoolManager::acquireFrame() {
   return false;
 }
 
-void CommandPoolManager::renderFrame(uint32_t numberIndices) {
+void CommandPoolManager::renderFrame(const Flim::Mesh &mesh) {
   auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
   auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
   auto &inFlightFences = commandPool.inFlightFences;
@@ -249,8 +212,7 @@ void CommandPoolManager::renderFrame(uint32_t numberIndices) {
   vkResetFences(context.device, 1, &inFlightFences[context.currentImage]);
 
   vkResetCommandBuffer(commandBuffers[context.currentImage], 0);
-  recordCommandBuffer(commandBuffers[context.currentImage], imageIndex,
-                      numberIndices);
+  recordCommandBuffer(commandBuffers[context.currentImage], imageIndex, mesh);
 }
 
 bool CommandPoolManager::submitFrame(bool framebufferResized) {

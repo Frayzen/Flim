@@ -21,10 +21,10 @@ public:
   BufferManager() = default;
 
   // Vertices
-  void createVertexBuffer(const std::vector<Flim::Vertex> &vertices);
-  void createIndexBuffer(const std::vector<uint16> indices);
-  void createDescriptorSetLayout();
-  void createUniformBuffers();
+  /* void createVertexBuffer(const std::vector<Flim::Vertex> &vertices); */
+  /* void createIndexBuffer(const std::vector<uint16> indices); */
+  /* void createDescriptorSetLayout(); */
+  /* void createUniformBuffers(); */
 
   void createDepthResources();
 

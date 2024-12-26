@@ -20,9 +20,6 @@ public:
   CommandPool commandPool;
   Pipeline pipeline;
   SwapChain swapChain;
-  Buffer stagingBuffer;
-  Buffer indexBuffer;
-  Buffer vertexBuffer;
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorPool descriptorPool;
   std::vector<VkDescriptorSet> descriptorSets;
