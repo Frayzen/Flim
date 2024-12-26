@@ -1,6 +1,7 @@
 #include "buffer_utils.hh"
-#include <fwd.hh>
 #include "vulkan/context.hh"
+#include <cstring>
+#include <fwd.hh>
 #include <stdexcept>
 
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
@@ -100,4 +101,35 @@ void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
   vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
   endSingleTimeCommands(commandBuffer);
+}
+
+void populateBufferFromData(Buffer &buffer, void *data, size_t dataSize) {
+  Buffer stagingBuffer;
+  createBuffer(
+      dataSize,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT, // required to be passed as source
+                                        // in a memory transfer operation
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, // means that the state of the
+                                                // bound buffer reflect the
+                                                // state of the actual buffer
+      stagingBuffer);
+  vkMapMemory(context.device, stagingBuffer.bufferMemory, 0, dataSize, 0,
+              &data);
+  memcpy(data, data, (size_t)dataSize);
+  vkUnmapMemory(context.device, stagingBuffer.bufferMemory);
+
+  createBuffer(
+      dataSize,
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT | // required to be passed as destination
+                                         // in a memory transfer operation
+          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer);
+  copyBuffer(stagingBuffer.buffer, buffer.buffer, dataSize);
+  vkDestroyBuffer(context.device, stagingBuffer.buffer, nullptr);
+  vkFreeMemory(context.device, stagingBuffer.bufferMemory, nullptr);
+}
+void destroyBuffer(Buffer &buffer) {
+  vkDestroyBuffer(context.device, buffer.buffer, nullptr);
+  vkFreeMemory(context.device, buffer.bufferMemory, nullptr);
 }

@@ -1,26 +1,18 @@
 #include "buffer_manager.hh"
-#include <cstddef>
-void BufferManager::cleanup() {
-  for (auto &image : context.images) {
-    vkDestroySampler(context.device, image.sampler, nullptr);
-    vkDestroyImageView(context.device, image.view, nullptr);
-    vkDestroyImage(context.device, image.textureImage, nullptr);
-    vkFreeMemory(context.device, image.textureImageMemory, nullptr);
-  }
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    vkDestroyBuffer(context.device, uniformLocationBuffers[i].buffer, nullptr);
-    vkFreeMemory(context.device, uniformLocationBuffers[i].bufferMemory, nullptr);
+#include "vulkan/buffers/texture_utils.hh"
+#include "vulkan/context.hh"
+#include "vulkan/rendering/utils.hh"
 
-    vkDestroyBuffer(context.device, uniformMaterialBuffers[i].buffer, nullptr);
-    vkFreeMemory(context.device, uniformMaterialBuffers[i].bufferMemory, nullptr);
-  }
-  vkDestroyDescriptorPool(context.device, context.descriptorPool, nullptr);
-  vkDestroyDescriptorSetLayout(context.device, context.descriptorSetLayout,
-                               nullptr);
+void BufferManager::createDepthResources() {
+  VkFormat depthFormat = findDepthFormat(context);
+  VkExtent2D &extent = context.swapChain.swapChainExtent;
+  context.depthImage.width = extent.width;
+  context.depthImage.height = extent.height;
+  createImage(context.depthImage, depthFormat, VK_IMAGE_TILING_OPTIMAL,
+              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  createImageView(context.depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-  vkDestroyBuffer(context.device, context.indexBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, context.indexBuffer.bufferMemory, nullptr);
-
-  vkDestroyBuffer(context.device, context.vertexBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, context.vertexBuffer.bufferMemory, nullptr);
+  transitionImageLayout(context.depthImage,
+                        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }

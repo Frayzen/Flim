@@ -199,6 +199,8 @@ Mesh MeshUtils::loadFromFile(std::string path) {
         m.indices.emplace_back(face.mIndices[2]);
       }
     }
+    m.updateBuffers();
+
     std::cout << " | Attaching material" << std::endl;
     m.attachMaterial(
         Material::createFrom(scene->mMaterials[mesh->mMaterialIndex]));

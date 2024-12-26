@@ -22,13 +22,22 @@ public:
   const std::vector<Vertex> &getVertices() const;
   const std::vector<uint16> &getTriangles() const;
   void attachMaterial(Material m);
+  ~Mesh();
 
 private:
-  Mesh() = default;
+  Mesh() : bufferCreated(false) {};
 
   Material material;
   std::vector<Vertex> vertices;
   std::vector<uint16> indices;
+
+  void updateBuffers();
+
+protected:
+  bool bufferCreated;
+  Buffer indexBuffer;
+  Buffer vertexBuffer;
+  void cleanup();
 
   friend class MeshUtils;
 };

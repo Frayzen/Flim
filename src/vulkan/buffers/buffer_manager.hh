@@ -1,9 +1,6 @@
 #pragma once
 
 #include "api/render/mesh.hh"
-#include "api/tree/camera_object.hh"
-
-#include "vulkan/context.hh"
 #include <glm/fwd.hpp>
 #include <vulkan/vulkan_core.h>
 
@@ -29,19 +26,7 @@ public:
   void createDescriptorSetLayout();
   void createUniformBuffers();
 
-  // Uniform
-  void updateUniformBuffer(const Flim::Mesh &mesh,
-                           const Flim::CameraObject *cam);
-  void createDescriptorPool();
-  void createDescriptorSets();
-
-  // Texture
-  void createTextureImage(const std::string &imgPath);
-  void createTextureImageView();
-  void createTextureSampler();
   void createDepthResources();
-
-  void cleanup();
 
 private:
   std::vector<Buffer> uniformLocationBuffers;
