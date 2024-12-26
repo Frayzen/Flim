@@ -9,8 +9,8 @@
 #include <glm/fwd.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <memory>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 namespace Flim {
 class TreeObject {
@@ -26,12 +26,13 @@ public:
     return nullptr;
   }
 
-  template <typename T> T *findAll() const {
+  template <typename T> std::vector<T *> findAll() const {
+    std::vector<T *> all;
     for (auto &c : children) {
       if (auto cast = std::dynamic_pointer_cast<T>(c))
-        return cast.get();
+        all.push_back(cast.get());
     }
-    return nullptr;
+    return all;
   }
 
   template <typename T, typename... Args>
@@ -69,6 +70,5 @@ protected:
 
   friend class InstanceObject;
 };
-
 
 } // namespace Flim

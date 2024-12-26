@@ -17,7 +17,7 @@ public:
   void cleanup();
 
 private:
-  void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex,
+  void recordCommandBuffer(VkCommandBuffer commandBuffer,
                            const Flim::Mesh &mesh);
   CommandPool &commandPool;
 };

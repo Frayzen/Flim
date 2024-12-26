@@ -57,73 +57,8 @@ static void createImageMemoryBarrier(const VkCommandBuffer &commandBuffer,
 }
 
 void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
-                                             uint32_t swapChainIndex,
                                              const Flim::Mesh &mesh) {
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = 0;                  // Optional
-  beginInfo.pInheritanceInfo = nullptr; // Optional
-
-  if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-    throw std::runtime_error("failed to begin recording command buffer!");
-  }
-
-  createImageMemoryBarrier(commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED,
-                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                           context.swapChain.swapChainImages[swapChainIndex]);
-
-  VkRenderingAttachmentInfo depthInfo{};
-  depthInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-  depthInfo.imageView = context.depthImage.view;
-  depthInfo.imageLayout = context.depthImage.layout;
-  depthInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  depthInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  depthInfo.clearValue.depthStencil.depth = 1.0f;
-
-  VkRenderingAttachmentInfoKHR attachmentInfoKHR{};
-  attachmentInfoKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-  attachmentInfoKHR.imageView =
-      context.swapChain.swapChainImageViews[swapChainIndex];
-  attachmentInfoKHR.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  attachmentInfoKHR.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  attachmentInfoKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  // define the clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we
-  // used as load operation for the color attachment
-  attachmentInfoKHR.clearValue = {{0, 0, 0, 1.0f}};
-
-  VkRenderingInfoKHR renderInfo{};
-  renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-  renderInfo.renderArea.offset = {0, 0};
-  renderInfo.renderArea.extent = context.swapChain.swapChainExtent;
-  renderInfo.layerCount = 1;
-  renderInfo.colorAttachmentCount = 1;
-  renderInfo.pColorAttachments = &attachmentInfoKHR;
-  renderInfo.pDepthAttachment = &depthInfo;
-
-  auto vkCmdBeginRenderingKHR =
-      (PFN_vkCmdBeginRenderingKHR)vkGetInstanceProcAddr(
-          context.instance, "vkCmdBeginRenderingKHR");
-  vkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
   // Draw calls here
-
-  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    context.pipeline.graphicsPipeline);
-
-  // viewport and scissor state for this pipeline are dynamic
-  VkViewport viewport{};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
-  viewport.width = static_cast<float>(context.swapChain.swapChainExtent.width);
-  viewport.height =
-      static_cast<float>(context.swapChain.swapChainExtent.height);
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-  VkRect2D scissor{};
-  scissor.offset = {0, 0};
-  scissor.extent = context.swapChain.swapChainExtent;
-  vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
   VkBuffer vertexBuffers[] = {mesh.vertexBuffer.buffer};
   VkDeviceSize offsets[] = {0};
@@ -200,19 +135,81 @@ bool CommandPoolManager::acquireFrame() {
     return true;
   if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
     throw std::runtime_error("failed to acquire swap chain image!");
+  auto &inFlightFences = commandPool.inFlightFences;
+  // Only reset the fence if we are submitting work
+  VkCommandBuffer &commandBuffer =
+      commandPool.commandBuffers[context.currentImage];
+  vkResetFences(context.device, 1, &inFlightFences[context.currentImage]);
+  vkResetCommandBuffer(commandBuffer, 0);
+
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = 0;                  // Optional
+  beginInfo.pInheritanceInfo = nullptr; // Optional
+
+  if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+    throw std::runtime_error("failed to begin recording command buffer!");
+  }
+
+  createImageMemoryBarrier(commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED,
+                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                           context.swapChain.swapChainImages[imageIndex]);
+
+  VkRenderingAttachmentInfo depthInfo{};
+  depthInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+  depthInfo.imageView = context.depthImage.view;
+  depthInfo.imageLayout = context.depthImage.layout;
+  depthInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  depthInfo.clearValue.depthStencil.depth = 1.0f;
+
+  VkRenderingAttachmentInfoKHR attachmentInfoKHR{};
+  attachmentInfoKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+  attachmentInfoKHR.imageView =
+      context.swapChain.swapChainImageViews[imageIndex];
+  attachmentInfoKHR.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  attachmentInfoKHR.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachmentInfoKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  // define the clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we
+  // used as load operation for the color attachment
+  attachmentInfoKHR.clearValue = {{0, 0, 0, 1.0f}};
+
+  VkRenderingInfoKHR renderInfo{};
+  renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+  renderInfo.renderArea.offset = {0, 0};
+  renderInfo.renderArea.extent = context.swapChain.swapChainExtent;
+  renderInfo.layerCount = 1;
+  renderInfo.colorAttachmentCount = 1;
+  renderInfo.pColorAttachments = &attachmentInfoKHR;
+  renderInfo.pDepthAttachment = &depthInfo;
+  auto vkCmdBeginRenderingKHR =
+      (PFN_vkCmdBeginRenderingKHR)vkGetInstanceProcAddr(
+          context.instance, "vkCmdBeginRenderingKHR");
+  vkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
+
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    context.pipeline.graphicsPipeline);
+
+  // viewport and scissor state for this pipeline are dynamic
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = static_cast<float>(context.swapChain.swapChainExtent.width);
+  viewport.height =
+      static_cast<float>(context.swapChain.swapChainExtent.height);
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = context.swapChain.swapChainExtent;
+  vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
   return false;
 }
 
 void CommandPoolManager::renderFrame(const Flim::Mesh &mesh) {
-  auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
-  auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
-  auto &inFlightFences = commandPool.inFlightFences;
-  auto &commandBuffers = commandPool.commandBuffers;
-  // Only reset the fence if we are submitting work
-  vkResetFences(context.device, 1, &inFlightFences[context.currentImage]);
-
-  vkResetCommandBuffer(commandBuffers[context.currentImage], 0);
-  recordCommandBuffer(commandBuffers[context.currentImage], imageIndex, mesh);
+  recordCommandBuffer(commandPool.commandBuffers[context.currentImage], mesh);
 }
 
 bool CommandPoolManager::submitFrame(bool framebufferResized) {

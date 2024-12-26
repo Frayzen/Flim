@@ -59,18 +59,22 @@ int main() {
   renderer.addGeneralDescriptor(2)->attach<PointUniform>(pointDesc);
 
   Mesh teddy = MeshUtils(scene).loadFromFile("resources/single_file/teddy.obj");
+  Mesh room = MeshUtils(scene).loadFromFile("resources/viking_room/viking_room.obj");
   renderer.addImageDescriptor(3, teddy.getMaterial().texturePath);
 
   scene.defaultRenderer(renderer);
 
-  auto &obj = scene.instantiate(teddy);
-  obj.transform.position = vec3(0, 0, -11);
-  obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
+  auto &teddy_obj = scene.instantiate(teddy);
+  teddy_obj.transform.position = vec3(0, 0, -11);
+  teddy_obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
+
+  auto &room_obj = scene.instantiate(room);
+  room_obj.transform.scale = vec3(5);
+
 
   scene.mainCamera->speed = 30;
   scene.mainCamera->transform.position = vec3(0, 0, 0);
   scene.mainCamera->sensivity = 8;
-  /* obj.transform.rotation = glm::identity<quat>(); */
 
   float a;
   return api.run([&] {
@@ -80,9 +84,9 @@ int main() {
       scene.invalidateRenderer();
     }
     ImGui::SliderFloat3("Ambient color",
-                        (float *)&obj.mesh.getMaterial().ambient, 0.0f, 1.0f);
+                        (float *)&teddy_obj.mesh.getMaterial().ambient, 0.0f, 1.0f);
     ImGui::SliderFloat3("Diffuse color",
-                        (float *)&obj.mesh.getMaterial().diffuse, 0.0f, 1.0f);
+                        (float *)&teddy_obj.mesh.getMaterial().diffuse, 0.0f, 1.0f);
     if (renderer.mode == RendererMode::RENDERER_MODE_POINTS) {
       ImGui::SliderFloat("Point size", &pointDesc.pointSize, 0.0f, 20.0f);
       ImGui::Checkbox("Point diffuse color", &pointDesc.applyDiffuse);

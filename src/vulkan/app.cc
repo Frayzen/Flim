@@ -91,16 +91,6 @@ void VulkanApplication::setupGraphics(Flim::Scene &scene) {
   descriptors_manager.setupUniforms();
   descriptors_manager.createDescriptorPool();
   descriptors_manager.createDescriptorSets();
-  /*   // Texture */
-  /*   buffer_manager.createTextureImage(instance->mesh.getMaterial().texturePath);
-   */
-  /*   buffer_manager.createTextureImageView(); */
-  /*   buffer_manager.createTextureSampler(); */
-
-  /*   // Uniform */
-  /*   buffer_manager.createUniformBuffers(); */
-  /*   buffer_manager.createDescriptorPool(); */
-  /*   buffer_manager.createDescriptorSets(); */
 }
 
 void VulkanApplication::recreateSwapChain() {
@@ -121,7 +111,6 @@ void VulkanApplication::recreateSwapChain() {
 
 bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
                                  Flim::Scene &scene) {
-  const auto &instance = *scene.getRoot().findAny<Flim::InstanceObject>();
   const auto &camera = *scene.mainCamera;
   glfwPollEvents();
 
@@ -129,9 +118,12 @@ bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
     recreateSwapChain();
     return false;
   }
-  descriptors_manager.updateUniforms(instance, camera);
-  /* buffer_manager.updateUniformBuffer(instance->mesh, scene.mainCamera); */
-  command_pool_manager.renderFrame(instance.mesh);
+
+  for (auto instance : scene.getRoot().findAll<Flim::InstanceObject>()) {
+    descriptors_manager.updateUniforms(*instance, camera);
+    command_pool_manager.renderFrame(instance->mesh);
+  }
+
   gui_manager.beginFrame();
   renderMethod();
   gui_manager.endFrame();
