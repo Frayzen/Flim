@@ -15,8 +15,7 @@ InstanceObject &Scene::instantiate(Mesh &mesh) {
 const RootObject &Scene::getRoot() { return root; }
 
 void Scene::registerMesh(Mesh &mesh, RenderParams &params) {
-  renderers.insert(
-      std::pair(mesh.id, std::make_shared<Renderer>(mesh, params)));
+  renderers.insert(std::pair(mesh.id, std::make_shared<Renderer>(mesh, params)));
 }
 
 }; // namespace Flim

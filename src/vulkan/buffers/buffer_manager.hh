@@ -1,7 +1,6 @@
 #pragma once
 
-#include "api/render/mesh.hh"
-#include <glm/fwd.hpp>
+#include <fwd.hh>
 #include <vulkan/vulkan_core.h>
 
 struct UniformLocationObject {

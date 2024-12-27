@@ -1,7 +1,6 @@
 #pragma once
 
 #include "api/tree/camera_object.hh"
-#include "api/tree/instance_object.hh"
 #include "vulkan/context.hh"
 #include "vulkan/rendering/renderer.hh"
 #include <cassert>
