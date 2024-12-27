@@ -62,15 +62,17 @@ int main() {
 
   Scene &scene = api.getScene();
   scene.registerMesh(teddy, renderParams);
-  scene.registerMesh(room, renderParams);
+  /* scene.registerMesh(room, renderParams); */
 
   InstanceObject &teddy_obj = scene.instantiate(teddy);
-  teddy.transform.scale = vec3(0.2f);
-  teddy_obj.transform.position = vec3(0, 0, -11);
-  teddy_obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
+  teddy_obj.transform.scale = vec3(0.2f);
+  InstanceObject &teddy_obj2 = scene.instantiate(teddy);
+  teddy_obj2.transform.scale = vec3(0.2f);
+  teddy_obj2.transform.position = vec3(0, 0, -11);
+  teddy_obj2.transform.scale = vec3(0.2f, 0.2f, 0.2f);
 
-  InstanceObject &room_obj = scene.instantiate(room);
-  room.transform.scale = vec3(10);
+  /* InstanceObject &room_obj = scene.instantiate(room); */
+  /* room_obj.transform.scale = vec3(10); */
 
   scene.mainCamera->speed = 30;
   scene.mainCamera->transform.position = vec3(0, 0, 0);
@@ -92,14 +94,12 @@ int main() {
                         1.0f);
 
     float size;
-    if (ImGui::SliderFloat("Taille du nounours", (float *)&size, 0.1f, 10.0f))
-    {
-      teddy.transform.scale = vec3(size);
-    }
-    if (ImGui::SliderFloat("Taille de la room", (float *)&size, 0.1f, 100.0f))
-    {
-      room.transform.scale = vec3(size);
-    }
+    /* if (ImGui::SliderFloat("Taille du nounours", (float *)&size, 0.1f, 10.0f)) { */
+    /*   teddy.transform.scale = vec3(size); */
+    /* } */
+    /* if (ImGui::SliderFloat("Taille de la room", (float *)&size, 0.1f, 100.0f)) { */
+    /*   room.transform.scale = vec3(size); */
+    /* } */
     if (renderParams.mode == RendererMode::RENDERER_MODE_POINTS) {
       ImGui::SliderFloat("Point size", &pointDesc.pointSize, 0.0f, 20.0f);
       ImGui::Checkbox("Point diffuse color", &pointDesc.applyDiffuse);

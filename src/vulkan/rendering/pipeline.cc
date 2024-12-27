@@ -47,7 +47,7 @@ getAttributeDescriptions() {
   for (int i = 0; i < 4; i++) { // attribute for a glm::mat4
     attributeDescriptions[3 + i].binding = 1;
     attributeDescriptions[3 + i].location = 3 + i;
-    attributeDescriptions[3 + i].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[3 + i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
     attributeDescriptions[3 + i].offset = sizeof(glm::vec4) * i;
   }
 

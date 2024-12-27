@@ -76,7 +76,7 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
                           &renderer.descriptorSets[context.currentImage], 0,
                           nullptr);
   uint32_t nbIndices = static_cast<uint32_t>(mesh.indices.size());
-  vkCmdDrawIndexed(commandBuffer, nbIndices, 1, 0, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, nbIndices, renderer.mesh.instances.size(), 0, 0, 0);
 }
 
 void CommandPoolManager::createCommandBuffers() {
