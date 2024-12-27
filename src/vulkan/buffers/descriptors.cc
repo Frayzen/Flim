@@ -13,10 +13,12 @@
 
 ImageDescriptor::ImageDescriptor(int binding, std::string path)
     : BaseDescriptor(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER),
-      path(path) {}
+      path(path), imageSetup(false) {}
 
 void ImageDescriptor::setup(Renderer &) {
-
+  if (imageSetup)
+    return;
+  imageSetup = true;
   int texWidth, texHeight, texChannels;
   stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels,
                               STBI_rgb_alpha);
@@ -105,6 +107,7 @@ void ImageDescriptor::setup(Renderer &) {
 }
 
 VkWriteDescriptorSet ImageDescriptor::getDescriptor(Renderer &renderer, int i) {
+  assert(imageSetup);
   static VkDescriptorImageInfo imageInfo{};
   imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   imageInfo.imageView = image.view;
@@ -121,10 +124,14 @@ VkWriteDescriptorSet ImageDescriptor::getDescriptor(Renderer &renderer, int i) {
 }
 
 void ImageDescriptor::cleanup(Renderer &) {
+  if (!imageSetup)
+    return;
+  std::cout << "Clean image" << std::endl;
   vkDestroySampler(context.device, image.sampler, nullptr);
   vkDestroyImageView(context.device, image.view, nullptr);
   vkDestroyImage(context.device, image.textureImage, nullptr);
   vkFreeMemory(context.device, image.textureImageMemory, nullptr);
+  imageSetup = false;
 }
 
 void GeneralDescriptor::setup(Renderer &renderer) {

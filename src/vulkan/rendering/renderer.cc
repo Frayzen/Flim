@@ -5,8 +5,9 @@ void Renderer::setup() {
   for (auto desc : params.descriptors) {
     desc->setup(*this);
   }
-  createDescriptorPool();
   createDescriptorSetLayout();
+  createDescriptorPool();
+  createDescriptorSets();
   pipeline.create();
 }
 
@@ -22,12 +23,13 @@ void Renderer::update(const Flim::CameraObject &cam) {
 }
 
 void Renderer::cleanup() {
+  mesh.cleanup();
   for (auto desc : params.descriptors) {
     desc->cleanup(*this);
   }
   pipeline.cleanup();
-  vkDestroyDescriptorSetLayout(context.device, descriptorSetLayout, nullptr);
   vkDestroyDescriptorPool(context.device, descriptorPool, nullptr);
+  vkDestroyDescriptorSetLayout(context.device, descriptorSetLayout, nullptr);
 }
 
 void Renderer::createDescriptorSetLayout() {

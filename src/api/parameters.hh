@@ -24,7 +24,6 @@ inline VkPolygonMode renderModeToPolygonMode(RendererMode mode) {
   }
 }
 
-typedef std::vector<std::shared_ptr<BaseDescriptor>> DescriptorList;
 struct RenderParams {
   Shader vertexShader;
   Shader fragmentShader;
@@ -52,7 +51,8 @@ struct RenderParams {
 
   void invalidate() { version++; };
 
-  DescriptorList descriptors = DescriptorList();
+  std::vector<std::shared_ptr<BaseDescriptor>> descriptors =
+      std::vector<std::shared_ptr<BaseDescriptor>>();
 };
 
 struct FlimParameters {};

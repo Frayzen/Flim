@@ -14,7 +14,7 @@ FlimAPI FlimAPI::init(FlimParameters parameters) {
 
 Scene &FlimAPI::getScene() { return scene; }
 
-FlimAPI::~FlimAPI() { app.cleanup(scene); }
+void FlimAPI::cleanup() { app.cleanup(scene); }
 
 int FlimAPI::run(const std::function<void()> &renderMethod) {
   app.setupGraphics(scene);

@@ -63,6 +63,7 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   // Draw calls here
   Flim::Mesh &mesh = renderer.mesh;
 
+
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     renderer.pipeline.pipeline);
 

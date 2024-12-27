@@ -25,8 +25,6 @@ void Mesh::updateBuffers() {
   bufferCreated = true;
 }
 
-Mesh::~Mesh() { cleanup(); }
-
 void Mesh::cleanup() {
   destroyBuffer(indexBuffer);
   destroyBuffer(vertexBuffer);

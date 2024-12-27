@@ -26,7 +26,7 @@ public:
   const std::vector<Vertex> &getVertices() const;
   const std::vector<uint16> &getTriangles() const;
   void attachMaterial(Material m);
-  ~Mesh();
+  void cleanup();
 
 protected:
   Mesh() : bufferCreated(false), id(curid++) {};
@@ -40,7 +40,6 @@ protected:
   bool bufferCreated;
   Buffer indexBuffer;
   Buffer vertexBuffer;
-  void cleanup();
 
   friend class MeshUtils;
   friend class ::CommandPoolManager;

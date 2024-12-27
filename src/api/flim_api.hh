@@ -10,15 +10,14 @@ namespace Flim {
 
 class FlimAPI {
 
-
 public:
   static FlimAPI init(FlimParameters parameters = {});
-  int run(const std::function<void()>& renderMethod);
+  int run(const std::function<void()> &renderMethod);
   int run();
-  ~FlimAPI();
-  Scene& getScene();
+  void cleanup();
+  Scene &getScene();
 
-  GLFWwindow* getWindow();
+  GLFWwindow *getWindow();
 
 private:
   Scene scene;

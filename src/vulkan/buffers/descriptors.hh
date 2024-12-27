@@ -35,6 +35,7 @@ inline VkShaderStageFlags shaderStageToVulkanFlags(ShaderStage stage) {
 static int curid = 0;
 class BaseDescriptor {
 public:
+  BaseDescriptor() = delete;
   BaseDescriptor(int binding, VkDescriptorType type)
       : binding(binding), type(type), stage(ShaderStage::Both), id(curid++) {};
   virtual VkWriteDescriptorSet getDescriptor(Renderer &renderer, int i) = 0;
@@ -64,6 +65,7 @@ public:
   void cleanup(Renderer &renderer) override;
 
 private:
+  bool imageSetup;
   Image image;
   std::string path;
 };
