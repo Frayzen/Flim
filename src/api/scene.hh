@@ -7,31 +7,32 @@
 #include "api/tree/instance_object.hh"
 #include "api/tree/root_object.hh"
 #include "api/tree/tree_object.hh"
+#include "vulkan/rendering/renderer.hh"
+#include <map>
+
+class VulkanApplication;
 
 namespace Flim {
 
 class Scene {
 
 public:
-  void defaultRenderer(Renderer &renderer);
-
   InstanceObject &instantiate(Mesh &mesh);
   const RootObject &getRoot();
 
+  void registerMesh(Mesh &mesh, RenderParams& params);
   FlimAPI &api;
   CameraObject *mainCamera;
-  void invalidateRenderer();
-  Renderer *renderer;
 
 private:
-  bool invalidatedRenderer;
   RootObject root;
-  Scene(FlimAPI &api)
-      : api(api), root(*this), mainCamera(), renderer(nullptr),
-        invalidatedRenderer(false) {
+  Scene(FlimAPI &api) : api(api), root(*this), mainCamera() {
     mainCamera = &root.append<CameraObject>();
   };
+
+  std::map<int, std::shared_ptr<Renderer>> renderers;
   friend class FlimAPI;
+  friend class ::VulkanApplication;
 };
 
 } // namespace Flim

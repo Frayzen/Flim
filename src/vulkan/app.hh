@@ -3,12 +3,10 @@
 #include "api/scene.hh"
 #include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/buffers/descriptors_manager.hh"
-#include "vulkan/context.hh"
 #include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
 #include "vulkan/gui/gui_manager.hh"
 #include "vulkan/rendering/command_pool_manager.hh"
-#include "vulkan/rendering/pipeline_manager.hh"
 #include "vulkan/swap_chain/surface_manager.hh"
 #include "vulkan/swap_chain/swap_chain_manager.hh"
 #include "vulkan/window_manager.hh"
@@ -31,25 +29,23 @@ private:
   SurfaceManager surface_manager;
   CommandPoolManager command_pool_manager;
   BufferManager buffer_manager;
-  PipelineManager pipeline_manager;
-  DescriptorsManager descriptors_manager;
+  /* PipelineManager pipeline_manager; */
+  /* DescriptorsManager descriptors_manager; */
   GUIManager gui_manager;
 
   void createInstance();
 
   void initVulkan();
 
-  void updateGraphics(Flim::Scene &scene, bool setup = false);
+  void recreateSwapChain();
 
   void setupGraphics(Flim::Scene &scene);
-
-  void recreateSwapChain();
 
   bool mainLoop(const std::function<void()> &renderMethod, Flim::Scene &scene);
 
   void finish();
 
-  void cleanup();
+  void cleanup(Flim::Scene &scene);
 
   friend class Flim::FlimAPI;
 };

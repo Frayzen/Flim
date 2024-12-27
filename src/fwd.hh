@@ -29,13 +29,6 @@ typedef struct CommandPool {
   std::vector<VkFence> inFlightFences;
 } CommandPool;
 
-typedef struct Pipeline {
-  VkShaderModule vertShaderModule;
-  VkShaderModule fragShaderModule;
-  VkPipelineLayout pipelineLayout;
-  VkPipeline graphicsPipeline;
-} Pipeline;
-
 typedef struct Image {
   VkImage textureImage;
   VkDeviceMemory textureImageMemory;

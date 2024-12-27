@@ -1,4 +1,5 @@
 #include "app.hh"
+#include "api/scene.hh"
 #include "api/tree/instance_object.hh"
 #include "api/tree/tree_object.hh"
 #include <iostream>
@@ -9,8 +10,7 @@ VulkanContext context{};
 VulkanApplication::VulkanApplication()
     : window_manager(), extension_manager(), swap_chain_manager(),
       device_manager(), surface_manager(), command_pool_manager(),
-      buffer_manager(), pipeline_manager(), descriptors_manager(),
-      gui_manager() {
+      buffer_manager(), gui_manager() {
   context.currentImage = 0;
 }
 
@@ -70,27 +70,9 @@ void VulkanApplication::initVulkan() {
   gui_manager.setup();
 }
 
-void VulkanApplication::updateGraphics(Flim::Scene &scene, bool setup) {
-  context.renderer = scene.renderer;
-  if (!setup) {
-    vkDeviceWaitIdle(context.device);
-    pipeline_manager.cleanup();
-    vkDestroyDescriptorSetLayout(context.device, context.descriptorSetLayout,
-                                 nullptr);
-  }
-  descriptors_manager.createDescriptorSetLayout();
-  pipeline_manager.createGraphicPipeline();
-}
-
 void VulkanApplication::setupGraphics(Flim::Scene &scene) {
-  updateGraphics(scene, true);
-
-  const auto &instance = scene.getRoot().findAny<Flim::InstanceObject>();
-
-  // Vertices
-  descriptors_manager.setupUniforms();
-  descriptors_manager.createDescriptorPool();
-  descriptors_manager.createDescriptorSets();
+  for (auto &r : scene.renderers)
+    r.second->setup();
 }
 
 void VulkanApplication::recreateSwapChain() {
@@ -119,9 +101,12 @@ bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
     return false;
   }
 
+  for (auto &r : scene.renderers)
+    r.second->update(camera);
+
   for (auto instance : scene.getRoot().findAll<Flim::InstanceObject>()) {
-    descriptors_manager.updateUniforms(*instance, camera);
-    command_pool_manager.renderFrame(instance->mesh);
+    command_pool_manager.recordCommandBuffer(
+        *scene.renderers[instance->mesh.id]);
   }
 
   gui_manager.beginFrame();
@@ -136,11 +121,14 @@ bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
 
 void VulkanApplication::finish() { vkDeviceWaitIdle(context.device); }
 
-void VulkanApplication::cleanup() {
-  descriptors_manager.cleanup();
+void VulkanApplication::cleanup(Flim::Scene &scene) {
   gui_manager.cleanup();
   swap_chain_manager.cleanup();
-  pipeline_manager.cleanup();
+  for (auto &r : scene.renderers) {
+    r.second->cleanup();
+  }
+
+  /* pipeline_manager.cleanup(); */
   command_pool_manager.cleanup();
   vkDestroyDevice(context.device, nullptr);
   extension_manager.cleanUp();

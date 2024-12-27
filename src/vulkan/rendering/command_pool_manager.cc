@@ -2,6 +2,7 @@
 #include "api/render/mesh.hh"
 #include "consts.hh"
 #include "vulkan/device/device_utils.hh"
+#include "vulkan/rendering/renderer.hh"
 
 #include <cstdint>
 #include <stdexcept>
@@ -56,9 +57,14 @@ static void createImageMemoryBarrier(const VkCommandBuffer &commandBuffer,
   );
 }
 
-void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
-                                             const Flim::Mesh &mesh) {
+void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
+  VkCommandBuffer commandBuffer =
+      commandPool.commandBuffers[context.currentImage];
   // Draw calls here
+  Flim::Mesh &mesh = renderer.mesh;
+
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    renderer.pipeline.pipeline);
 
   VkBuffer vertexBuffers[] = {mesh.vertexBuffer.buffer};
   VkDeviceSize offsets[] = {0};
@@ -66,8 +72,8 @@ void CommandPoolManager::recordCommandBuffer(VkCommandBuffer commandBuffer,
   vkCmdBindIndexBuffer(commandBuffer, mesh.indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT16);
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          context.pipeline.pipelineLayout, 0, 1,
-                          &context.descriptorSets[context.currentImage], 0,
+                          renderer.pipeline.pipelineLayout, 0, 1,
+                          &renderer.descriptorSets[context.currentImage], 0,
                           nullptr);
   uint32_t nbIndices = static_cast<uint32_t>(mesh.indices.size());
   vkCmdDrawIndexed(commandBuffer, nbIndices, 1, 0, 0, 0);
@@ -187,9 +193,6 @@ bool CommandPoolManager::acquireFrame() {
           context.instance, "vkCmdBeginRenderingKHR");
   vkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
 
-  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    context.pipeline.graphicsPipeline);
-
   // viewport and scissor state for this pipeline are dynamic
   VkViewport viewport{};
   viewport.x = 0.0f;
@@ -206,10 +209,6 @@ bool CommandPoolManager::acquireFrame() {
   scissor.extent = context.swapChain.swapChainExtent;
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
   return false;
-}
-
-void CommandPoolManager::renderFrame(const Flim::Mesh &mesh) {
-  recordCommandBuffer(commandPool.commandBuffers[context.currentImage], mesh);
 }
 
 bool CommandPoolManager::submitFrame(bool framebufferResized) {

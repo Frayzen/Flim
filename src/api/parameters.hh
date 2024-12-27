@@ -2,7 +2,6 @@
 
 #include "api/shaders/shader.hh"
 #include "vulkan/buffers/descriptors.hh"
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,16 +25,11 @@ inline VkPolygonMode renderModeToPolygonMode(RendererMode mode) {
 }
 
 typedef std::vector<std::shared_ptr<BaseDescriptor>> DescriptorList;
-struct Renderer {
+struct RenderParams {
   Shader vertexShader;
   Shader fragmentShader;
+  int version = 0;
   RendererMode mode = RendererMode::RENDERER_MODE_TRIS;
-
-  ~Renderer() {
-    for (auto desc : descriptors) {
-      desc->cleanup();
-    }
-  }
 
   std::shared_ptr<GeneralDescriptor> addGeneralDescriptor(int binding) {
     std::shared_ptr<GeneralDescriptor> ptr =
@@ -55,6 +49,8 @@ struct Renderer {
   bool valid() {
     return !vertexShader.code.empty() && !fragmentShader.code.empty();
   }
+
+  void invalidate() { version++; };
 
   DescriptorList descriptors = DescriptorList();
 };

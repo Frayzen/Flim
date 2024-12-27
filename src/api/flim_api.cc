@@ -14,20 +14,15 @@ FlimAPI FlimAPI::init(FlimParameters parameters) {
 
 Scene &FlimAPI::getScene() { return scene; }
 
-FlimAPI::~FlimAPI() { app.cleanup(); }
+FlimAPI::~FlimAPI() { app.cleanup(scene); }
 
 int FlimAPI::run(const std::function<void()> &renderMethod) {
-  assert(scene.renderer->valid());
   app.setupGraphics(scene);
   try {
     double lastTime = glfwGetTime();
     while (true) {
       if (app.mainLoop(renderMethod, scene))
         break;
-      if (scene.invalidatedRenderer) {
-        app.updateGraphics(scene);
-        scene.invalidatedRenderer = false;
-      }
       double curTime = glfwGetTime();
       double deltaTime = lastTime - curTime;
       scene.mainCamera->handleInputs(deltaTime);

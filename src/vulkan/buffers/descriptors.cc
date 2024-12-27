@@ -2,6 +2,7 @@
 #include "vulkan/buffers/buffer_utils.hh"
 #include "vulkan/buffers/texture_utils.hh"
 #include "vulkan/context.hh"
+#include "vulkan/rendering/renderer.hh"
 #include <cassert>
 #include <fwd.hh>
 #include <iostream>
@@ -14,7 +15,7 @@ ImageDescriptor::ImageDescriptor(int binding, std::string path)
     : BaseDescriptor(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER),
       path(path) {}
 
-void ImageDescriptor::setup() {
+void ImageDescriptor::setup(Renderer &) {
 
   int texWidth, texHeight, texChannels;
   stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels,
@@ -103,14 +104,14 @@ void ImageDescriptor::setup() {
   }
 }
 
-VkWriteDescriptorSet ImageDescriptor::getDescriptor(int i) {
+VkWriteDescriptorSet ImageDescriptor::getDescriptor(Renderer &renderer, int i) {
   static VkDescriptorImageInfo imageInfo{};
   imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   imageInfo.imageView = image.view;
   imageInfo.sampler = image.sampler;
   VkWriteDescriptorSet descriptor{};
   descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptor.dstSet = context.descriptorSets[i];
+  descriptor.dstSet = renderer.descriptorSets[i];
   descriptor.dstBinding = binding;
   descriptor.dstArrayElement = 0;
   descriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -119,37 +120,38 @@ VkWriteDescriptorSet ImageDescriptor::getDescriptor(int i) {
   return descriptor;
 }
 
-void ImageDescriptor::cleanup() {
+void ImageDescriptor::cleanup(Renderer &) {
   vkDestroySampler(context.device, image.sampler, nullptr);
   vkDestroyImageView(context.device, image.view, nullptr);
   vkDestroyImage(context.device, image.textureImage, nullptr);
   vkFreeMemory(context.device, image.textureImageMemory, nullptr);
 }
 
-void GeneralDescriptor::setup() {
+void GeneralDescriptor::setup(Renderer &renderer) {
   assert(bufferSize != 0);
 
-  mappedBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-  buffers.resize(MAX_FRAMES_IN_FLIGHT);
+  renderer.mappedUniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
+  renderer.uniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                 buffers[i]);
-    vkMapMemory(context.device, buffers[i].bufferMemory, 0, bufferSize, 0,
-                &mappedBuffers[i]);
+                 renderer.uniforms[id][i]);
+    vkMapMemory(context.device, renderer.uniforms[id][i].bufferMemory, 0,
+                bufferSize, 0, &renderer.mappedUniforms[id][i]);
   }
 }
 
-VkWriteDescriptorSet GeneralDescriptor::getDescriptor(int i) {
+VkWriteDescriptorSet GeneralDescriptor::getDescriptor(Renderer &renderer,
+                                                      int i) {
   assert(bufferSize != 0);
-  bufferInfo.buffer = buffers[i].buffer;
+  bufferInfo.buffer = renderer.uniforms[id][i].buffer;
   bufferInfo.offset = 0;
   bufferInfo.range = bufferSize;
   VkWriteDescriptorSet descriptor{};
   descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptor.dstSet = context.descriptorSets[i];
+  descriptor.dstSet = renderer.descriptorSets[i];
   descriptor.dstBinding = binding;
   descriptor.dstArrayElement = 0;
   descriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -158,9 +160,10 @@ VkWriteDescriptorSet GeneralDescriptor::getDescriptor(int i) {
   return descriptor;
 }
 
-void GeneralDescriptor::cleanup() {
-  for (size_t i = 0; i < buffers.size(); i++) {
-    vkDestroyBuffer(context.device, buffers[i].buffer, nullptr);
-    vkFreeMemory(context.device, buffers[i].bufferMemory, nullptr);
+void GeneralDescriptor::cleanup(Renderer &renderer) {
+  for (size_t i = 0; i < renderer.uniforms[id].size(); i++) {
+    vkDestroyBuffer(context.device, renderer.uniforms[id][i].buffer, nullptr);
+    vkFreeMemory(context.device, renderer.uniforms[id][i].bufferMemory,
+                 nullptr);
   }
 }

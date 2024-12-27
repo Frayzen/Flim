@@ -16,9 +16,11 @@ struct Vertex {
   vec2 uv;
 };
 
+static int curid = 0;
 class Mesh {
 
 public:
+  int id;
   Transform transform;
   const Material &getMaterial() const;
   const std::vector<Vertex> &getVertices() const;
@@ -27,7 +29,7 @@ public:
   ~Mesh();
 
 protected:
-  Mesh() : bufferCreated(false) {};
+  Mesh() : bufferCreated(false), id(curid++) {};
 
   Material material;
   std::vector<Vertex> vertices;

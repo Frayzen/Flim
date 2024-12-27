@@ -3,11 +3,10 @@
 #include "api/tree/camera_object.hh"
 #include "api/tree/instance_object.hh"
 #include "vulkan/context.hh"
+#include "vulkan/rendering/renderer.hh"
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
-#include <cstring>
-#include <format>
 #include <functional>
 #include <stdexcept>
 #include <string>
@@ -33,35 +32,36 @@ inline VkShaderStageFlags shaderStageToVulkanFlags(ShaderStage stage) {
   }
 }
 
+static int curid = 0;
 class BaseDescriptor {
 public:
   BaseDescriptor(int binding, VkDescriptorType type)
-      : binding(binding), type(type), stage(ShaderStage::Both) {};
-  // /!\ omit the dstSet value here
-  virtual VkWriteDescriptorSet getDescriptor(int i) = 0;
-  virtual void setup() = 0;
-  virtual void update(const Flim::InstanceObject &object,
+      : binding(binding), type(type), stage(ShaderStage::Both), id(curid++) {};
+  virtual VkWriteDescriptorSet getDescriptor(Renderer &renderer, int i) = 0;
+  virtual void setup(Renderer &renderer) = 0;
+  virtual void update(Renderer &renderer, const Flim::Mesh &mesh,
                       const Flim::CameraObject &cam) = 0;
-  virtual void cleanup() {};
+  virtual void cleanup(Renderer &) {};
   virtual ~BaseDescriptor() {};
 
 protected:
   ShaderStage stage;
+  int id;
   int binding;
   VkDescriptorType type;
-  friend class DescriptorsManager;
+  friend class Renderer;
 };
 
 class ImageDescriptor : public BaseDescriptor {
 public:
   ImageDescriptor(int binding, std::string path);
-  VkWriteDescriptorSet getDescriptor(int i) override;
+  VkWriteDescriptorSet getDescriptor(Renderer &renderer, int i) override;
 
-  void setup() override;
-  void update(const Flim::InstanceObject &,
+  void setup(Renderer &renderer) override;
+  void update(Renderer &, const Flim::Mesh &,
               const Flim::CameraObject &) override {};
 
-  void cleanup() override;
+  void cleanup(Renderer &renderer) override;
 
 private:
   Image image;
@@ -70,9 +70,9 @@ private:
 
 // Concept to check for a specific method signature
 template <typename T>
-concept HasUpdateMethod = requires(const Flim::InstanceObject &instance,
+concept HasUpdateMethod = requires(const Flim::Mesh &mesh,
                                    const Flim::CameraObject &cam, T *ptr) {
-  { T::update(instance, cam, ptr) } -> std::same_as<void>;
+  { T::update(mesh, cam, ptr) } -> std::same_as<void>;
 };
 
 class GeneralDescriptor : public BaseDescriptor {
@@ -91,9 +91,9 @@ public:
         "2 bytes. Please consider adding 'alignas(16)' before each attributes");
     bufferSize = sizeof(T);
     // Cast to T::update<void(T*)>
-    updateFunction = [](const Flim::InstanceObject &istc,
+    updateFunction = [](const Flim::Mesh &mesh,
                         const Flim::CameraObject &cam, void *ptr) {
-      T::update(istc, cam, static_cast<T *>(ptr));
+      T::update(mesh, cam, static_cast<T *>(ptr));
     };
     return *this;
   };
@@ -107,33 +107,29 @@ public:
         "2 bytes. Please consider adding 'alignas(16)' before each attributes");
     bufferSize = sizeof(T);
     // Cast to T::update<void(T*)>
-    updateFunction = [&](const Flim::InstanceObject &,
+    updateFunction = [&](const Flim::Mesh &,
                          const Flim::CameraObject &, void *ptr) {
       memcpy(static_cast<T *>(ptr), &ref, bufferSize);
     };
     return *this;
   };
 
-  VkWriteDescriptorSet getDescriptor(int i) override;
+  VkWriteDescriptorSet getDescriptor(Renderer &renderer, int i) override;
 
-  void setup() override;
+  void setup(Renderer &renderer) override;
 
-  virtual void update(const Flim::InstanceObject &object,
+  virtual void update(Renderer &renderer, const Flim::Mesh &mesh,
                       const Flim::CameraObject &cam) override {
-    void *curBuf = mappedBuffers[context.currentImage];
-    updateFunction(object, cam, curBuf);
+    void *curBuf = renderer.mappedUniforms[id][context.currentImage];
+    updateFunction(mesh, cam, curBuf);
   };
 
-  void cleanup() override;
+  void cleanup(Renderer &renderer) override;
 
 protected:
   size_t bufferSize;
 
-  std::vector<void *> mappedBuffers;
-  std::vector<Buffer> buffers;
-
-  std::function<void(const Flim::InstanceObject &, const Flim::CameraObject &,
-                     void *)>
+  std::function<void(const Flim::Mesh &, const Flim::CameraObject &, void *)>
       updateFunction;
 
   friend class DescriptorsManager;

@@ -1,20 +1,20 @@
 #pragma once
 
-#include <fwd.hh>
-#include "vulkan/context.hh"
+/* #include <fwd.hh> */
+/* #include "vulkan/context.hh" */
 
-#include <vulkan/vulkan_core.h>
+/* #include <vulkan/vulkan_core.h> */
 
-class CommandPool;
-class SurfaceManager;
+/* class CommandPool; */
+/* class SurfaceManager; */
 
-class PipelineManager {
-public:
-  PipelineManager() : pipeline(context.pipeline) {};
+/* class PipelineManager { */
+/* public: */
+/*   PipelineManager() : pipeline(context.pipeline) {}; */
 
-  void createGraphicPipeline();
-  void cleanup();
+/*   void createGraphicPipeline(); */
+/*   void cleanup(); */
 
-private:
-  Pipeline &pipeline;
-};
+/* private: */
+/*   Pipeline &pipeline; */
+/* }; */

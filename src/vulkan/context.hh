@@ -6,7 +6,7 @@
 
 namespace Flim {
 
-class Renderer;
+class RenderParams;
 };
 class VulkanContext {
 public:
@@ -18,12 +18,6 @@ public:
   VkSurfaceKHR surface;
   Queues queues;
   CommandPool commandPool;
-  Pipeline pipeline;
   SwapChain swapChain;
-  VkDescriptorSetLayout descriptorSetLayout;
-  VkDescriptorPool descriptorPool;
-  std::vector<VkDescriptorSet> descriptorSets;
-  std::vector<Image> images;
   Image depthImage;
-  Flim::Renderer* renderer;
 } extern context;
