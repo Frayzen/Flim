@@ -19,6 +19,7 @@ void Renderer::update(const Flim::CameraObject &cam) {
     vkDeviceWaitIdle(context.device);
     pipeline.cleanup();
     pipeline.create();
+    version = params.version;
   }
 }
 
