@@ -1,6 +1,8 @@
 #include "api/parameters.hh"
 #include "api/tree/camera_object.hh"
+#include "api/tree/instance_object.hh"
 #include "vulkan/buffers/buffer_utils.hh"
+#include <glm/fwd.hpp>
 
 void Renderer::setup() {
   assert(mesh.vertices.size() > 0);
@@ -12,6 +14,14 @@ void Renderer::setup() {
   populateBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                          mesh.indices.data(),
                          mesh.indices.size() * sizeof(mesh.indices[0]));
+  std::vector<glm::mat4> instancesMatrix;
+  for (auto instance : mesh.instances) {
+    instancesMatrix.push_back(instance->transform.getViewMatrix());
+  }
+  populateBufferFromData(
+      instancesMatrixBuffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+      instancesMatrix.data(), instancesMatrix.size() * sizeof(glm::mat4));
+
   for (auto desc : params.descriptors) {
     desc->setup(*this);
   }
@@ -35,6 +45,7 @@ void Renderer::update(const Flim::CameraObject &cam) {
 
 void Renderer::cleanup() {
   destroyBuffer(indexBuffer);
+  destroyBuffer(instancesMatrixBuffer);
   destroyBuffer(vertexBuffer);
   for (auto desc : params.descriptors) {
     desc->cleanup(*this);

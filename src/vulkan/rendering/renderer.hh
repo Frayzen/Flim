@@ -37,6 +37,7 @@ public:
 
   Buffer indexBuffer;
   Buffer vertexBuffer;
+  Buffer instancesMatrixBuffer;
 
   std::vector<VkDescriptorSet> descriptorSets;
   VkDescriptorSetLayout descriptorSetLayout;

@@ -66,9 +66,9 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     renderer.pipeline.pipeline);
 
-  VkBuffer vertexBuffers[] = {renderer.vertexBuffer.buffer};
-  VkDeviceSize offsets[] = {0};
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+  VkBuffer vertexBuffers[] = {renderer.vertexBuffer.buffer, renderer.instancesMatrixBuffer.buffer};
+  VkDeviceSize offsets[] = {0, 0};
+  vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
   vkCmdBindIndexBuffer(commandBuffer, renderer.indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT16);
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,

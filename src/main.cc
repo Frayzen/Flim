@@ -86,9 +86,20 @@ int main() {
     ImGui::SliderFloat3("Ambient color",
                         (float *)&teddy_obj.mesh.getMaterial().ambient, 0.0f,
                         1.0f);
+
     ImGui::SliderFloat3("Diffuse color",
                         (float *)&teddy_obj.mesh.getMaterial().diffuse, 0.0f,
                         1.0f);
+
+    float size;
+    if (ImGui::SliderFloat("Taille du nounours", (float *)&size, 0.1f, 10.0f))
+    {
+      teddy.transform.scale = vec3(size);
+    }
+    if (ImGui::SliderFloat("Taille de la room", (float *)&size, 0.1f, 100.0f))
+    {
+      room.transform.scale = vec3(size);
+    }
     if (renderParams.mode == RendererMode::RENDERER_MODE_POINTS) {
       ImGui::SliderFloat("Point size", &pointDesc.pointSize, 0.0f, 20.0f);
       ImGui::Checkbox("Point diffuse color", &pointDesc.applyDiffuse);

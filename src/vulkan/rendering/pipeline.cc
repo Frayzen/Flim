@@ -12,21 +12,22 @@ void Pipeline::cleanup() {
 }
 
 inline std::vector<VkVertexInputBindingDescription> getBindingDescription() {
-  std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
+  std::vector<VkVertexInputBindingDescription> bindingDescriptions(2);
   bindingDescriptions[0].binding = 0;
   bindingDescriptions[0].stride = sizeof(Flim::Vertex);
   bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-  /* bindingDescriptions[1].binding = 1; */
-  /* bindingDescriptions[1].stride = sizeof(glm::mat4); */
-  /* bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE; */
+  bindingDescriptions[1].binding = 1;
+  bindingDescriptions[1].stride = sizeof(glm::mat4);
+  bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 
   return bindingDescriptions;
 }
 
 inline std::vector<VkVertexInputAttributeDescription>
 getAttributeDescriptions() {
-  std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3);
+  std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3 +
+                                                                       4 * 1);
 
   attributeDescriptions[0].binding = 0;
   attributeDescriptions[0].location = 0;
@@ -43,12 +44,12 @@ getAttributeDescriptions() {
   attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
   attributeDescriptions[2].offset = offsetof(Flim::Vertex, uv);
 
-  /* for (int i = 0; i < 4; i++) { // attribute for a glm::mat4 */
-  /*   attributeDescriptions[3 + i].binding = 1; */
-  /*   attributeDescriptions[3 + i].location = i; */
-  /*   attributeDescriptions[3 + i].format = VK_FORMAT_R32G32B32_SFLOAT; */
-  /*   attributeDescriptions[3 + i].offset = sizeof(glm::vec4) * i; */
-  /* } */
+  for (int i = 0; i < 4; i++) { // attribute for a glm::mat4
+    attributeDescriptions[3 + i].binding = 1;
+    attributeDescriptions[3 + i].location = 3 + i;
+    attributeDescriptions[3 + i].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[3 + i].offset = sizeof(glm::vec4) * i;
+  }
 
   return attributeDescriptions;
 }

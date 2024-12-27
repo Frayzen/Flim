@@ -11,6 +11,8 @@ class Renderer;
 
 namespace Flim {
 
+class InstanceObject;
+
 struct Vertex {
   vec3 pos;
   vec3 normal;
@@ -27,6 +29,7 @@ public:
   const std::vector<Vertex> &getVertices() const;
   const std::vector<uint16> &getTriangles() const;
   void attachMaterial(Material m);
+  void registerInstance(InstanceObject &instance);
 
 protected:
   Mesh() : id(curid++) {};
@@ -34,6 +37,8 @@ protected:
   Material material;
   std::vector<Vertex> vertices;
   std::vector<uint16> indices;
+
+  std::vector<InstanceObject *> instances;
 
   friend class MeshUtils;
   friend class ::CommandPoolManager;
