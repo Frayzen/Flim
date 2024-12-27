@@ -7,6 +7,7 @@
 #include <vector>
 
 class CommandPoolManager;
+class Renderer;
 
 namespace Flim {
 
@@ -26,23 +27,17 @@ public:
   const std::vector<Vertex> &getVertices() const;
   const std::vector<uint16> &getTriangles() const;
   void attachMaterial(Material m);
-  void cleanup();
 
 protected:
-  Mesh() : bufferCreated(false), id(curid++) {};
+  Mesh() : id(curid++) {};
 
   Material material;
   std::vector<Vertex> vertices;
   std::vector<uint16> indices;
 
-  void updateBuffers();
-
-  bool bufferCreated;
-  Buffer indexBuffer;
-  Buffer vertexBuffer;
-
   friend class MeshUtils;
   friend class ::CommandPoolManager;
+  friend class ::Renderer;
 };
 
 }; // namespace Flim

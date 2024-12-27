@@ -1,7 +1,17 @@
 #include "api/parameters.hh"
 #include "api/tree/camera_object.hh"
+#include "vulkan/buffers/buffer_utils.hh"
 
 void Renderer::setup() {
+  assert(mesh.vertices.size() > 0);
+  assert(mesh.indices.size() > 0);
+
+  populateBufferFromData(vertexBuffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                         mesh.vertices.data(),
+                         mesh.vertices.size() * sizeof(mesh.vertices[0]));
+  populateBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                         mesh.indices.data(),
+                         mesh.indices.size() * sizeof(mesh.indices[0]));
   for (auto desc : params.descriptors) {
     desc->setup(*this);
   }
@@ -24,7 +34,8 @@ void Renderer::update(const Flim::CameraObject &cam) {
 }
 
 void Renderer::cleanup() {
-  mesh.cleanup();
+  destroyBuffer(indexBuffer);
+  destroyBuffer(vertexBuffer);
   for (auto desc : params.descriptors) {
     desc->cleanup(*this);
   }

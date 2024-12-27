@@ -1,6 +1,5 @@
 #include "mesh.hh"
 #include "api/render/material.hh"
-#include "vulkan/buffers/buffer_utils.hh"
 #include <glm/fwd.hpp>
 
 namespace Flim {
@@ -10,24 +9,5 @@ const Material &Mesh::getMaterial() const { return material; };
 const std::vector<uint16> &Mesh::getTriangles() const { return indices; }
 
 void Mesh::attachMaterial(Material m) { material = m; }
-
-void Mesh::updateBuffers() {
-  if (bufferCreated)
-    cleanup();
-  assert(vertices.size() > 0);
-  assert(indices.size() > 0);
-
-  populateBufferFromData(vertexBuffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                         vertices.data(),
-                         vertices.size() * sizeof(vertices[0]));
-  populateBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                         indices.data(), indices.size() * sizeof(indices[0]));
-  bufferCreated = true;
-}
-
-void Mesh::cleanup() {
-  destroyBuffer(indexBuffer);
-  destroyBuffer(vertexBuffer);
-}
 
 } // namespace Flim

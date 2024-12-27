@@ -63,14 +63,13 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   // Draw calls here
   Flim::Mesh &mesh = renderer.mesh;
 
-
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     renderer.pipeline.pipeline);
 
-  VkBuffer vertexBuffers[] = {mesh.vertexBuffer.buffer};
+  VkBuffer vertexBuffers[] = {renderer.vertexBuffer.buffer};
   VkDeviceSize offsets[] = {0};
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-  vkCmdBindIndexBuffer(commandBuffer, mesh.indexBuffer.buffer, 0,
+  vkCmdBindIndexBuffer(commandBuffer, renderer.indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT16);
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           renderer.pipeline.pipelineLayout, 0, 1,

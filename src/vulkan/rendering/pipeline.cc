@@ -2,13 +2,55 @@
 #include "api/parameters.hh"
 #include "vulkan/context.hh"
 #include "vulkan/rendering/renderer.hh"
-#include "vulkan/rendering/utils.hh"
+#include <glm/fwd.hpp>
 #include <iostream>
+#include <vulkan/vulkan_core.h>
 
 void Pipeline::cleanup() {
-
   vkDestroyPipeline(context.device, pipeline, nullptr);
   vkDestroyPipelineLayout(context.device, pipelineLayout, nullptr);
+}
+
+inline std::vector<VkVertexInputBindingDescription> getBindingDescription() {
+  std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
+  bindingDescriptions[0].binding = 0;
+  bindingDescriptions[0].stride = sizeof(Flim::Vertex);
+  bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+  /* bindingDescriptions[1].binding = 1; */
+  /* bindingDescriptions[1].stride = sizeof(glm::mat4); */
+  /* bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE; */
+
+  return bindingDescriptions;
+}
+
+inline std::vector<VkVertexInputAttributeDescription>
+getAttributeDescriptions() {
+  std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3);
+
+  attributeDescriptions[0].binding = 0;
+  attributeDescriptions[0].location = 0;
+  attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+  attributeDescriptions[0].offset = offsetof(Flim::Vertex, pos);
+
+  attributeDescriptions[1].binding = 0;
+  attributeDescriptions[1].location = 1;
+  attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
+  attributeDescriptions[1].offset = offsetof(Flim::Vertex, normal);
+
+  attributeDescriptions[2].binding = 0;
+  attributeDescriptions[2].location = 2;
+  attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+  attributeDescriptions[2].offset = offsetof(Flim::Vertex, uv);
+
+  /* for (int i = 0; i < 4; i++) { // attribute for a glm::mat4 */
+  /*   attributeDescriptions[3 + i].binding = 1; */
+  /*   attributeDescriptions[3 + i].location = i; */
+  /*   attributeDescriptions[3 + i].format = VK_FORMAT_R32G32B32_SFLOAT; */
+  /*   attributeDescriptions[3 + i].offset = sizeof(glm::vec4) * i; */
+  /* } */
+
+  return attributeDescriptions;
 }
 
 /*
@@ -41,10 +83,8 @@ static VkShaderModule createShaderModule(VulkanContext &context,
 
 void Pipeline::create() {
   Flim::RenderParams &params = renderer.params;
-  vertShaderModule =
-      createShaderModule(context, params.vertexShader.code);
-  fragShaderModule =
-      createShaderModule(context, params.fragmentShader.code);
+  vertShaderModule = createShaderModule(context, params.vertexShader.code);
+  fragShaderModule = createShaderModule(context, params.fragmentShader.code);
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
   vertShaderStageInfo.sType =
@@ -186,13 +226,14 @@ void Pipeline::create() {
   vertexInputInfo.vertexAttributeDescriptionCount = 0;
   vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
 
-  auto bindingDescription = getBindingDescription();
+  auto bindingDescriptions = getBindingDescription();
   auto attributeDescriptions = getAttributeDescriptions();
 
-  vertexInputInfo.vertexBindingDescriptionCount = 1;
+  vertexInputInfo.vertexBindingDescriptionCount =
+      static_cast<uint32_t>(bindingDescriptions.size());
   vertexInputInfo.vertexAttributeDescriptionCount =
       static_cast<uint32_t>(attributeDescriptions.size());
-  vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+  vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
   vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
   VkPipelineDepthStencilStateCreateInfo depthStencil{};

@@ -2,13 +2,13 @@
 
 #include "api/render/mesh.hh"
 #include "api/tree/camera_object.hh"
-#include "api/tree/instance_object.hh"
 #include "fwd.hh"
 #include "vulkan/rendering/pipeline.hh"
 #include <map>
 #include <vector>
 namespace Flim {
 class RenderParams;
+class InstanceObject;
 }; // namespace Flim
 
 class Renderer {
@@ -34,6 +34,9 @@ public:
 
   std::map<int, std::vector<Buffer>> uniforms;
   std::map<int, std::vector<void *>> mappedUniforms;
+
+  Buffer indexBuffer;
+  Buffer vertexBuffer;
 
   std::vector<VkDescriptorSet> descriptorSets;
   VkDescriptorSetLayout descriptorSetLayout;
