@@ -8,7 +8,7 @@
 #include <vector>
 namespace Flim {
 class RenderParams;
-class InstanceObject;
+class Instance;
 }; // namespace Flim
 
 class Renderer {
@@ -17,12 +17,12 @@ public:
   Renderer() = delete;
   void setup();
   void cleanup();
-  void update(const Flim::CameraObject &cam);
+  void update(const Flim::Camera &cam);
 
   void createDescriptorSetLayout();
   void setupUniforms();
-  void updateUniforms(const Flim::InstanceObject &obj,
-                      const Flim::CameraObject &cam);
+  void updateUniforms(const Flim::Instance &obj,
+                      const Flim::Camera &cam);
   void createDescriptorSets();
   void createDescriptorPool();
 

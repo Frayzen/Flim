@@ -45,7 +45,7 @@ public:
   virtual VkWriteDescriptorSet getDescriptor(Renderer &renderer, int i) = 0;
   virtual void setup(Renderer &renderer) = 0;
   virtual void update(Renderer &renderer, const Flim::Mesh &mesh,
-                      const Flim::CameraObject &cam) = 0;
+                      const Flim::Camera &cam) = 0;
   virtual void cleanup(Renderer &) {};
   virtual ~BaseDescriptor() {};
 
@@ -64,7 +64,7 @@ public:
 
   void setup(Renderer &renderer) override;
   void update(Renderer &, const Flim::Mesh &,
-              const Flim::CameraObject &) override {};
+              const Flim::Camera &) override {};
 
   void cleanup(Renderer &renderer) override;
 
@@ -77,7 +77,7 @@ private:
 // Concept to check for a specific method signature
 template <typename T>
 concept HasUpdateMethod =
-    requires(const Flim::Mesh &mesh, const Flim::CameraObject &cam, T *ptr) {
+    requires(const Flim::Mesh &mesh, const Flim::Camera &cam, T *ptr) {
       { T::update(mesh, cam, ptr) } -> std::same_as<void>;
     };
 
@@ -97,7 +97,7 @@ public:
         "2 bytes. Please consider adding 'alignas(16)' before each attributes");
     bufferSize = sizeof(T);
     // Cast to T::update<void(T*)>
-    updateFunction = [](const Flim::Mesh &mesh, const Flim::CameraObject &cam,
+    updateFunction = [](const Flim::Mesh &mesh, const Flim::Camera &cam,
                         void *ptr) {
       T::update(mesh, cam, static_cast<T *>(ptr));
     };
@@ -113,7 +113,7 @@ public:
         "2 bytes. Please consider adding 'alignas(16)' before each attributes");
     bufferSize = sizeof(T);
     // Cast to T::update<void(T*)>
-    updateFunction = [&](const Flim::Mesh &, const Flim::CameraObject &,
+    updateFunction = [&](const Flim::Mesh &, const Flim::Camera &,
                          void *ptr) {
       memcpy(static_cast<T *>(ptr), &ref, bufferSize);
     };
@@ -125,13 +125,13 @@ public:
   void setup(Renderer &renderer) override;
 
   virtual void update(Renderer &renderer, const Flim::Mesh &mesh,
-                      const Flim::CameraObject &cam) override;
+                      const Flim::Camera &cam) override;
   void cleanup(Renderer &renderer) override;
 
 protected:
   size_t bufferSize;
 
-  std::function<void(const Flim::Mesh &, const Flim::CameraObject &, void *)>
+  std::function<void(const Flim::Mesh &, const Flim::Camera &, void *)>
       updateFunction;
 
   friend class DescriptorsManager;

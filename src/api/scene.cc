@@ -5,10 +5,12 @@
 
 namespace Flim {
 
-InstanceObject &Scene::instantiate(Mesh &mesh) {
+Instance &Scene::instantiate(Mesh &mesh) {
   assert(renderers.contains(mesh.id) &&
          "Please register the mesh before instatiating it");
-  return mesh.instances.emplace_back(*this, mesh);
+  Instance& obj = mesh.instances.emplace_back(*this, mesh);
+  obj.id = mesh.instances.size() - 1; 
+  return obj;
 }
 
 void Scene::registerMesh(Mesh &mesh, RenderParams &params) {

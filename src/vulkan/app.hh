@@ -38,7 +38,7 @@ private:
 
   void setupGraphics(Flim::Scene &scene);
 
-  bool mainLoop(const std::function<void()> &renderMethod, Flim::Scene &scene);
+  bool mainLoop(const std::function<void(float)> &renderMethod, Flim::Scene &scene);
 
   void finish();
 

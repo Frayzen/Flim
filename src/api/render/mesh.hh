@@ -5,6 +5,7 @@
 #include "api/transform.hh"
 #include <fwd.hh>
 #include <glm/fwd.hpp>
+#include <span>
 #include <vector>
 
 class CommandPoolManager;
@@ -12,7 +13,7 @@ class Renderer;
 
 namespace Flim {
 
-class InstanceObject;
+class Instance;
 
 struct Vertex {
   vec3 pos;
@@ -26,11 +27,12 @@ class Mesh {
 public:
   int id;
   Transform transform;
+  std::vector<Instance> instances;
   const Material &getMaterial() const;
   const std::vector<Vertex> &getVertices() const;
   const std::vector<uint16> &getTriangles() const;
   void attachMaterial(Material m);
-  void registerInstance(InstanceObject &instance);
+  void updateModelViews();
 
 protected:
   Mesh() : id(curid++) {};
@@ -39,7 +41,7 @@ protected:
   std::vector<Vertex> vertices;
   std::vector<uint16> indices;
 
-  std::vector<InstanceObject> instances;
+  std::span<glm::mat4> modelViews;
 
   friend class Scene;
   friend class MeshUtils;

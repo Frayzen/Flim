@@ -12,7 +12,7 @@ class FlimAPI {
 
 public:
   static FlimAPI init(FlimParameters parameters = {});
-  int run(const std::function<void()> &renderMethod);
+  int run(const std::function<void(float)> &renderMethod);
   int run();
   void cleanup();
   Scene &getScene();

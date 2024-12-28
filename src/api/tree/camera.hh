@@ -9,12 +9,9 @@ namespace Flim {
 
 class Scene;
 
-class CameraObject {
+class Camera {
 
 public:
-  CameraObject(Scene &scene)
-      : scene(scene), is2D(false), near(0.1f), far(1000), fov(90), speed(1),
-        sensivity(1), pitch(0), yaw(0), lockPitch(45) {};
   Scene &scene;
   Transform transform;
 
@@ -43,8 +40,12 @@ public:
                           int mods);
 
 private:
+  Camera(Scene &scene)
+      : scene(scene), is2D(false), near(0.1f), far(1000), fov(90), speed(1),
+        sensivity(1), pitch(0), yaw(0), lockPitch(45) {};
   void handleInputs3D(double deltaTime);
   void handleInputs2D(double deltaTime);
+  friend Scene;
 };
 
 } // namespace Flim

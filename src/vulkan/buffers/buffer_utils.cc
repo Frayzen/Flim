@@ -3,6 +3,7 @@
 #include <cstring>
 #include <fwd.hh>
 #include <stdexcept>
+#include <vulkan/vulkan_core.h>
 
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
   VkPhysicalDeviceMemoryProperties memProperties;
@@ -104,7 +105,8 @@ void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
 }
 
 void populateBufferFromData(Buffer &buffer, VkBufferUsageFlags usage,
-                            void *data, size_t dataSize) {
+                            void *data, size_t dataSize,
+                            VkMemoryPropertyFlags properties) {
   Buffer stagingBuffer;
   createBuffer(
       dataSize,
@@ -120,11 +122,12 @@ void populateBufferFromData(Buffer &buffer, VkBufferUsageFlags usage,
               &mapped);
   memcpy(mapped, data, (size_t)dataSize);
   vkUnmapMemory(context.device, stagingBuffer.bufferMemory);
-  
-// VK_BUFFER_USAGE_TRANSFER_DST_BIT required to be passed as destination in a memory transfer operation
 
-  createBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage,
-               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer);
+  // VK_BUFFER_USAGE_TRANSFER_DST_BIT required to be passed as destination in a
+  // memory transfer operation
+
+  createBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage, properties,
+               buffer);
   copyBuffer(stagingBuffer.buffer, buffer.buffer, dataSize);
   vkDestroyBuffer(context.device, stagingBuffer.buffer, nullptr);
   vkFreeMemory(context.device, stagingBuffer.bufferMemory, nullptr);

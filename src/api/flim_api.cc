@@ -16,7 +16,7 @@ Scene &FlimAPI::getScene() { return scene; }
 
 void FlimAPI::cleanup() { app.cleanup(scene); }
 
-int FlimAPI::run(const std::function<void()> &renderMethod) {
+int FlimAPI::run(const std::function<void(float)> &renderMethod) {
   app.setupGraphics(scene);
   try {
     double lastTime = glfwGetTime();
@@ -25,7 +25,7 @@ int FlimAPI::run(const std::function<void()> &renderMethod) {
         break;
       double curTime = glfwGetTime();
       double deltaTime = lastTime - curTime;
-      scene.mainCamera.handleInputs(deltaTime);
+      scene.camera.handleInputs(deltaTime);
       lastTime = curTime;
     }
     app.finish();

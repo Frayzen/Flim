@@ -1,5 +1,6 @@
 #include "app.hh"
 #include "api/scene.hh"
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
 
@@ -89,9 +90,12 @@ void VulkanApplication::recreateSwapChain() {
   context.currentImage = 0;
 }
 
-bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
+static std::chrono::high_resolution_clock timer;
+static auto last = timer.now();
+
+bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
                                  Flim::Scene &scene) {
-  const auto &camera = scene.mainCamera;
+  const auto &camera = scene.camera;
   glfwPollEvents();
 
   if (command_pool_manager.acquireFrame()) {
@@ -106,8 +110,17 @@ bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
     command_pool_manager.recordCommandBuffer(*renderer.second);
   }
 
+  // Assuming timer and last are already defined.
+  auto now = timer.now();
+  std::chrono::duration<float> deltaTime =
+      now - last; // Automatically in seconds as float
+  last = now;
+
+  float deltaSeconds = deltaTime.count(); // Convert to float for easier use
+
+  static float deltatime;
   gui_manager.beginFrame();
-  renderMethod();
+  renderMethod(deltaTime.count());
   gui_manager.endFrame();
   if (command_pool_manager.submitFrame(window_manager.framebufferResized)) {
     window_manager.framebufferResized = false;

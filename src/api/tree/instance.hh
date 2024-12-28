@@ -7,14 +7,20 @@ namespace Flim {
 
 class Mesh;
 
-class InstanceObject {
+class Instance {
 public:
   Transform transform;
   Scene &scene;
-  InstanceObject(Scene &scene, Mesh &mesh);
+  Instance(Scene &scene, Mesh &mesh);
 
-  static InstanceObject &instantiate(Mesh &mesh, TreeObject *parent);
+  static Instance &instantiate(Mesh &mesh, TreeObject *parent);
+
   Renderer &getRenderer();
   const Mesh &mesh;
+  int getId() const;
+
+private:
+  int id;
+  friend class Scene;
 };
 } // namespace Flim

@@ -2,9 +2,10 @@
 #include "api/scene.hh"
 namespace Flim {
 
-InstanceObject::InstanceObject(Scene &scene, Mesh &mesh)
-    : scene(scene), mesh(mesh) {};
+Instance::Instance(Scene &scene, Mesh &mesh) : scene(scene), mesh(mesh) {};
 
-Renderer &InstanceObject::getRenderer() { return *scene.renderers[mesh.id]; }
+Renderer &Instance::getRenderer() { return *scene.renderers[mesh.id]; }
+
+int Instance::getId() const { return id; };
 
 } // namespace Flim

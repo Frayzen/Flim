@@ -2,25 +2,32 @@
 #include "api/tree/camera.hh"
 #include "api/tree/instance.hh"
 #include "vulkan/buffers/buffer_utils.hh"
+#include <cstddef>
 #include <glm/fwd.hpp>
+#include <vector>
+#include <vulkan/vulkan_core.h>
 
 void Renderer::setup() {
   assert(mesh.vertices.size() > 0);
   assert(mesh.indices.size() > 0);
-
   populateBufferFromData(vertexBuffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                          mesh.vertices.data(),
                          mesh.vertices.size() * sizeof(mesh.vertices[0]));
   populateBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                          mesh.indices.data(),
                          mesh.indices.size() * sizeof(mesh.indices[0]));
-  std::vector<glm::mat4> instancesMatrix;
-  for (auto instance : mesh.instances) {
-    instancesMatrix.push_back(instance.transform.getViewMatrix());
-  }
-  populateBufferFromData(
-      instancesMatrixBuffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-      instancesMatrix.data(), instancesMatrix.size() * sizeof(glm::mat4));
+
+  size_t bufSize = mesh.instances.size() * sizeof(glm::mat4);
+  createBuffer(bufSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               instancesMatrixBuffer);
+  void *instancesMatrixBufferMapped;
+  vkMapMemory(context.device, instancesMatrixBuffer.bufferMemory, 0, bufSize, 0,
+              &instancesMatrixBufferMapped);
+  mat4 *modelViewsPtr = (mat4 *)instancesMatrixBufferMapped;
+  mesh.modelViews = std::span<glm::mat4>(modelViewsPtr, mesh.instances.size());
+  mesh.updateModelViews();
 
   for (auto desc : params.descriptors) {
     desc->setup(*this);
@@ -31,7 +38,7 @@ void Renderer::setup() {
   pipeline.create();
 }
 
-void Renderer::update(const Flim::CameraObject &cam) {
+void Renderer::update(const Flim::Camera &cam) {
   for (auto desc : params.descriptors) {
     desc->update(*this, mesh, cam);
   }
@@ -44,6 +51,7 @@ void Renderer::update(const Flim::CameraObject &cam) {
 }
 
 void Renderer::cleanup() {
+  vkUnmapMemory(context.device, instancesMatrixBuffer.bufferMemory);
   destroyBuffer(indexBuffer);
   destroyBuffer(instancesMatrixBuffer);
   destroyBuffer(vertexBuffer);

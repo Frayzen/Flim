@@ -7,7 +7,7 @@
 
 namespace Flim {
 
-void CameraObject::handleInputs2D(double deltaTime) {
+void Camera::handleInputs2D(double deltaTime) {
   (void)deltaTime;
 
   /* float zoom = -transform.position.x; */
@@ -30,7 +30,7 @@ void CameraObject::handleInputs2D(double deltaTime) {
   /*   position += speed * 3 * getFront(); */
 }
 
-void CameraObject::handleInputs3D(double deltaTime) {
+void Camera::handleInputs3D(double deltaTime) {
   auto win = scene.api.getWindow();
   float curSpeed = speed * deltaTime;
   if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS)
@@ -60,7 +60,7 @@ void CameraObject::handleInputs3D(double deltaTime) {
       glm::quat(glm::vec3(glm::radians(pitch), glm::radians(yaw), 0.0f)));
 }
 
-void CameraObject::handleInputs(double deltaTime) {
+void Camera::handleInputs(double deltaTime) {
   if (is2D)
     handleInputs2D(deltaTime);
   else

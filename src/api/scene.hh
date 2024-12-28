@@ -11,20 +11,20 @@ class VulkanApplication;
 
 namespace Flim {
 
-class InstanceObject;
+class Instance;
 
 class Scene {
 
 public:
-  InstanceObject &instantiate(Mesh &mesh);
+  Instance &instantiate(Mesh &mesh);
 
   void registerMesh(Mesh &mesh, RenderParams &params);
   FlimAPI &api;
-  CameraObject mainCamera;
+  Camera camera;
   std::map<int, std::shared_ptr<Renderer>> renderers; // key is mesh.id
 
 private:
-  Scene(FlimAPI &api) : api(api), mainCamera(*this) {};
+  Scene(FlimAPI &api) : api(api), camera(*this) {};
   friend class FlimAPI;
   friend class ::VulkanApplication;
 };
