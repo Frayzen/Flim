@@ -1,7 +1,5 @@
 #include "app.hh"
 #include "api/scene.hh"
-#include "api/tree/instance_object.hh"
-#include "api/tree/tree_object.hh"
 #include <iostream>
 #include <stdexcept>
 
@@ -93,7 +91,7 @@ void VulkanApplication::recreateSwapChain() {
 
 bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
                                  Flim::Scene &scene) {
-  const auto &camera = *scene.mainCamera;
+  const auto &camera = scene.mainCamera;
   glfwPollEvents();
 
   if (command_pool_manager.acquireFrame()) {
@@ -104,9 +102,8 @@ bool VulkanApplication::mainLoop(const std::function<void()> &renderMethod,
   for (auto &r : scene.renderers)
     r.second->update(camera);
 
-  for (auto instance : scene.getRoot().findAll<Flim::InstanceObject>()) {
-    command_pool_manager.recordCommandBuffer(
-        *scene.renderers[instance->mesh.id]);
+  for (auto renderer : scene.renderers) {
+    command_pool_manager.recordCommandBuffer(*renderer.second);
   }
 
   gui_manager.beginFrame();

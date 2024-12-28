@@ -3,8 +3,8 @@
 #include "api/render/mesh.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/scene.hh"
-#include "api/tree/camera_object.hh"
-#include "api/tree/instance_object.hh"
+#include "api/tree/camera.hh"
+#include "api/tree/instance.hh"
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -64,19 +64,20 @@ int main() {
   scene.registerMesh(teddy, renderParams);
   /* scene.registerMesh(room, renderParams); */
 
-  InstanceObject &teddy_obj = scene.instantiate(teddy);
-  teddy_obj.transform.scale = vec3(0.2f);
-  InstanceObject &teddy_obj2 = scene.instantiate(teddy);
-  teddy_obj2.transform.scale = vec3(0.2f);
-  teddy_obj2.transform.position = vec3(0, 0, -11);
-  teddy_obj2.transform.scale = vec3(0.2f, 0.2f, 0.2f);
+  const int amount = 5;
+  const float offset = 10;
+  for (int i = 0; i < amount; i++)
+    for (int j = 0; j < amount; j++)
+      for (int k = 0; k < amount; k++) {
+        InstanceObject &teddy_obj = scene.instantiate(teddy);
+        teddy_obj.transform.scale = vec3(0.2f);
+        teddy_obj.transform.position = vec3(i, j, k) * offset;
+        teddy_obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
+      }
 
-  /* InstanceObject &room_obj = scene.instantiate(room); */
-  /* room_obj.transform.scale = vec3(10); */
-
-  scene.mainCamera->speed = 30;
-  scene.mainCamera->transform.position = vec3(0, 0, 0);
-  scene.mainCamera->sensivity = 8;
+  scene.mainCamera.speed = 30;
+  scene.mainCamera.transform.position = vec3(0, 0, 0);
+  scene.mainCamera.sensivity = 8;
 
   float a;
   int ret = api.run([&] {
@@ -86,21 +87,15 @@ int main() {
       renderParams.invalidate();
     }
     ImGui::SliderFloat3("Ambient color",
-                        (float *)&teddy_obj.mesh.getMaterial().ambient, 0.0f,
+                        (float *)&teddy.getMaterial().ambient, 0.0f,
                         1.0f);
 
     ImGui::SliderFloat3("Diffuse color",
-                        (float *)&teddy_obj.mesh.getMaterial().diffuse, 0.0f,
+                        (float *)&teddy.getMaterial().diffuse, 0.0f,
                         1.0f);
 
     float size;
-    /* if (ImGui::SliderFloat("Taille du nounours", (float *)&size, 0.1f, 10.0f)) { */
-    /*   teddy.transform.scale = vec3(size); */
-    /* } */
-    /* if (ImGui::SliderFloat("Taille de la room", (float *)&size, 0.1f, 100.0f)) { */
-    /*   room.transform.scale = vec3(size); */
-    /* } */
-    if (renderParams.mode == RendererMode::RENDERER_MODE_POINTS) {
+      if (renderParams.mode == RendererMode::RENDERER_MODE_POINTS) {
       ImGui::SliderFloat("Point size", &pointDesc.pointSize, 0.0f, 20.0f);
       ImGui::Checkbox("Point diffuse color", &pointDesc.applyDiffuse);
     }

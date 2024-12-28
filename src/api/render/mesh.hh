@@ -1,5 +1,6 @@
 #pragma once
 
+#include "api/tree/instance.hh"
 #include "api/render/material.hh"
 #include "api/transform.hh"
 #include <fwd.hh>
@@ -38,8 +39,9 @@ protected:
   std::vector<Vertex> vertices;
   std::vector<uint16> indices;
 
-  std::vector<InstanceObject *> instances;
+  std::vector<InstanceObject> instances;
 
+  friend class Scene;
   friend class MeshUtils;
   friend class ::CommandPoolManager;
   friend class ::Renderer;

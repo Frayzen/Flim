@@ -1,7 +1,7 @@
 #pragma once
 
 #include "api/render/mesh.hh"
-#include "api/tree/camera_object.hh"
+#include "api/tree/camera.hh"
 #include "fwd.hh"
 #include "vulkan/rendering/pipeline.hh"
 #include <map>

@@ -1,6 +1,6 @@
 #include "api/parameters.hh"
-#include "api/tree/camera_object.hh"
-#include "api/tree/instance_object.hh"
+#include "api/tree/camera.hh"
+#include "api/tree/instance.hh"
 #include "vulkan/buffers/buffer_utils.hh"
 #include <glm/fwd.hpp>
 
@@ -16,7 +16,7 @@ void Renderer::setup() {
                          mesh.indices.size() * sizeof(mesh.indices[0]));
   std::vector<glm::mat4> instancesMatrix;
   for (auto instance : mesh.instances) {
-    instancesMatrix.push_back(instance->transform.getViewMatrix());
+    instancesMatrix.push_back(instance.transform.getViewMatrix());
   }
   populateBufferFromData(
       instancesMatrixBuffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,

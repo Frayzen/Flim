@@ -174,3 +174,9 @@ void GeneralDescriptor::cleanup(Renderer &renderer) {
                  nullptr);
   }
 }
+
+void GeneralDescriptor::update(Renderer &renderer, const Flim::Mesh &mesh,
+                               const Flim::CameraObject &cam) {
+  void *curBuf = renderer.mappedUniforms[id][context.currentImage];
+  updateFunction(mesh, cam, curBuf);
+};

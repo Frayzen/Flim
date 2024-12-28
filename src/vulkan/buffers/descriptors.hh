@@ -1,8 +1,7 @@
 #pragma once
 
-#include "api/tree/camera_object.hh"
+#include "api/tree/camera.hh"
 #include "vulkan/context.hh"
-#include "vulkan/rendering/renderer.hh"
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
@@ -10,6 +9,12 @@
 #include <stdexcept>
 #include <string>
 #include <vulkan/vulkan_core.h>
+
+namespace Flim {
+class Mesh;
+};
+
+class Renderer;
 
 enum ShaderStage {
   Vertex = 0,
@@ -71,10 +76,10 @@ private:
 
 // Concept to check for a specific method signature
 template <typename T>
-concept HasUpdateMethod = requires(const Flim::Mesh &mesh,
-                                   const Flim::CameraObject &cam, T *ptr) {
-  { T::update(mesh, cam, ptr) } -> std::same_as<void>;
-};
+concept HasUpdateMethod =
+    requires(const Flim::Mesh &mesh, const Flim::CameraObject &cam, T *ptr) {
+      { T::update(mesh, cam, ptr) } -> std::same_as<void>;
+    };
 
 class GeneralDescriptor : public BaseDescriptor {
 
@@ -92,8 +97,8 @@ public:
         "2 bytes. Please consider adding 'alignas(16)' before each attributes");
     bufferSize = sizeof(T);
     // Cast to T::update<void(T*)>
-    updateFunction = [](const Flim::Mesh &mesh,
-                        const Flim::CameraObject &cam, void *ptr) {
+    updateFunction = [](const Flim::Mesh &mesh, const Flim::CameraObject &cam,
+                        void *ptr) {
       T::update(mesh, cam, static_cast<T *>(ptr));
     };
     return *this;
@@ -108,8 +113,8 @@ public:
         "2 bytes. Please consider adding 'alignas(16)' before each attributes");
     bufferSize = sizeof(T);
     // Cast to T::update<void(T*)>
-    updateFunction = [&](const Flim::Mesh &,
-                         const Flim::CameraObject &, void *ptr) {
+    updateFunction = [&](const Flim::Mesh &, const Flim::CameraObject &,
+                         void *ptr) {
       memcpy(static_cast<T *>(ptr), &ref, bufferSize);
     };
     return *this;
@@ -120,11 +125,7 @@ public:
   void setup(Renderer &renderer) override;
 
   virtual void update(Renderer &renderer, const Flim::Mesh &mesh,
-                      const Flim::CameraObject &cam) override {
-    void *curBuf = renderer.mappedUniforms[id][context.currentImage];
-    updateFunction(mesh, cam, curBuf);
-  };
-
+                      const Flim::CameraObject &cam) override;
   void cleanup(Renderer &renderer) override;
 
 protected:
