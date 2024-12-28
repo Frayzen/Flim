@@ -22,9 +22,10 @@ layout(location = 2) out vec2 fragTexCoord;
 
 void main() {
     gl_Position = ulo.proj * ulo.view * ulo.model * inInstanceMat * vec4(inPosition, 1.0);
+    gl_Position /= gl_Position.w;
     fragColor = inPosition;
     fragNormal = inNormal;
     fragTexCoord = inTexCoord;
-    float depth = gl_Position.z / gl_Position.w;
+    float depth = gl_Position.z;
     gl_PointSize = pointDesc.size / abs(depth);
 }

@@ -7,13 +7,13 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
-enum RendererMode {
+enum RenderMode {
   RENDERER_MODE_TRIS = 0,
   RENDERER_MODE_LINE,
   RENDERER_MODE_POINTS,
 };
 
-inline VkPolygonMode renderModeToPolygonMode(RendererMode mode) {
+inline VkPolygonMode renderModeToPolygonMode(RenderMode mode) {
   switch (mode) {
   case RENDERER_MODE_LINE:
     return VK_POLYGON_MODE_LINE;
@@ -27,8 +27,9 @@ inline VkPolygonMode renderModeToPolygonMode(RendererMode mode) {
 struct RenderParams {
   Shader vertexShader;
   Shader fragmentShader;
+  bool useBackfaceCulling = true;
   int version = 0;
-  RendererMode mode = RendererMode::RENDERER_MODE_TRIS;
+  RenderMode mode = RenderMode::RENDERER_MODE_TRIS;
 
   std::shared_ptr<GeneralDescriptor> addGeneralDescriptor(int binding) {
     std::shared_ptr<GeneralDescriptor> ptr =

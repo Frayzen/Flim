@@ -16,6 +16,9 @@ public:
   Transform transform;
 
   bool is2D;
+  float minZoom2D = 1.0f;
+  float maxZoom2D = 10.0f;
+
   float near;
   float far;
   float fov; // in degrees

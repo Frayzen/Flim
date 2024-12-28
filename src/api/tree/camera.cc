@@ -3,31 +3,31 @@
 #include "api/scene.hh"
 #include <GLFW/glfw3.h>
 #include <glm/ext/quaternion_transform.hpp>
-#include <iostream>
 
 namespace Flim {
 
 void Camera::handleInputs2D(double deltaTime) {
   (void)deltaTime;
 
-  /* float zoom = -transform.position.x; */
-  /* bool canZoom = zoom > transform.minZoom; */
-  /* bool canUnzoom = zoom < transform.maxZoom; */
+  float zoom = -transform.position.x;
+  bool canZoom = zoom > minZoom2D;
+  bool canUnzoom = zoom < maxZoom2D;
 
-  /* auto adaptSpeed = speed * (0.2f + 2 * (zoom - minZoom) / (maxZoom -
-   * minZoom)); */
-  /* if (glfwGetKey(win_, GLFW_KEY_D) == GLFW_PRESS) */
-  /*   position += adaptSpeed * getRight(); */
-  /* if (glfwGetKey(win_, GLFW_KEY_A) == GLFW_PRESS) */
-  /*   position += adaptSpeed * -getRight(); */
-  /* if (glfwGetKey(win_, GLFW_KEY_W) == GLFW_PRESS) */
-  /*   position += adaptSpeed * up_; */
-  /* if (glfwGetKey(win_, GLFW_KEY_S) == GLFW_PRESS) */
-  /*   position += adaptSpeed * -up_; */
-  /* if (glfwGetKey(win_, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS && canUnzoom) */
-  /*   position += speed * 3 * -getFront(); */
-  /* if (glfwGetKey(win_, GLFW_KEY_SPACE) == GLFW_PRESS && canZoom) */
-  /*   position += speed * 3 * getFront(); */
+  auto adaptSpeed =
+      speed * (0.2f + 2 * (zoom - minZoom2D) / (maxZoom2D - minZoom2D));
+  auto win = scene.api.getWindow();
+  if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS)
+    transform.position += adaptSpeed * world.right();
+  if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS)
+    transform.position += adaptSpeed * -world.right();
+  if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS)
+    transform.position += adaptSpeed * world.up();
+  if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
+    transform.position += adaptSpeed * world.up();
+  if (glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS && canUnzoom)
+    transform.position += speed * 3 * -world.front();
+  if (glfwGetKey(win, GLFW_KEY_SPACE) == GLFW_PRESS && canZoom)
+    transform.position += speed * 3 * world.front();
 }
 
 void Camera::handleInputs3D(double deltaTime) {

@@ -123,6 +123,15 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
   return model;
 }
 
+Mesh MeshUtils::createNodalMesh() {
+  Mesh model;
+  model.vertices.push_back({});
+  model.indices.push_back(0);
+  model.indices.push_back(0);
+  model.indices.push_back(0);
+  return model;
+}
+
 static Transform getMeshTransformFromScene(const aiScene *scene) {
   int upAxis = 0;
   int upAxisSign = 1;
@@ -185,7 +194,7 @@ Mesh MeshUtils::loadFromFile(std::string path) {
       auto n = mesh->mNormals[i];
       vtx.pos = {v.x, v.y, v.z};
       vtx.normal = {n.x, n.y, n.z};
-      m.vertices.emplace_back(vtx);
+      m.vertices.push_back(vtx);
     }
 
     std::cout << " | Retrieving indices" << std::endl;
@@ -194,9 +203,9 @@ Mesh MeshUtils::loadFromFile(std::string path) {
       aiFace face = mesh->mFaces[i];
       if (face.mNumIndices == 3) // Assuming triangles
       {
-        m.indices.emplace_back(face.mIndices[0]);
-        m.indices.emplace_back(face.mIndices[1]);
-        m.indices.emplace_back(face.mIndices[2]);
+        m.indices.push_back(face.mIndices[0]);
+        m.indices.push_back(face.mIndices[1]);
+        m.indices.push_back(face.mIndices[2]);
       }
     }
     std::cout << " | Attaching material" << std::endl;
