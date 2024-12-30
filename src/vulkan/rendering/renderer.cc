@@ -1,6 +1,7 @@
 #include "api/parameters.hh"
 #include "api/tree/camera.hh"
 #include "api/tree/instance.hh"
+#include "api/render/mesh.hh"
 #include "vulkan/buffers/buffer_utils.hh"
 #include <cstddef>
 #include <glm/fwd.hpp>

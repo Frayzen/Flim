@@ -1,6 +1,5 @@
 #pragma once
 
-#include "api/render/mesh.hh"
 #include "api/tree/camera.hh"
 #include "fwd.hh"
 #include "vulkan/rendering/pipeline.hh"
@@ -9,6 +8,7 @@
 namespace Flim {
 class RenderParams;
 class Instance;
+class Mesh;
 }; // namespace Flim
 
 class Renderer {

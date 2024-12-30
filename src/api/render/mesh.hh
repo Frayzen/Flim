@@ -34,14 +34,15 @@ public:
   void attachMaterial(Material m);
   void updateModelViews();
 
-protected:
-  Mesh() : id(curid++), material() {};
-
-  Material material;
   std::vector<Vertex> vertices;
   std::vector<uint16> indices;
 
   std::span<glm::mat4> modelViews;
+
+protected:
+  Mesh() : id(curid++), material() {};
+
+  Material material;
 
   friend class Scene;
   friend class MeshUtils;

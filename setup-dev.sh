@@ -20,6 +20,7 @@ cmake . -B build -DCMAKE_BUILD_TYPE=Debug
 rm compile_commands.json
 rm -rf ./build/textures
 ln -s ./textures/ ./build/textures/
+ln -s ./resources/ ./build/resources/
 ln -s ./build/compile_commands.json compile_commands.json
 
 echo "Setup DONE"

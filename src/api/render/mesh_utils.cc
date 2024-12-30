@@ -30,28 +30,28 @@ Mesh MeshUtils::createCube(float side_length) {
   // Add vertices to the mesh
   for (const auto &pos : positions) {
     vertex.pos = pos;
+    vertex.normal = normalize(pos);
     model.vertices.push_back(vertex);
   }
 
   // Define the 12 triangles (2 per face)
-  std::vector<uint16> indices = {// Top
-                                 2, 6, 7, 2, 3, 7,
+  const std::vector<uint16> indices = {// Top
+                                       2, 6, 7, 2, 3, 7,
 
-                                 // Bottom
-                                 0, 4, 5, 0, 1, 5,
+                                       // Bottom
+                                       0, 4, 5, 0, 1, 5,
 
-                                 // Left
-                                 0, 2, 6, 0, 4, 6,
+                                       // Left
+                                       0, 2, 6, 0, 4, 6,
 
-                                 // Right
-                                 1, 3, 7, 1, 5, 7,
+                                       // Right
+                                       1, 3, 7, 1, 5, 7,
 
-                                 // Front
-                                 0, 2, 3, 0, 1, 3,
+                                       // Front
+                                       0, 2, 3, 0, 1, 3,
 
-                                 // Back
-                                 4, 6, 7, 4, 5, 7};
-
+                                       // Back
+                                       4, 6, 7, 4, 5, 7};
   // Add indices to the mesh
   for (const auto &tri : indices) {
     model.indices.push_back(tri);

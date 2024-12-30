@@ -1,21 +1,19 @@
 #pragma once
 
-#include "api/scene.hh"
 #include "api/transform.hh"
 #include "vulkan/rendering/renderer.hh"
 namespace Flim {
 
 class Mesh;
+class Scene;
 
 class Instance {
 public:
   Transform transform;
-  Scene &scene;
-  Instance(Scene &scene, Mesh &mesh);
-
-  static Instance &instantiate(Mesh &mesh, TreeObject *parent);
+  Instance(const Scene &scene, Mesh &mesh);
 
   Renderer &getRenderer();
+  const Scene &scene;
   const Mesh &mesh;
   int getId() const;
 
@@ -23,4 +21,4 @@ private:
   int id;
   friend class Scene;
 };
-} // namespace Flim
+}; // namespace Flim

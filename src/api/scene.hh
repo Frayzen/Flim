@@ -16,7 +16,7 @@ class Instance;
 class Scene {
 
 public:
-  Instance &instantiate(Mesh &mesh);
+  Instance &instantiate(Mesh &mesh) const;
 
   void registerMesh(Mesh &mesh, RenderParams &params);
   FlimAPI &api;

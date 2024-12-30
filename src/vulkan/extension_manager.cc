@@ -29,7 +29,8 @@ void ExtensionManager::populateRequiredExtensions() {
   }
   if (enableValidationLayers) {
     requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    requiredExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    requiredExtensions.push_back(
+        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
   }
 }
 
@@ -109,11 +110,10 @@ void ExtensionManager::activateDebugExtensions(
   createInfo.ppEnabledLayerNames = validationLayers.data();
 }
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL
-debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-              VkDebugUtilsMessageTypeFlagsEXT messageType,
-              const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-              void *pUserData) {
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT,
+    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
 
   if (messageSeverity >= VK_DEBUG_LEVEL) {
     // Message is important enough to show

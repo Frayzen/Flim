@@ -1,6 +1,7 @@
 #include "pipeline.hh"
 #include "api/parameters.hh"
 #include "vulkan/context.hh"
+#include "api/render/mesh.hh"
 #include "vulkan/rendering/renderer.hh"
 #include <glm/fwd.hpp>
 #include <iostream>
@@ -136,11 +137,10 @@ void Pipeline::create() {
 
   VkPipelineRasterizationStateCreateInfo rasterizer{};
   rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-  rasterizer.depthClampEnable = VK_FALSE;
 
   // If set to VK_TRUE, then fragments that are beyond the near and far planes
   // are clamped to them as opposed to discarding them.
-  rasterizer.rasterizerDiscardEnable = VK_FALSE;
+  rasterizer.depthClampEnable = VK_FALSE;
   // If set to VK_TRUE, then geometry never passes through the rasterizer stage.
   // This basically disables any output to the framebuffer.
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
