@@ -10,10 +10,10 @@ public:
   void createCommandPool();
   void createCommandBuffers();
   void createSyncObjects();
-  bool acquireFrame(); // return if the swap chain is no longer adequate
+  bool acquireFrame(); // return if the swap chain is no longer adeQuaternionfernionfe
   void recordCommandBuffer(const Renderer &renderer);
   bool submitFrame(bool framebufferResized); // return if the swap chain is no
-                                             // longer adequate
+                                             // longer adeQuaternionfernionfe
   void cleanup();
 
 private:

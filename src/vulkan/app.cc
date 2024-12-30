@@ -91,7 +91,7 @@ void VulkanApplication::recreateSwapChain() {
 }
 
 static std::chrono::high_resolution_clock timer;
-static auto last = timer.now();
+static auto previous = timer.now();
 
 bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
                                  Flim::Scene &scene) {
@@ -110,11 +110,11 @@ bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
     command_pool_manager.recordCommandBuffer(*renderer.second);
   }
 
-  // Assuming timer and last are already defined.
+  // Assuming timer and previous are already defined.
   auto now = timer.now();
-  std::chrono::duration<float> deltaTime =
-      now - last; // Automatically in seconds as float
-  last = now;
+  // Automatically in seconds as float
+  std::chrono::duration<float> deltaTime = now - previous;
+  previous = now;
 
   float deltaSeconds = deltaTime.count(); // Convert to float for easier use
 

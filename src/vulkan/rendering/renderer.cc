@@ -4,7 +4,6 @@
 #include "api/render/mesh.hh"
 #include "vulkan/buffers/buffer_utils.hh"
 #include <cstddef>
-#include <glm/fwd.hpp>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
@@ -18,7 +17,7 @@ void Renderer::setup() {
                          mesh.indices.data(),
                          mesh.indices.size() * sizeof(mesh.indices[0]));
 
-  size_t bufSize = mesh.instances.size() * sizeof(glm::mat4);
+  size_t bufSize = mesh.instances.size() * sizeof(Matrix4f);
   createBuffer(bufSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -26,8 +25,8 @@ void Renderer::setup() {
   void *instancesMatrixBufferMapped;
   vkMapMemory(context.device, instancesMatrixBuffer.bufferMemory, 0, bufSize, 0,
               &instancesMatrixBufferMapped);
-  mat4 *modelViewsPtr = (mat4 *)instancesMatrixBufferMapped;
-  mesh.modelViews = std::span<glm::mat4>(modelViewsPtr, mesh.instances.size());
+  Matrix4f *modelViewsPtr = (Matrix4f *)instancesMatrixBufferMapped;
+  mesh.modelViews = std::span<Matrix4f>(modelViewsPtr, mesh.instances.size());
   mesh.updateModelViews();
 
   for (auto desc : params.descriptors) {

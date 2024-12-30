@@ -16,7 +16,12 @@ fi
 
 conda activate $ENV_NAME
 
-cmake . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake_args="-B build -DCMAKE_BUILD_TYPE=Debug"
+which hipcc >/dev/null
+if [ $? -ne 1 ]; then
+  cmake_args="$cmake_args -DCMAKE_CXX_COMPILER=$(which hipcc)"
+fi
+cmake . $cmake_args
 rm compile_commands.json
 rm -rf ./build/textures
 ln -s ./textures/ ./build/textures/

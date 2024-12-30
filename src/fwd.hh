@@ -1,13 +1,17 @@
 #pragma once
 
+#include <Eigen/StdVector>
+#include <Eigen/Core>
+#include <Eigen/Eigen>
+#include <Eigen/Dense>
+
+using namespace Eigen;
+
 #include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <consts.hh>
-#include <glm/glm.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/string_cast.hpp>
 
 typedef struct SwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;
@@ -53,6 +57,3 @@ typedef struct Buffer {
   VkDeviceMemory bufferMemory;
   VkBuffer buffer;
 } Buffer;
-
-
-using namespace glm;

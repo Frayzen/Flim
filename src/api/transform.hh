@@ -1,46 +1,49 @@
 #pragma once
 
 #include <fwd.hh>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/quaternion_common.hpp>
 
 namespace Flim {
 
-const vec3 world_front = vec3(0, 0, -1);
-const vec3 world_right = vec3(1, 0, 0);
-const vec3 world_up = vec3(0, 1, 0);
+const Vector3f world_front = Vector3f(0, 0, -1);
+const Vector3f world_right = Vector3f(1, 0, 0);
+const Vector3f world_up = Vector3f(0, 1, 0);
 
 class Transform {
 
 public:
   Transform()
-      : position({0, 0, 0}), rotation(glm::identity<quat>()),
-        scale(vec3(1, 1, 1)) {};
-  vec3 position;
-  quat rotation;
-  vec3 scale;
+      : position({0, 0, 0}), rotation(Quaternionf::Identity()),
+        scale(Vector3f(1, 1, 1)) {};
+  Vector3f position;
+  Quaternionf rotation;
+  Vector3f scale;
 
   // Right hand rule applies
-  vec3 front() const {
+  Vector3f front() const {
     // The forward vector in world space (-Z)
-    return glm::normalize(rotation * world_front);
+    return (rotation * world_front).normalized();
   }
-  vec3 up() const {
+  Vector3f up() const {
     // The forward vector in world space (+Y)
-    return glm::normalize(rotation * world_up);
+    return (rotation * world_up).normalized();
   }
-  vec3 right() const {
+  Vector3f right() const {
     // The forward vector in world space (+X)
-    return glm::normalize(rotation * world_right);
+    return (rotation * world_right).normalized();
   }
 
-  void translate(vec3 v) { position = position + v; }
+  void translate(Vector3f v) { position = position + v; }
 
-  glm::mat4 getViewMatrix() const {
-    glm::mat4 m = glm::translate(glm::identity<mat4>(), position);
-    glm::mat4 rot = glm::mat4_cast(glm::conjugate(rotation));
-    m = glm::scale(rot * m, scale);
-    return m;
+  Matrix4f getViewMatrix() const {
+    // Create a translation matrix
+    auto translation = Eigen::Translation3f(position);
+    // Create a rotation matrix
+    auto rotationMatrix = Eigen::Affine3f(rotation);
+    // Create a scale matrix
+    auto scaleMatrix = Eigen::Scaling(scale);
+
+    // Apply transformations in the same order as glm (translate, rotate, scale)
+    return (scaleMatrix * rotationMatrix * translation).matrix();
   };
 };
 

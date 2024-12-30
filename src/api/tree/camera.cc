@@ -1,15 +1,16 @@
 #include "camera.hh"
 #include "api/flim_api.hh"
 #include "api/scene.hh"
+#include <algorithm>
+#include <fwd.hh>
 #include <GLFW/glfw3.h>
-#include <glm/ext/quaternion_transform.hpp>
 
 namespace Flim {
 
 void Camera::handleInputs2D(double deltaTime) {
   (void)deltaTime;
 
-  float zoom = -transform.position.x;
+  float zoom = -transform.position.x();
   bool canZoom = zoom > minZoom2D;
   bool canUnzoom = zoom < maxZoom2D;
 
@@ -55,9 +56,15 @@ void Camera::handleInputs3D(double deltaTime) {
     pitch -= curSensivity;
   if (glfwGetKey(win, GLFW_KEY_K) == GLFW_PRESS)
     pitch += curSensivity;
-  pitch = max(min(pitch, lockPitch), -lockPitch);
-  transform.rotation = glm::normalize(
-      glm::quat(glm::vec3(glm::radians(pitch), glm::radians(yaw), 0.0f)));
+  pitch = std::max(std::min(pitch, lockPitch), -lockPitch);
+  // Create quaternions for the pitch and yaw rotations
+  Eigen::Quaternionf pitchQuat(
+      Eigen::AngleAxisf(pitch, Eigen::Vector3f::UnitX()));
+  Eigen::Quaternionf yawQuat(
+      Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitY()));
+
+  // Combine yaw and pitch (order matters: typically Yaw * Pitch)
+  transform.rotation = yawQuat * pitchQuat;
 }
 
 void Camera::handleInputs(double deltaTime) {

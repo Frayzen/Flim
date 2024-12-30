@@ -5,7 +5,6 @@ channels:
 dependencies:
   - gcc
   - cmake 
-  - glm
   - eigen
   - vulkan-tools
   - vulkan-headers
@@ -15,9 +14,8 @@ dependencies:
   - libcxx
   - glfw
   - assimp
-  - glm
   - imgui
-  - kokkos
+  # - kokkos
   # debug only
   - llvm-openmp
   - vulkan-validation-layers

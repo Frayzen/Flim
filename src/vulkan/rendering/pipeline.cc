@@ -3,7 +3,6 @@
 #include "vulkan/context.hh"
 #include "api/render/mesh.hh"
 #include "vulkan/rendering/renderer.hh"
-#include <glm/fwd.hpp>
 #include <iostream>
 #include <vulkan/vulkan_core.h>
 
@@ -19,7 +18,7 @@ inline std::vector<VkVertexInputBindingDescription> getBindingDescription() {
   bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
   bindingDescriptions[1].binding = 1;
-  bindingDescriptions[1].stride = sizeof(glm::mat4);
+  bindingDescriptions[1].stride = sizeof(Matrix4f);
   bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 
   return bindingDescriptions;
@@ -45,11 +44,11 @@ getAttributeDescriptions() {
   attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
   attributeDescriptions[2].offset = offsetof(Flim::Vertex, uv);
 
-  for (int i = 0; i < 4; i++) { // attribute for a glm::mat4
+  for (int i = 0; i < 4; i++) { // attribute for a Matrix4f
     attributeDescriptions[3 + i].binding = 1;
     attributeDescriptions[3 + i].location = 3 + i;
     attributeDescriptions[3 + i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[3 + i].offset = sizeof(glm::vec4) * i;
+    attributeDescriptions[3 + i].offset = sizeof(Vector4f) * i;
   }
 
   return attributeDescriptions;

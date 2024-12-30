@@ -1,7 +1,6 @@
 #pragma once
 #include "api/render/mesh.hh"
 #include <fwd.hh>
-#include <glm/fwd.hpp>
 #include <string>
 
 namespace Flim {

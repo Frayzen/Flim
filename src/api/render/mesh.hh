@@ -3,8 +3,8 @@
 #include "api/tree/instance.hh"
 #include "api/render/material.hh"
 #include "api/transform.hh"
+#include <cstdint>
 #include <fwd.hh>
-#include <glm/fwd.hpp>
 #include <span>
 #include <vector>
 
@@ -16,9 +16,9 @@ namespace Flim {
 class Instance;
 
 struct Vertex {
-  vec3 pos;
-  vec3 normal;
-  vec2 uv;
+  Vector3f pos;
+  Vector3f normal;
+  Vector2f uv;
 };
 
 static int curid = 0;
@@ -30,14 +30,14 @@ public:
   std::vector<Instance> instances;
   const Material &getMaterial() const;
   const std::vector<Vertex> &getVertices() const;
-  const std::vector<uint16> &getTriangles() const;
+  const std::vector<uint16_t> &getTriangles() const;
   void attachMaterial(Material m);
   void updateModelViews();
 
   std::vector<Vertex> vertices;
-  std::vector<uint16> indices;
+  std::vector<uint16_t> indices;
 
-  std::span<glm::mat4> modelViews;
+  std::span<Matrix4f> modelViews;
 
 protected:
   Mesh() : id(curid++), material() {};

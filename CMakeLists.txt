@@ -17,7 +17,7 @@ endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
 file(GLOB_RECURSE sources src/*.cc)
 add_executable(engine ${sources})
 
-target_link_libraries(engine ${Vulkan_LIBRARY} glfw glm::glm assimp imgui Kokkos::kokkos)
+target_link_libraries(engine ${Vulkan_LIBRARY} glfw Eigen3::Eigen assimp imgui Kokkos::kokkos)
 target_include_directories(engine PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 add_subdirectory(shaders)

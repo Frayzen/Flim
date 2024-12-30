@@ -1,13 +1,11 @@
 #include "mesh_utils.hh"
+#include <Eigen/Eigen>
 #include "api/render/mesh.hh"
+#include <Eigen/src/Core/Matrix.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <cstddef>
-#include <glm/fwd.hpp>
-#include <glm/geometric.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/string_cast.hpp>
 #include <iostream>
 #include <stdexcept>
 
@@ -21,7 +19,7 @@ Mesh MeshUtils::createCube(float side_length) {
   float half = side_length / 2.0f;
 
   // Define the 8 vertices of the cube
-  std::vector<glm::vec3> positions = {
+  std::vector<Vector3f> positions = {
       {-half, -half, half}, {half, -half, half},   {-half, half, half},
       {half, half, half},   {-half, -half, -half}, {half, -half, -half},
       {-half, half, -half}, {half, half, -half},
@@ -30,28 +28,28 @@ Mesh MeshUtils::createCube(float side_length) {
   // Add vertices to the mesh
   for (const auto &pos : positions) {
     vertex.pos = pos;
-    vertex.normal = normalize(pos);
+    vertex.normal = pos.normalized();
     model.vertices.push_back(vertex);
   }
 
   // Define the 12 triangles (2 per face)
-  const std::vector<uint16> indices = {// Top
-                                       2, 6, 7, 2, 3, 7,
+  const std::vector<uint16_t> indices = {// Top
+                                         2, 6, 7, 2, 3, 7,
 
-                                       // Bottom
-                                       0, 4, 5, 0, 1, 5,
+                                         // Bottom
+                                         0, 4, 5, 0, 1, 5,
 
-                                       // Left
-                                       0, 2, 6, 0, 4, 6,
+                                         // Left
+                                         0, 2, 6, 0, 4, 6,
 
-                                       // Right
-                                       1, 3, 7, 1, 5, 7,
+                                         // Right
+                                         1, 3, 7, 1, 5, 7,
 
-                                       // Front
-                                       0, 2, 3, 0, 1, 3,
+                                         // Front
+                                         0, 2, 3, 0, 1, 3,
 
-                                       // Back
-                                       4, 6, 7, 4, 5, 7};
+                                         // Back
+                                         4, 6, 7, 4, 5, 7};
   // Add indices to the mesh
   for (const auto &tri : indices) {
     model.indices.push_back(tri);
@@ -66,7 +64,7 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
   Vertex vertex;
 
   // add top vertex
-  vertex.pos = radius * vec3(0, 1, 0);
+  vertex.pos = radius * Vector3f(0, 1, 0);
   int v0 = model.vertices.size();
   model.vertices.push_back(vertex);
 
@@ -78,13 +76,13 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
       auto x = std::sin(phi) * std::cos(theta);
       auto y = std::cos(phi);
       auto z = std::sin(phi) * std::sin(theta);
-      vertex.pos = radius * vec3(x, y, z);
+      vertex.pos = radius * Vector3f(x, y, z);
       model.vertices.push_back(vertex);
     }
   }
 
   // add bottom vertex
-  vertex.pos = radius * vec3(0, -1, 0);
+  vertex.pos = radius * Vector3f(0, -1, 0);
   int v1 = model.vertices.size();
   model.vertices.push_back(vertex);
 
@@ -163,7 +161,8 @@ static Transform getMeshTransformFromScene(const aiScene *scene) {
                   upVec.z, 0.0f, forwardVec.x, forwardVec.y, forwardVec.z, 0.0f,
                   0.0f, 0.0f, 0.0f, 1.0f);
   Transform t;
-  t.rotation = *((mat4 *)&mat);
+  Matrix3f mat3 = (*((Matrix4f *)&mat)).block<3,3>(0,0);
+  t.rotation = Quaternionf(mat3);
   return t;
 }
 
@@ -177,7 +176,7 @@ Mesh MeshUtils::loadFromFile(std::string path) {
           aiProcess_RemoveRedundantMaterials |
           aiProcess_GenNormals /* or aiProcess_GenSmoothNormals */);
 
-  mat4 rot = *((mat4 *)&scene->mRootNode->mTransformation);
+  Matrix4f rot = *((Matrix4f *)&scene->mRootNode->mTransformation);
 
   if (scene == NULL || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       scene->mRootNode == NULL)
@@ -190,10 +189,11 @@ Mesh MeshUtils::loadFromFile(std::string path) {
     auto mesh = scene->mMeshes[i];
     Vertex vtx{};
     for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
-      auto v = mesh->mVertices[i];
-      auto n = mesh->mNormals[i];
-      vtx.pos = {v.x, v.y, v.z};
-      vtx.normal = {n.x, n.y, n.z};
+      aiVector3D v = mesh->mVertices[i];
+      aiVector3D n = mesh->mNormals[i];
+      vtx.pos = Vector3f(v.x, v.y, v.z);
+      vtx.normal = Vector3f(n.x, n.y, n.z);
+      vtx.uv = Vector2f(0,0);
       m.vertices.push_back(vtx);
     }
 

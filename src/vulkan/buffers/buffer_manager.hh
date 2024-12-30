@@ -4,15 +4,15 @@
 #include <vulkan/vulkan_core.h>
 
 struct UniformLocationObject {
-  glm::mat4 model;
-  glm::mat4 view;
-  glm::mat4 proj;
+  Matrix4f model;
+  Matrix4f view;
+  Matrix4f proj;
 };
 
 struct UniformMaterialObject {
-  alignas(16) glm::vec3 ambient;
-  alignas(16) glm::vec3 diffuse;
-  alignas(16) glm::vec3 specular;
+  alignas(16) Vector3f ambient;
+  alignas(16) Vector3f diffuse;
+  alignas(16) Vector3f specular;
 };
 
 class BufferManager {
