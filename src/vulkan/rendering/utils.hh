@@ -1,28 +1,18 @@
 #pragma once
 
-#include <fwd.hh>
 #include "vulkan/context.hh"
+#include <fwd.hh>
 #include <stdexcept>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
 #define TO_RAD(X) ((X) * 0.5f * M_PI / 180.0f)
 
-inline Quaternionf toQuaternion(Vector3f data)
-{
-    Quaternionf ans;
-    double t0 = cos(data.y() * 0.5);
-    double t1 = sin(data.y() * 0.5);
-    double t2 = cos(data.z() * 0.5);
-    double t3 = sin(data.z() * 0.5);
-    double t4 = cos(data.x() * 0.5);
-    double t5 = sin(data.x() * 0.5);
-
-    ans.x() = t2 * t4 * t0 + t3 * t5 * t1;
-    ans.y() = t3 * t4 * t0 - t2 * t5 * t1;
-    ans.z() = t2 * t5 * t0 + t3 * t4 * t1;
-    ans.w() = t2 * t4 * t1 - t3 * t5 * t0;
-    return ans;
+// angles in radian
+inline Quaternionf toQuaternion(float roll, float pitch, float yaw) {
+  return AngleAxisf(pitch, Vector3f::UnitX()) *
+         AngleAxisf(yaw, Vector3f::UnitY()) *
+         AngleAxisf(roll, Vector3f::UnitZ());
 }
 
 static VkFormat findSupportedFormat(VulkanContext &context,

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "api/tree/instance.hh"
 #include "api/render/material.hh"
 #include "api/transform.hh"
+#include "api/tree/instance.hh"
 #include <cstdint>
 #include <fwd.hh>
 #include <span>
@@ -40,7 +40,7 @@ public:
   std::span<Matrix4f> modelViews;
 
 protected:
-  Mesh() : id(curid++), material() {};
+  Mesh() : id(curid++), material(), vertices(), indices(), modelViews() {};
 
   Material material;
 

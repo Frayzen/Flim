@@ -6,6 +6,9 @@
 !src/
 !src/**/
 
+!simulations/
+!simulations/**/
+
 !*.cc
 !*.hh
 !*.h

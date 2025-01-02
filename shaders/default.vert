@@ -8,6 +8,7 @@ layout(binding = 0) uniform UniformLocationObject {
 
 layout(binding = 2) uniform PointDesc {
   float size;
+  float edgeSize;
   bool applyDiffuse;
 } pointDesc;
 
@@ -19,6 +20,7 @@ layout(location = 3) in mat4 inInstanceMat;
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNormal;
 layout(location = 2) out vec2 fragTexCoord;
+layout(location = 3) out vec2 fragPos;
 
 void main() {
     gl_Position = ulo.proj * ulo.view * ulo.model * inInstanceMat * vec4(inPosition, 1.0);
@@ -29,5 +31,6 @@ void main() {
     fragNormal = inNormal;
     fragTexCoord = inTexCoord;
     float depth = pos.z;
-    gl_PointSize = pointDesc.size / abs(depth);
+    fragPos = pos.xy;
+    gl_PointSize = (pointDesc.size + pointDesc.edgeSize) / abs(depth);
 }

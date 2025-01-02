@@ -36,17 +36,17 @@ void Camera::handleInputs3D(double deltaTime) {
   auto win = scene.api.getWindow();
   float curSpeed = speed * deltaTime;
   if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS)
-    transform.position += curSpeed * transform.right();
+    transform.position -= curSpeed * transform.right();
   if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS)
-    transform.position += curSpeed * -transform.right();
+    transform.position -= curSpeed * -transform.right();
   if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS)
-    transform.position += curSpeed * transform.front();
+    transform.position -= curSpeed * transform.front();
   if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
-    transform.position += curSpeed * -transform.front();
+    transform.position -= curSpeed * -transform.front();
   if (glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-    transform.position += curSpeed * -world.up();
+    transform.position -= curSpeed * -world.up();
   if (glfwGetKey(win, GLFW_KEY_SPACE) == GLFW_PRESS)
-    transform.position += curSpeed * world.up();
+    transform.position -= curSpeed * world.up();
 
   float curSensivity = sensivity;
   if (glfwGetKey(win, GLFW_KEY_L) == GLFW_PRESS)
@@ -60,7 +60,7 @@ void Camera::handleInputs3D(double deltaTime) {
   pitch = std::max(std::min(pitch, lockPitch), -lockPitch);
 
   // Combine yaw and pitch (order matters: typically Yaw * Pitch)
-  transform.rotation = toQuaternion(Vector3f(TO_RAD(yaw), TO_RAD(pitch), 0));
+  transform.rotation = toQuaternion(0.0f, TO_RAD(pitch), TO_RAD(yaw));
 }
 
 void Camera::handleInputs(double deltaTime) {

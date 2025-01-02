@@ -14,7 +14,7 @@ namespace Flim {
 Mesh MeshUtils::createCube(float side_length) {
   Mesh model;
 
-  Vertex vertex;
+  Vertex vertex{};
 
   float half = side_length / 2.0f;
 
@@ -61,7 +61,7 @@ Mesh MeshUtils::createCube(float side_length) {
 Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
   Mesh model;
 
-  Vertex vertex;
+  Vertex vertex{};
 
   // add top vertex
   vertex.pos = radius * Vector3f(0, 1, 0);

@@ -38,7 +38,7 @@ public:
 
       proj(0, 0) = 2.0f / (right - left);
       proj(1, 1) = 2.0f / (top - bottom);
-      proj(2, 2) = -2.0f / (far - near);
+      proj(2, 2) = 2.0f / (far - near);
       proj(0, 3) = -(right + left) / (right - left);
       proj(1, 3) = -(top + bottom) / (top - bottom);
       proj(2, 3) = -(far + near) / (far - near);
@@ -48,7 +48,7 @@ public:
           std::tan(TO_RAD(fov)); // Convert fov to radians
 
       proj(0, 0) = 1.0f / (screenRatio * tanHalfFov);
-      proj(1, 1) = 1.0f / tanHalfFov;
+      proj(1, 1) = -1.0f / tanHalfFov;
       proj(2, 2) = -(far + near) / (far - near);
       proj(2, 3) = -(2.0f * far * near) / (far - near);
       proj(3, 2) = -1.0f;
@@ -58,7 +58,17 @@ public:
     return proj;
   }
 
-  Matrix4f getViewMat() const { return transform.getViewMatrix(); }
+  Matrix4f getViewMat() const {
+    // Create a translation matrix
+    auto translation = Eigen::Translation3f(-transform.position);
+    // Create a rotation matrix
+    auto rotationMatrix = toQuaternion(0.0f, -TO_RAD(pitch), -TO_RAD(yaw));
+    // Create a scale matrix
+    auto scaleMatrix = Eigen::Scaling(transform.scale);
+
+    // Apply transformations in the same order as glm (translate, rotate, scale)
+    return (scaleMatrix * rotationMatrix * translation).matrix();
+  }
 
   void handleInputs(double deltaTime);
   static void keyCallback(GLFWwindow *window, int key, int scancode, int action,
