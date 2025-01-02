@@ -59,6 +59,7 @@ int main() {
 
   Mesh sphere = MeshUtils::createNodalMesh();
   Mesh cube = MeshUtils::createCube();
+  Mesh teddy = MeshUtils::loadFromFile("./resources/single_file/teddy.obj");
 
   RenderParams sphereParams = {
       Shader("shaders/default.vert.spv"),
@@ -69,6 +70,8 @@ int main() {
   sphereParams.addGeneralDescriptor(1)->attach<MaterialUniform>();
   sphereParams.addGeneralDescriptor(2)->attach<PointUniform>(pointDesc);
 
+  /* sphereParams.registerComputeShader("./shaders/particles.compute"); */
+
   RenderParams cubeParams = sphereParams;
   cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
   cubeParams.useBackfaceCulling = false;
@@ -76,8 +79,12 @@ int main() {
   Scene &scene = api.getScene();
   scene.registerMesh(sphere, sphereParams);
   scene.registerMesh(cube, cubeParams);
+  scene.registerMesh(teddy, cubeParams);
 
-  constexpr long amount = 100;
+  auto& teddy_istc = scene.instantiate(teddy);
+  teddy_istc.transform.scale = Vector3f(0.2,0.2,0.2);
+
+  constexpr long amount = 10;
 
   std::vector<Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> velocities(
       amount * amount * amount);
@@ -91,19 +98,18 @@ int main() {
         Instance &istc = scene.instantiate(sphere);
         istc.transform.scale = Vector3f(0.2f, 0.2f, 0.2f);
         auto pos = Vector3f(i, j, k);
-        istc.transform.position = pos * offset - Vector3f(bounds, bounds, bounds);
-        auto vel =
-            Vector3f(std::rand() - RAND_MAX / 2, std::rand() - RAND_MAX / 2,
-                     std::rand() - RAND_MAX / 2);
+        istc.transform.position =
+            pos * offset - Vector3f(bounds, bounds, bounds);
+        auto vel = Vector3f::Random().normalized();
         velocities[i * amount * amount + j * amount + k] = vel.normalized();
       }
 
   Instance &cubeIstc = scene.instantiate(cube);
 
   /* scene.camera.is2D = true; */
-  scene.camera.speed = 30;
+  scene.camera.speed = 10;
   scene.camera.transform.position = Vector3f(0, 0, 10);
-  scene.camera.sensivity = 8;
+  scene.camera.sensivity = 5;
 
   float timeSpeed = 0.0f;
   int ret = api.run([&](float deltaTime) {

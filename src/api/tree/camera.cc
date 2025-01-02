@@ -1,9 +1,10 @@
 #include "camera.hh"
 #include "api/flim_api.hh"
 #include "api/scene.hh"
+#include "vulkan/rendering/utils.hh"
+#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <fwd.hh>
-#include <GLFW/glfw3.h>
 
 namespace Flim {
 
@@ -57,14 +58,9 @@ void Camera::handleInputs3D(double deltaTime) {
   if (glfwGetKey(win, GLFW_KEY_K) == GLFW_PRESS)
     pitch += curSensivity;
   pitch = std::max(std::min(pitch, lockPitch), -lockPitch);
-  // Create quaternions for the pitch and yaw rotations
-  Eigen::Quaternionf pitchQuat(
-      Eigen::AngleAxisf(pitch, Eigen::Vector3f::UnitX()));
-  Eigen::Quaternionf yawQuat(
-      Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitY()));
 
   // Combine yaw and pitch (order matters: typically Yaw * Pitch)
-  transform.rotation = yawQuat * pitchQuat;
+  transform.rotation = toQuaternion(Vector3f(TO_RAD(yaw), TO_RAD(pitch), 0));
 }
 
 void Camera::handleInputs(double deltaTime) {

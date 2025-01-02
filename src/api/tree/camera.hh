@@ -1,6 +1,7 @@
 #pragma once
 
 #include "api/transform.hh"
+#include "vulkan/rendering/utils.hh"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE // for perspective projection
 #include <fwd.hh>
 namespace Flim {
@@ -44,10 +45,10 @@ public:
     } else {
       // Perspective projection
       float tanHalfFov =
-          std::tan(fov * 0.5f * M_PI / 180.0f); // Convert fov to radians
+          std::tan(TO_RAD(fov)); // Convert fov to radians
 
       proj(0, 0) = 1.0f / (screenRatio * tanHalfFov);
-      proj(1, 1) = -1.0f / tanHalfFov; // Invert Y for glsl compatibility
+      proj(1, 1) = 1.0f / tanHalfFov;
       proj(2, 2) = -(far + near) / (far - near);
       proj(2, 3) = -(2.0f * far * near) / (far - near);
       proj(3, 2) = -1.0f;
