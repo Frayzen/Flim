@@ -1,7 +1,7 @@
 #pragma once
 
 #include "api/shaders/shader.hh"
-#include "vulkan/buffers/descriptors.hh"
+#include "vulkan/buffers/uniform_descriptors.hh"
 #include <memory>
 #include <string>
 #include <vector>
@@ -34,7 +34,7 @@ struct RenderParams {
   std::shared_ptr<GeneralDescriptor> addGeneralDescriptor(int binding) {
     std::shared_ptr<GeneralDescriptor> ptr =
         std::make_unique<GeneralDescriptor>(binding);
-    descriptors.push_back(ptr);
+    uniforms.push_back(ptr);
     return ptr;
   }
 
@@ -42,7 +42,7 @@ struct RenderParams {
                                                       std::string path) {
     std::shared_ptr<ImageDescriptor> ptr =
         std::make_unique<ImageDescriptor>(binding, path);
-    descriptors.push_back(ptr);
+    uniforms.push_back(ptr);
     return ptr;
   }
 
@@ -52,8 +52,8 @@ struct RenderParams {
 
   void invalidate() { version++; };
 
-  std::vector<std::shared_ptr<BaseDescriptor>> descriptors =
-      std::vector<std::shared_ptr<BaseDescriptor>>();
+  std::vector<std::shared_ptr<UniformDescriptor>> uniforms =
+      std::vector<std::shared_ptr<UniformDescriptor>>();
 };
 
 struct FlimParameters {};

@@ -21,8 +21,7 @@ public:
 
   void createDescriptorSetLayout();
   void setupUniforms();
-  void updateUniforms(const Flim::Instance &obj,
-                      const Flim::Camera &cam);
+  void updateUniforms(const Flim::Instance &obj, const Flim::Camera &cam);
   void createDescriptorSets();
   void createDescriptorPool();
 
@@ -35,8 +34,12 @@ public:
   std::map<int, std::vector<Buffer>> uniforms;
   std::map<int, std::vector<void *>> mappedUniforms;
 
+  // per index
   Buffer indexBuffer;
+
+  // per vertex
   Buffer vertexBuffer;
+
   Buffer instancesMatrixBuffer;
 
   std::vector<VkDescriptorSet> descriptorSets;

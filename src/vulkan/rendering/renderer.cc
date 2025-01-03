@@ -29,7 +29,7 @@ void Renderer::setup() {
   mesh.modelViews = std::span<Matrix4f>(modelViewsPtr, mesh.instances.size());
   mesh.updateModelViews();
 
-  for (auto desc : params.descriptors) {
+  for (auto desc : params.uniforms) {
     desc->setup(*this);
   }
   createDescriptorSetLayout();
@@ -39,7 +39,7 @@ void Renderer::setup() {
 }
 
 void Renderer::update(const Flim::Camera &cam) {
-  for (auto desc : params.descriptors) {
+  for (auto desc : params.uniforms) {
     desc->update(*this, mesh, cam);
   }
   if (params.version != version) {
@@ -55,7 +55,7 @@ void Renderer::cleanup() {
   destroyBuffer(indexBuffer);
   destroyBuffer(instancesMatrixBuffer);
   destroyBuffer(vertexBuffer);
-  for (auto desc : params.descriptors) {
+  for (auto desc : params.uniforms) {
     desc->cleanup(*this);
   }
   pipeline.cleanup();
@@ -64,9 +64,9 @@ void Renderer::cleanup() {
 }
 
 void Renderer::createDescriptorSetLayout() {
-  std::vector<VkDescriptorSetLayoutBinding> bindings(params.descriptors.size());
+  std::vector<VkDescriptorSetLayoutBinding> bindings(params.uniforms.size());
   int i = 0;
-  for (auto desc : params.descriptors) {
+  for (auto desc : params.uniforms) {
     bindings[i] = {};
     bindings[i].binding = desc->binding;
     bindings[i].descriptorType = desc->type;
@@ -103,10 +103,10 @@ void Renderer::createDescriptorSets() {
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 
     std::vector<VkWriteDescriptorSet> descriptorWrites(
-        params.descriptors.size());
+        params.uniforms.size());
 
     int cur = 0;
-    for (auto desc : params.descriptors) {
+    for (auto desc : params.uniforms) {
       descriptorWrites[cur++] = desc->getDescriptor(*this, i);
     }
     vkUpdateDescriptorSets(context.device,
@@ -117,9 +117,9 @@ void Renderer::createDescriptorSets() {
 
 void Renderer::createDescriptorPool() {
 
-  std::vector<VkDescriptorPoolSize> poolSizes(params.descriptors.size());
+  std::vector<VkDescriptorPoolSize> poolSizes(params.uniforms.size());
   int i = 0;
-  for (auto desc : params.descriptors) {
+  for (auto desc : params.uniforms) {
     poolSizes[i].type = desc->type;
     poolSizes[i].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     i++;
