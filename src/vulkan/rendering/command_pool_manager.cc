@@ -73,7 +73,7 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   for (auto &attr : renderer.params.getAttributeDescriptors()) {
     const std::shared_ptr<Flim::BaseAttributeDescriptor> &desc = attr.second;
     vertexBuffers.push_back(
-        desc->getBuffer(renderer, context.currentImage).buffer);
+        desc->getBuffer(renderer).buffer);
     offsets.push_back(0);
   }
 
@@ -283,6 +283,7 @@ bool CommandPoolManager::submitFrame(bool framebufferResized) {
   if (result != VK_SUCCESS)
     throw std::runtime_error("failed to acquire swap chain image!");
   context.currentImage = (context.currentImage + 1) % MAX_FRAMES_IN_FLIGHT;
+  context.currentUpdate = (context.currentImage + 1) % MAX_FRAMES_IN_FLIGHT;
   return false;
 }
 

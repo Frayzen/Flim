@@ -11,6 +11,7 @@ VulkanApplication::VulkanApplication()
       device_manager(), surface_manager(), command_pool_manager(),
       buffer_manager(), gui_manager() {
   context.currentImage = 0;
+  context.currentUpdate = 1;
 }
 
 void VulkanApplication::init() {
