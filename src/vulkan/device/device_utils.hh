@@ -6,16 +6,15 @@
 #include <vulkan/vulkan_core.h>
 
 struct QueueFamilyIndices {
-  std::optional<uint32_t> graphicsFamily;
+  std::optional<uint32_t> graphicsAndComputeFamily;
   std::optional<uint32_t> presentFamily;
   bool isComplete() {
-    return graphicsFamily.has_value() && presentFamily.has_value();
+    return graphicsAndComputeFamily.has_value() && presentFamily.has_value();
   }
 };
 
-
-
-inline QueueFamilyIndices findQueueFamilies(VulkanContext& context, VkPhysicalDevice device) {
+inline QueueFamilyIndices findQueueFamilies(VulkanContext &context,
+                                            VkPhysicalDevice device) {
   // Verify what kind of queues the device can handle
   QueueFamilyIndices indices;
   // Assign index to queue families that could be found
@@ -28,8 +27,9 @@ inline QueueFamilyIndices findQueueFamilies(VulkanContext& context, VkPhysicalDe
 
   int i = 0;
   for (const auto &queueFamily : queueFamilies) {
-    if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-      indices.graphicsFamily = i;
+    if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
+        (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)) {
+      indices.graphicsAndComputeFamily = i;
     }
     VkBool32 presentSupport = false;
     vkGetPhysicalDeviceSurfaceSupportKHR(device, i, context.surface,
@@ -44,4 +44,3 @@ inline QueueFamilyIndices findQueueFamilies(VulkanContext& context, VkPhysicalDe
 
   return indices;
 }
-

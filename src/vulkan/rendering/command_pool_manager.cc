@@ -1,5 +1,5 @@
 #include "command_pool_manager.hh"
-#include "api/parameters.hh"
+#include "api/parameters/render_params.hh"
 #include "api/render/mesh.hh"
 #include "consts.hh"
 #include "vulkan/device/device_utils.hh"
@@ -18,7 +18,7 @@ void CommandPoolManager::createCommandPool() {
   // Allow command buffers to be rerecorded individually, without this flag they
   // all have to be reset together
   poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsAndComputeFamily.value();
 
   if (vkCreateCommandPool(context.device, &poolInfo, nullptr,
                           &commandPool.pool) != VK_SUCCESS) {

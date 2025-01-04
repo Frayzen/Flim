@@ -3,7 +3,6 @@
 #include <Eigen/StdVector>
 
 #include "api/flim_api.hh"
-#include "api/parameters.hh"
 #include "api/render/mesh.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/scene.hh"
@@ -46,16 +45,18 @@ int main() {
   RenderParams sphereParams;
   sphereParams.vertexShader = Shader("shaders/default.vert.spv"),
   sphereParams.fragmentShader = Shader("shaders/default.frag.spv");
+
   sphereParams.mode = RenderMode::RENDERER_MODE_POINTS;
-  sphereParams.addUniform(0).attach<LocationUniform>(
-      [](const Mesh &mesh, const Camera &cam, LocationUniform *uni) {
-        uni->model = mesh.transform.getViewMatrix();
-        uni->view = cam.getViewMat();
-        uni->proj =
-            cam.getProjMat(context.swapChain.swapChainExtent.width /
-                           (float)context.swapChain.swapChainExtent.height);
-      });
-  sphereParams.addUniform(1).attach<MaterialUniform>(
+  sphereParams.addUniform(0, VERTEX_SHADER_STAGE)
+      .attach<LocationUniform>(
+          [](const Mesh &mesh, const Camera &cam, LocationUniform *uni) {
+            uni->model = mesh.transform.getViewMatrix();
+            uni->view = cam.getViewMat();
+            uni->proj =
+                cam.getProjMat(context.swapChain.swapChainExtent.width /
+                               (float)context.swapChain.swapChainExtent.height);
+          });
+  sphereParams.addUniform(1, FRAGMENT_SHADER_STAGE).attach<MaterialUniform>(
       [](const Mesh &mesh, const Camera &, MaterialUniform *uni) {
         uni->ambient = mesh.getMaterial().ambient;
         uni->diffuse = mesh.getMaterial().diffuse;
@@ -80,13 +81,24 @@ int main() {
         }
       })
       .onlySetup(true)
+      .computeFriendly(true)
       .add(0 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
       .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
       .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
       .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
 
+  sphereParams.setAttribute(2, AttributeRate::INSTANCE)
+      .attach<Vector3f>([](const Mesh &m, Vector3f *vels) {
+        for (size_t i = 0; i < m.instances.size(); i++)
+          vels[i] = Vector3f::Random().normalized();
+      })
+      .add(0, VK_FORMAT_R32G32B32_SFLOAT)
+      .computeFriendly(true)
+      .onlySetup(true);
+
   RenderParams cubeParams = sphereParams;
-  cubeParams.getAttribute(1).onlySetup(false);
+  cubeParams.getAttribute(1).onlySetup(false).computeFriendly(false);
+  cubeParams.removeAttribute(2);
   cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
   cubeParams.useBackfaceCulling = false;
 
@@ -130,8 +142,6 @@ int main() {
                      IM_ARRAYSIZE(items))) {
       cubeParams.invalidate();
     }
-
-
 
     ImGui::SliderFloat3("Ambient color", (float *)&sphere.getMaterial().ambient,
                         0.0f, 1.0f);

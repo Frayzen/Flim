@@ -5,8 +5,7 @@
 
 namespace Flim {
 
-FlimAPI FlimAPI::init(FlimParameters parameters) {
-  (void)parameters;
+FlimAPI FlimAPI::init() {
   FlimAPI flim;
   flim.app.init();
   return flim;

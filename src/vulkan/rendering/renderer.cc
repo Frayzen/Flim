@@ -1,4 +1,6 @@
-#include "api/parameters.hh"
+#include "renderer.hh"
+
+#include "api/parameters/render_params.hh"
 #include "api/render/mesh.hh"
 #include "api/tree/camera.hh"
 #include "api/tree/instance.hh"
@@ -70,7 +72,7 @@ void Renderer::createDescriptorSetLayout() {
     bindings[i].binding = desc.second->binding;
     bindings[i].descriptorType = desc.second->type;
     bindings[i].descriptorCount = 1;
-    bindings[i].stageFlags = shaderStageToVulkanFlags(desc.second->stage);
+    bindings[i].stageFlags = desc.second->stage;
     i++;
   }
   VkDescriptorSetLayoutCreateInfo layoutInfo{};

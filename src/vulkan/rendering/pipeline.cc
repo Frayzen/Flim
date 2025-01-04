@@ -1,5 +1,5 @@
 #include "pipeline.hh"
-#include "api/parameters.hh"
+#include "api/parameters/render_params.hh"
 #include "api/render/mesh.hh"
 #include "vulkan/context.hh"
 #include "vulkan/rendering/renderer.hh"
@@ -13,11 +13,10 @@ void Pipeline::cleanup() {
 
 std::vector<VkVertexInputBindingDescription> Pipeline::getBindingDescription() {
   Flim::RenderParams &params = renderer.params;
-  auto &descs = params.getAttributeDescriptors();
-  auto nbBindings = descs.size();
+  auto nbBindings = params.attributes.size();
   std::vector<VkVertexInputBindingDescription> bindingDescriptions(nbBindings);
   for (size_t i = 0; i < nbBindings; i++)
-    bindingDescriptions[i] = descs[i]->getBindingDescription();
+    bindingDescriptions[i] = params.attributes[i]->getBindingDescription();
   return bindingDescriptions;
 }
 

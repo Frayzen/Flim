@@ -14,7 +14,7 @@ Instance &Scene::instantiate(Mesh &mesh) const {
 }
 
 void Scene::registerMesh(Mesh &mesh, RenderParams &params) {
-  assert(params.valid());
+  assert(params.usable());
   renderers.insert(
       std::pair(mesh.id, std::make_shared<Renderer>(mesh, params)));
 }
