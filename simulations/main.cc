@@ -56,12 +56,13 @@ int main() {
                 cam.getProjMat(context.swapChain.swapChainExtent.width /
                                (float)context.swapChain.swapChainExtent.height);
           });
-  sphereParams.addUniform(1, FRAGMENT_SHADER_STAGE).attach<MaterialUniform>(
-      [](const Mesh &mesh, const Camera &, MaterialUniform *uni) {
-        uni->ambient = mesh.getMaterial().ambient;
-        uni->diffuse = mesh.getMaterial().diffuse;
-        uni->specular = mesh.getMaterial().specular;
-      });
+  sphereParams.addUniform(1, FRAGMENT_SHADER_STAGE)
+      .attach<MaterialUniform>(
+          [](const Mesh &mesh, const Camera &, MaterialUniform *uni) {
+            uni->ambient = mesh.getMaterial().ambient;
+            uni->diffuse = mesh.getMaterial().diffuse;
+            uni->specular = mesh.getMaterial().specular;
+          });
   sphereParams.addUniform(2).attachObj<PointUniform>(pointDesc);
 
   sphereParams.setAttribute(0)
@@ -74,27 +75,28 @@ int main() {
       .add(offsetof(Flim::Vertex, normal), VK_FORMAT_R32G32B32_SFLOAT)
       .add(offsetof(Flim::Vertex, uv), VK_FORMAT_R32G32_SFLOAT);
 
-  sphereParams.setAttribute(1, AttributeRate::INSTANCE)
-      .attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) {
-        for (size_t i = 0; i < m.instances.size(); i++) {
-          mats[i] = m.instances[i].transform.getViewMatrix();
-        }
-      })
-      .onlySetup(true)
-      .computeFriendly(true)
-      .add(0 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
-      .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
-      .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
-      .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
+  auto &positions =
+      sphereParams.setAttribute(1, AttributeRate::INSTANCE)
+          .attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) {
+            for (size_t i = 0; i < m.instances.size(); i++) {
+              mats[i] = m.instances[i].transform.getViewMatrix();
+            }
+          })
+          .onlySetup(true)
+          .computeFriendly(true)
+          .add(0 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
+          .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
+          .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
+          .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
 
-  sphereParams.setAttribute(2, AttributeRate::INSTANCE)
-      .attach<Vector3f>([](const Mesh &m, Vector3f *vels) {
-        for (size_t i = 0; i < m.instances.size(); i++)
-          vels[i] = Vector3f::Random().normalized();
-      })
-      .add(0, VK_FORMAT_R32G32B32_SFLOAT)
-      .computeFriendly(true)
-      .onlySetup(true);
+  auto &velocities = sphereParams.setAttribute(2, AttributeRate::INSTANCE)
+                         .attach<Vector3f>([](const Mesh &m, Vector3f *vels) {
+                           for (size_t i = 0; i < m.instances.size(); i++)
+                             vels[i] = Vector3f::Random().normalized();
+                         })
+                         .add(0, VK_FORMAT_R32G32B32_SFLOAT)
+                         .computeFriendly(true)
+                         .onlySetup(true);
 
   RenderParams cubeParams = sphereParams;
   cubeParams.getAttribute(1).onlySetup(false).computeFriendly(false);
@@ -108,8 +110,6 @@ int main() {
 
   constexpr long amount = 10;
 
-  std::vector<Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> velocities(
-      amount * amount * amount);
   const float offset = 5;
   float bounds = offset * (float)amount / 2.0f;
   const float originalBounds = bounds;
@@ -122,8 +122,6 @@ int main() {
         auto pos = Vector3f(i, j, k);
         istc.transform.position =
             pos * offset - Vector3f(bounds, bounds, bounds);
-        auto vel = Vector3f::Random().normalized();
-        velocities[i * amount * amount + j * amount + k] = vel.normalized();
       }
 
   Instance &cubeIstc = scene.instantiate(cube);

@@ -15,8 +15,8 @@ void Renderer::setup() {
   assert(mesh.indices.size() > 0);
 
   createBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                         mesh.indices.data(),
-                         mesh.indices.size() * sizeof(mesh.indices[0]));
+                       mesh.indices.data(),
+                       mesh.indices.size() * sizeof(mesh.indices[0]));
 
   for (auto &desc : params.getAttributeDescriptors()) {
     desc.second->setup(*this);
@@ -36,7 +36,7 @@ const std::vector<Flim::Instance> &Renderer::getInstances() {
 
 void Renderer::update(const Flim::Camera &cam) {
   for (auto desc : params.getUniformDescriptors()) {
-    desc.second->update(*this, mesh, cam);
+    desc.second->update(*this, cam);
   }
   for (auto desc : params.getAttributeDescriptors()) {
     desc.second->update(*this);

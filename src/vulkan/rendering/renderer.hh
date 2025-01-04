@@ -36,8 +36,8 @@ public:
   std::map<int, std::vector<Buffer>> uniforms;
   std::map<int, std::vector<void *>> mappedUniforms;
 
-  std::map<int, Buffer> attributes;
-  std::map<int, void *> mappedAttributes;
+  std::map<int, std::vector<Buffer>> attributes;
+  std::map<int, std::vector<void *>> mappedAttributes;
 
   // per index
   Buffer indexBuffer;

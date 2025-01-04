@@ -18,7 +18,8 @@ void CommandPoolManager::createCommandPool() {
   // Allow command buffers to be rerecorded individually, without this flag they
   // all have to be reset together
   poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsAndComputeFamily.value();
+  poolInfo.queueFamilyIndex =
+      queueFamilyIndices.graphicsAndComputeFamily.value();
 
   if (vkCreateCommandPool(context.device, &poolInfo, nullptr,
                           &commandPool.pool) != VK_SUCCESS) {
@@ -70,7 +71,9 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   std::vector<VkBuffer> vertexBuffers;
   std::vector<VkDeviceSize> offsets;
   for (auto &attr : renderer.params.getAttributeDescriptors()) {
-    vertexBuffers.push_back(renderer.attributes.find(attr.second->id)->second.buffer);
+    const std::shared_ptr<Flim::BaseAttributeDescriptor> &desc = attr.second;
+    vertexBuffers.push_back(
+        desc->getBuffer(renderer, context.currentImage).buffer);
     offsets.push_back(0);
   }
 
