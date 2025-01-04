@@ -22,11 +22,13 @@ typedef struct SwapChainSupportDetails {
 typedef struct Queues {
   VkQueue presentQueue;
   VkQueue graphicsQueue;
+  VkQueue computeQueue;
 } Queues;
 
 typedef struct CommandPool {
   VkCommandPool pool = {};
-  std::vector<VkCommandBuffer> commandBuffers;
+  std::vector<VkCommandBuffer> graphicBuffers;
+  std::vector<VkCommandBuffer> computeBuffers;
 
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;

@@ -107,6 +107,10 @@ bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
   for (auto &r : scene.renderers)
     r.second->update(camera);
 
+  for (auto computer : scene.computers) {
+    command_pool_manager.recordCommandBuffer(*computer.second);
+  }
+
   for (auto renderer : scene.renderers) {
     command_pool_manager.recordCommandBuffer(*renderer.second);
   }

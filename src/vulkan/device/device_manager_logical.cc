@@ -12,6 +12,8 @@ static void setupQueues(VulkanContext &context, QueueFamilyIndices &indices) {
                    &context.queues.graphicsQueue);
   vkGetDeviceQueue(context.device, indices.presentFamily.value(), 0,
                    &context.queues.presentQueue);
+  vkGetDeviceQueue(context.device, indices.presentFamily.value(), 0,
+      &context.queues.computeQueue);
 }
 
 void DeviceManager::createLogicalDevice() {
