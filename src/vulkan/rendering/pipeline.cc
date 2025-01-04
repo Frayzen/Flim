@@ -28,17 +28,17 @@ Pipeline::getAttributeDescriptions() {
 
   int amount = 0;
   for (auto &d : descs)
-    amount += d->getAmountOffset();
+    amount += d.second->getAmountOffset();
 
   std::vector<VkVertexInputAttributeDescription> attributeDescriptions(amount);
 
   int cur = 0;
   for (auto &desc : descs) {
-    for (int i = 0; i < desc->getAmountOffset(); i++) {
-      attributeDescriptions[cur + i] = desc->getAttributeDesc(i);
+    for (int i = 0; i < desc.second->getAmountOffset(); i++) {
+      attributeDescriptions[cur + i] = desc.second->getAttributeDesc(i);
       attributeDescriptions[cur + i].location = cur + i;
     }
-    cur += desc->getAmountOffset();
+    cur += desc.second->getAmountOffset();
   }
   return attributeDescriptions;
 }

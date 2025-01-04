@@ -104,7 +104,7 @@ void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
   endSingleTimeCommands(commandBuffer);
 }
 
-void populateBufferFromData(Buffer &buffer, VkBufferUsageFlags usage,
+void createBufferFromData(Buffer &buffer, VkBufferUsageFlags usage,
                             void *data, size_t dataSize,
                             VkMemoryPropertyFlags properties) {
   Buffer stagingBuffer;

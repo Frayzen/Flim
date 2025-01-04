@@ -3,6 +3,7 @@
 #include "api/shaders/shader.hh"
 #include "vulkan/buffers/attribute_descriptors.hh"
 #include "vulkan/buffers/uniform_descriptors.hh"
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -39,23 +40,40 @@ struct RenderParams {
   GeneralUniDesc &addUniform(int binding) {
     std::shared_ptr<GeneralUniDesc> ptr =
         std::make_shared<GeneralUniDesc>(binding);
-    uniforms.push_back(ptr);
+    uniforms[binding] = ptr;
     return *ptr;
   }
 
   ImageUniDesc &addUniformImage(int binding, std::string path) {
     std::shared_ptr<ImageUniDesc> ptr =
         std::make_shared<ImageUniDesc>(binding, path);
-    uniforms.push_back(ptr);
+    uniforms[binding] = ptr;
     return *ptr;
   }
 
   AttributeDescriptor &
-  addAttribute(int binding, AttributeRate rate = AttributeRate::VERTEX) {
+  setAttribute(int binding, AttributeRate rate = AttributeRate::VERTEX) {
     std::shared_ptr<AttributeDescriptor> ptr =
         std::make_shared<AttributeDescriptor>(binding, rate);
-    attributes.push_back(ptr);
+    attributes[binding] = ptr;
     return *ptr;
+  }
+
+  // Get uniforms
+  GeneralUniDesc &getUniform(int binding) {
+    uniforms[binding] = uniforms[binding]->clone();
+    return *std::dynamic_pointer_cast<GeneralUniDesc>(uniforms[binding]);
+  }
+
+  ImageUniDesc &getUniformImage(int binding) {
+    uniforms[binding] = uniforms[binding]->clone();
+    return *std::dynamic_pointer_cast<ImageUniDesc>(uniforms[binding]);
+  }
+
+  // Get attributes
+  AttributeDescriptor &getAttribute(int binding) {
+    attributes[binding] = attributes[binding]->clone();
+    return *std::dynamic_pointer_cast<AttributeDescriptor>(attributes[binding]);
   }
 
   bool valid() {
@@ -64,18 +82,18 @@ struct RenderParams {
 
   void invalidate() { version++; };
 
-  std::vector<std::shared_ptr<UniformDescriptor>> &getUniformDescriptors() {
+  std::map<int, std::shared_ptr<UniformDescriptor>> &getUniformDescriptors() {
     return uniforms;
   }
 
-  std::vector<std::shared_ptr<BaseAttributeDescriptor>> &
+  std::map<int, std::shared_ptr<BaseAttributeDescriptor>> &
   getAttributeDescriptors() {
     return attributes;
   }
 
 protected:
-  std::vector<std::shared_ptr<UniformDescriptor>> uniforms;
-  std::vector<std::shared_ptr<BaseAttributeDescriptor>> attributes;
+  std::map<int, std::shared_ptr<UniformDescriptor>> uniforms;
+  std::map<int, std::shared_ptr<BaseAttributeDescriptor>> attributes;
 };
 
 struct FlimParameters {};

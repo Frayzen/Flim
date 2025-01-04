@@ -12,15 +12,15 @@ void Renderer::setup() {
   assert(mesh.vertices.size() > 0);
   assert(mesh.indices.size() > 0);
 
-  populateBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+  createBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                          mesh.indices.data(),
                          mesh.indices.size() * sizeof(mesh.indices[0]));
 
   for (auto &desc : params.getAttributeDescriptors()) {
-    desc->setup(*this);
+    desc.second->setup(*this);
   }
   for (auto desc : params.getUniformDescriptors()) {
-    desc->setup(*this);
+    desc.second->setup(*this);
   }
   createDescriptorSetLayout();
   createDescriptorPool();
@@ -34,10 +34,10 @@ const std::vector<Flim::Instance> &Renderer::getInstances() {
 
 void Renderer::update(const Flim::Camera &cam) {
   for (auto desc : params.getUniformDescriptors()) {
-    desc->update(*this, mesh, cam);
+    desc.second->update(*this, mesh, cam);
   }
   for (auto desc : params.getAttributeDescriptors()) {
-    desc->update(*this);
+    desc.second->update(*this);
   }
   if (params.version != version) {
     vkDeviceWaitIdle(context.device);
@@ -50,11 +50,11 @@ void Renderer::update(const Flim::Camera &cam) {
 void Renderer::cleanup() {
   destroyBuffer(indexBuffer);
   for (auto desc : params.getUniformDescriptors()) {
-    desc->cleanup(*this);
+    desc.second->cleanup(*this);
   }
 
   for (auto desc : params.getAttributeDescriptors()) {
-    desc->cleanup(*this);
+    desc.second->cleanup(*this);
   }
   pipeline.cleanup();
   vkDestroyDescriptorPool(context.device, descriptorPool, nullptr);
@@ -67,10 +67,10 @@ void Renderer::createDescriptorSetLayout() {
   int i = 0;
   for (auto desc : params.getUniformDescriptors()) {
     bindings[i] = {};
-    bindings[i].binding = desc->binding;
-    bindings[i].descriptorType = desc->type;
+    bindings[i].binding = desc.second->binding;
+    bindings[i].descriptorType = desc.second->type;
     bindings[i].descriptorCount = 1;
-    bindings[i].stageFlags = shaderStageToVulkanFlags(desc->stage);
+    bindings[i].stageFlags = shaderStageToVulkanFlags(desc.second->stage);
     i++;
   }
   VkDescriptorSetLayoutCreateInfo layoutInfo{};
@@ -106,7 +106,7 @@ void Renderer::createDescriptorSets() {
 
     int cur = 0;
     for (auto desc : params.getUniformDescriptors()) {
-      descriptorWrites[cur++] = desc->getDescriptor(*this, i);
+      descriptorWrites[cur++] = desc.second->getDescriptor(*this, i);
     }
     vkUpdateDescriptorSets(context.device,
                            static_cast<uint32_t>(descriptorWrites.size()),
@@ -120,7 +120,7 @@ void Renderer::createDescriptorPool() {
       params.getUniformDescriptors().size());
   int i = 0;
   for (auto desc : params.getUniformDescriptors()) {
-    poolSizes[i].type = desc->type;
+    poolSizes[i].type = desc.second->type;
     poolSizes[i].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     i++;
   }

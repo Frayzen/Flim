@@ -70,7 +70,7 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   std::vector<VkBuffer> vertexBuffers;
   std::vector<VkDeviceSize> offsets;
   for (auto &attr : renderer.params.getAttributeDescriptors()) {
-    vertexBuffers.push_back(renderer.attributes.find(attr->id)->second.buffer);
+    vertexBuffers.push_back(renderer.attributes.find(attr.second->id)->second.buffer);
     offsets.push_back(0);
   }
 

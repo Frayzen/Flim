@@ -42,7 +42,6 @@ int main() {
 
   Mesh sphere = MeshUtils::createNodalMesh();
   Mesh cube = MeshUtils::createCube();
-  Mesh boule = MeshUtils::createSphere();
 
   RenderParams sphereParams;
   sphereParams.vertexShader = Shader("shaders/default.vert.spv"),
@@ -64,41 +63,36 @@ int main() {
       });
   sphereParams.addUniform(2).attachObj<PointUniform>(pointDesc);
 
-  sphereParams.addAttribute(0)
+  sphereParams.setAttribute(0)
       .attach<Flim::Vertex>([](const Mesh &m, Flim::Vertex *vertices) {
         memcpy(vertices, m.vertices.data(),
                m.vertices.size() * sizeof(Flim::Vertex));
       })
+      .onlySetup(true)
       .add(offsetof(Flim::Vertex, pos), VK_FORMAT_R32G32B32_SFLOAT)
       .add(offsetof(Flim::Vertex, normal), VK_FORMAT_R32G32B32_SFLOAT)
       .add(offsetof(Flim::Vertex, uv), VK_FORMAT_R32G32_SFLOAT);
 
-  sphereParams.addAttribute(1, AttributeRate::INSTANCE)
+  sphereParams.setAttribute(1, AttributeRate::INSTANCE)
       .attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) {
         for (size_t i = 0; i < m.instances.size(); i++) {
           mats[i] = m.instances[i].transform.getViewMatrix();
         }
       })
+      .onlySetup(true)
       .add(0 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
       .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
       .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
       .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
 
-  /* sphereParams.registerComputeShader("./shaders/particles.compute"); */
-
   RenderParams cubeParams = sphereParams;
+  cubeParams.getAttribute(1).onlySetup(false);
   cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
   cubeParams.useBackfaceCulling = false;
 
   Scene &scene = api.getScene();
   scene.registerMesh(sphere, sphereParams);
   scene.registerMesh(cube, cubeParams);
-
-  scene.registerMesh(boule, cubeParams);
-
-  auto &boule_istc = scene.instantiate(boule);
-  boule_istc.transform.scale = Vector3f(0.2, 0.2, 0.2);
-  boule_istc.transform.position = Vector3f(0, 1, -1);
 
   constexpr long amount = 10;
 
@@ -132,11 +126,13 @@ int main() {
     /* std::cout << deltaTime << std::endl; */
     ImGui::Text("%f ms (%f FPS)", deltaTime, 1.0f / deltaTime);
     const char *items[] = {"Triangles", "Bars", "Dots"};
-    if (ImGui::Combo("Rendering type", ((int *)&(sphereParams.mode)), items,
-
+    if (ImGui::Combo("Rendering type", ((int *)&(cubeParams.mode)), items,
                      IM_ARRAYSIZE(items))) {
-      sphereParams.invalidate();
+      cubeParams.invalidate();
     }
+
+
+
     ImGui::SliderFloat3("Ambient color", (float *)&sphere.getMaterial().ambient,
                         0.0f, 1.0f);
 
