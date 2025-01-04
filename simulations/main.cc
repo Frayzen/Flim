@@ -15,7 +15,6 @@
 #include <cstring>
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 using namespace Flim;
@@ -24,26 +23,12 @@ struct LocationUniform {
   Matrix4f model;
   Matrix4f view;
   Matrix4f proj;
-
-  static void update(const Mesh &mesh, const Camera &cam,
-                     LocationUniform *uni) {
-    uni->model = mesh.transform.getViewMatrix();
-    uni->view = cam.getViewMat();
-    uni->proj = cam.getProjMat(context.swapChain.swapChainExtent.width /
-                               (float)context.swapChain.swapChainExtent.height);
-  }
 };
 
 struct MaterialUniform {
   alignas(16) Vector3f ambient;
   alignas(16) Vector3f diffuse;
   alignas(16) Vector3f specular;
-
-  static void update(const Mesh &mesh, const Camera &, MaterialUniform *uni) {
-    uni->ambient = mesh.getMaterial().ambient;
-    uni->diffuse = mesh.getMaterial().diffuse;
-    uni->specular = mesh.getMaterial().specular;
-  }
 };
 
 struct PointUniform {
@@ -63,9 +48,21 @@ int main() {
   sphereParams.vertexShader = Shader("shaders/default.vert.spv"),
   sphereParams.fragmentShader = Shader("shaders/default.frag.spv");
   sphereParams.mode = RenderMode::RENDERER_MODE_POINTS;
-  sphereParams.addUniform(0).attach<LocationUniform>();
-  sphereParams.addUniform(1).attach<MaterialUniform>();
-  sphereParams.addUniform(2).attach<PointUniform>(pointDesc);
+  sphereParams.addUniform(0).attach<LocationUniform>(
+      [](const Mesh &mesh, const Camera &cam, LocationUniform *uni) {
+        uni->model = mesh.transform.getViewMatrix();
+        uni->view = cam.getViewMat();
+        uni->proj =
+            cam.getProjMat(context.swapChain.swapChainExtent.width /
+                           (float)context.swapChain.swapChainExtent.height);
+      });
+  sphereParams.addUniform(1).attach<MaterialUniform>(
+      [](const Mesh &mesh, const Camera &, MaterialUniform *uni) {
+        uni->ambient = mesh.getMaterial().ambient;
+        uni->diffuse = mesh.getMaterial().diffuse;
+        uni->specular = mesh.getMaterial().specular;
+      });
+  sphereParams.addUniform(2).attachObj<PointUniform>(pointDesc);
 
   sphereParams.addAttribute(0)
       .attach<Flim::Vertex>([](const Mesh &m, Flim::Vertex *vertices) {
