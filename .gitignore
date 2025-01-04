@@ -15,6 +15,7 @@
 
 !*.vert
 !*.frag
+!*.comp
 
 !*.cmake
 

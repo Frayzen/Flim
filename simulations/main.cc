@@ -3,6 +3,7 @@
 #include <Eigen/StdVector>
 
 #include "api/flim_api.hh"
+#include "api/parameters/compute_params.hh"
 #include "api/render/mesh.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/scene.hh"
@@ -42,12 +43,12 @@ int main() {
   Mesh sphere = MeshUtils::createNodalMesh();
   Mesh cube = MeshUtils::createCube();
 
-  RenderParams sphereParams;
-  sphereParams.vertexShader = Shader("shaders/default.vert.spv"),
-  sphereParams.fragmentShader = Shader("shaders/default.frag.spv");
+  RenderParams particlesParams;
+  particlesParams.vertexShader = Shader("shaders/default.vert.spv"),
+  particlesParams.fragmentShader = Shader("shaders/default.frag.spv");
 
-  sphereParams.mode = RenderMode::RENDERER_MODE_POINTS;
-  sphereParams.addUniform(0, VERTEX_SHADER_STAGE)
+  particlesParams.mode = RenderMode::RENDERER_MODE_POINTS;
+  particlesParams.setUniform(0, VERTEX_SHADER_STAGE)
       .attach<LocationUniform>(
           [](const Mesh &mesh, const Camera &cam, LocationUniform *uni) {
             uni->model = mesh.transform.getViewMatrix();
@@ -56,16 +57,16 @@ int main() {
                 cam.getProjMat(context.swapChain.swapChainExtent.width /
                                (float)context.swapChain.swapChainExtent.height);
           });
-  sphereParams.addUniform(1, FRAGMENT_SHADER_STAGE)
+  particlesParams.setUniform(1, FRAGMENT_SHADER_STAGE)
       .attach<MaterialUniform>(
           [](const Mesh &mesh, const Camera &, MaterialUniform *uni) {
             uni->ambient = mesh.getMaterial().ambient;
             uni->diffuse = mesh.getMaterial().diffuse;
             uni->specular = mesh.getMaterial().specular;
           });
-  sphereParams.addUniform(2).attachObj<PointUniform>(pointDesc);
+  particlesParams.setUniform(2).attachObj<PointUniform>(pointDesc);
 
-  sphereParams.setAttribute(0)
+  particlesParams.setAttribute(0)
       .attach<Flim::Vertex>([](const Mesh &m, Flim::Vertex *vertices) {
         memcpy(vertices, m.vertices.data(),
                m.vertices.size() * sizeof(Flim::Vertex));
@@ -76,7 +77,7 @@ int main() {
       .add(offsetof(Flim::Vertex, uv), VK_FORMAT_R32G32_SFLOAT);
 
   auto &positions =
-      sphereParams.setAttribute(1, AttributeRate::INSTANCE)
+      particlesParams.setAttribute(1, AttributeRate::INSTANCE)
           .attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) {
             for (size_t i = 0; i < m.instances.size(); i++) {
               mats[i] = m.instances[i].transform.getViewMatrix();
@@ -89,7 +90,7 @@ int main() {
           .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
           .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
 
-  auto &velocities = sphereParams.setAttribute(2, AttributeRate::INSTANCE)
+  auto &velocities = particlesParams.setAttribute(2, AttributeRate::INSTANCE)
                          .attach<Vector3f>([](const Mesh &m, Vector3f *vels) {
                            for (size_t i = 0; i < m.instances.size(); i++)
                              vels[i] = Vector3f::Random().normalized();
@@ -98,14 +99,19 @@ int main() {
                          .computeFriendly(true)
                          .onlySetup(true);
 
-  RenderParams cubeParams = sphereParams;
+  RenderParams cubeParams = particlesParams;
   cubeParams.getAttribute(1).onlySetup(false).computeFriendly(false);
   cubeParams.removeAttribute(2);
   cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
   cubeParams.useBackfaceCulling = false;
 
+  ComputeParams particlesCompute;
+  particlesCompute.shader = Shader("shaders/default.comp.spv");
+  particlesCompute.setAttribute(velocities);
+  particlesCompute.setAttribute(positions);
+
   Scene &scene = api.getScene();
-  scene.registerMesh(sphere, sphereParams);
+  scene.registerMesh(sphere, particlesParams);
   scene.registerMesh(cube, cubeParams);
 
   constexpr long amount = 10;
@@ -147,7 +153,7 @@ int main() {
     ImGui::SliderFloat3("Diffuse color", (float *)&sphere.getMaterial().diffuse,
                         0.0f, 1.0f);
 
-    if (sphereParams.mode == RenderMode::RENDERER_MODE_POINTS) {
+    if (particlesParams.mode == RenderMode::RENDERER_MODE_POINTS) {
       ImGui::SliderFloat("Point size", &pointDesc.pointSize, 0.5f, 20.0f);
       ImGui::SliderFloat("Edge size", &pointDesc.edgeSize, 0.0f, 0.5f);
       ImGui::Checkbox("Point diffuse color", &pointDesc.applyDiffuse);

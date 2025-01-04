@@ -6,6 +6,10 @@
 const uint32_t width = 1600;
 const uint32_t height = 900;
 
+
+template <typename T, typename U>
+concept Derived = std::is_base_of<U, T>::value;
+
 const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation",
 };
