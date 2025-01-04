@@ -11,9 +11,7 @@
 void Renderer::setup() {
   assert(mesh.vertices.size() > 0);
   assert(mesh.indices.size() > 0);
-  populateBufferFromData(vertexBuffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                         mesh.vertices.data(),
-                         mesh.vertices.size() * sizeof(mesh.vertices[0]));
+
   populateBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                          mesh.indices.data(),
                          mesh.indices.size() * sizeof(mesh.indices[0]));
@@ -51,7 +49,6 @@ void Renderer::update(const Flim::Camera &cam) {
 
 void Renderer::cleanup() {
   destroyBuffer(indexBuffer);
-  destroyBuffer(vertexBuffer);
   for (auto desc : params.getUniformDescriptors()) {
     desc->cleanup(*this);
   }

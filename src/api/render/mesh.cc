@@ -9,7 +9,5 @@ const Material &Mesh::getMaterial() const { return material; };
 const std::vector<uint16_t> &Mesh::getTriangles() const { return indices; }
 
 void Mesh::attachMaterial(Material m) { material = m; }
-void Mesh::updateModelViews() {
-}
 
 } // namespace Flim

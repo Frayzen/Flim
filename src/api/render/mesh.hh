@@ -32,7 +32,6 @@ public:
   const std::vector<Vertex> &getVertices() const;
   const std::vector<uint16_t> &getTriangles() const;
   void attachMaterial(Material m);
-  void updateModelViews();
 
   std::vector<Vertex> vertices;
   std::vector<uint16_t> indices;

@@ -156,7 +156,6 @@ int main() {
     ImGui::SliderFloat("Bounds", &bounds, 0.1f, 2.0f * originalBounds);
 
     cubeIstc.transform.scale = 2.0f * Vector3f(bounds, bounds, bounds);
-    /* cube.updateModelViews(); */
   });
   api.cleanup();
   return ret;

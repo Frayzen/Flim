@@ -42,9 +42,6 @@ public:
   // per index
   Buffer indexBuffer;
 
-  // per vertex
-  Buffer vertexBuffer;
-
   std::vector<VkDescriptorSet> descriptorSets;
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorPool descriptorPool;
