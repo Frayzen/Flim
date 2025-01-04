@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <vulkan/vulkan_core.h>
 
 class Renderer;
@@ -16,5 +17,7 @@ public:
 
 private:
   Pipeline(Renderer &renderer) : renderer(renderer) {};
+  std::vector<VkVertexInputBindingDescription> getBindingDescription();
+  std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
   friend Renderer;
 };

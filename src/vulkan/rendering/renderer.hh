@@ -25,6 +25,8 @@ public:
   void createDescriptorSets();
   void createDescriptorPool();
 
+  const std::vector<Flim::Instance> &getInstances();
+
   Renderer(Flim::Mesh &mesh, Flim::RenderParams &params)
       : mesh(mesh), params(params), version(0), pipeline(*this),
         descriptorSetLayout(0), descriptorPool(0) {};
@@ -34,13 +36,14 @@ public:
   std::map<int, std::vector<Buffer>> uniforms;
   std::map<int, std::vector<void *>> mappedUniforms;
 
+  std::map<int, Buffer> attributes;
+  std::map<int, void *> mappedAttributes;
+
   // per index
   Buffer indexBuffer;
 
   // per vertex
   Buffer vertexBuffer;
-
-  Buffer instancesMatrixBuffer;
 
   std::vector<VkDescriptorSet> descriptorSets;
   VkDescriptorSetLayout descriptorSetLayout;

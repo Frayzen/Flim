@@ -1,8 +1,9 @@
 #include "api/parameters.hh"
+#include "api/render/mesh.hh"
 #include "api/tree/camera.hh"
 #include "api/tree/instance.hh"
-#include "api/render/mesh.hh"
 #include "vulkan/buffers/buffer_utils.hh"
+#include <Eigen/src/Core/Matrix.h>
 #include <cstddef>
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -17,19 +18,10 @@ void Renderer::setup() {
                          mesh.indices.data(),
                          mesh.indices.size() * sizeof(mesh.indices[0]));
 
-  size_t bufSize = mesh.instances.size() * sizeof(Matrix4f);
-  createBuffer(bufSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               instancesMatrixBuffer);
-  void *instancesMatrixBufferMapped;
-  vkMapMemory(context.device, instancesMatrixBuffer.bufferMemory, 0, bufSize, 0,
-              &instancesMatrixBufferMapped);
-  Matrix4f *modelViewsPtr = (Matrix4f *)instancesMatrixBufferMapped;
-  mesh.modelViews = std::span<Matrix4f>(modelViewsPtr, mesh.instances.size());
-  mesh.updateModelViews();
-
-  for (auto desc : params.uniforms) {
+  for (auto &desc : params.getAttributeDescriptors()) {
+    desc->setup(*this);
+  }
+  for (auto desc : params.getUniformDescriptors()) {
     desc->setup(*this);
   }
   createDescriptorSetLayout();
@@ -38,10 +30,17 @@ void Renderer::setup() {
   pipeline.create();
 }
 
+const std::vector<Flim::Instance> &Renderer::getInstances() {
+  return mesh.instances;
+}
+
 void Renderer::update(const Flim::Camera &cam) {
-  for (auto desc : params.uniforms) {
+  for (auto desc : params.getUniformDescriptors()) {
     desc->update(*this, mesh, cam);
   }
+  /* for (auto desc : params.getAttributeDescriptors()) { */
+  /*   desc->update(*this); */
+  /* } */
   if (params.version != version) {
     vkDeviceWaitIdle(context.device);
     pipeline.cleanup();
@@ -51,11 +50,13 @@ void Renderer::update(const Flim::Camera &cam) {
 }
 
 void Renderer::cleanup() {
-  vkUnmapMemory(context.device, instancesMatrixBuffer.bufferMemory);
   destroyBuffer(indexBuffer);
-  destroyBuffer(instancesMatrixBuffer);
   destroyBuffer(vertexBuffer);
-  for (auto desc : params.uniforms) {
+  for (auto desc : params.getUniformDescriptors()) {
+    desc->cleanup(*this);
+  }
+
+  for (auto desc : params.getAttributeDescriptors()) {
     desc->cleanup(*this);
   }
   pipeline.cleanup();
@@ -64,9 +65,10 @@ void Renderer::cleanup() {
 }
 
 void Renderer::createDescriptorSetLayout() {
-  std::vector<VkDescriptorSetLayoutBinding> bindings(params.uniforms.size());
+  std::vector<VkDescriptorSetLayoutBinding> bindings(
+      params.getUniformDescriptors().size());
   int i = 0;
-  for (auto desc : params.uniforms) {
+  for (auto desc : params.getUniformDescriptors()) {
     bindings[i] = {};
     bindings[i].binding = desc->binding;
     bindings[i].descriptorType = desc->type;
@@ -103,10 +105,10 @@ void Renderer::createDescriptorSets() {
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 
     std::vector<VkWriteDescriptorSet> descriptorWrites(
-        params.uniforms.size());
+        params.getUniformDescriptors().size());
 
     int cur = 0;
-    for (auto desc : params.uniforms) {
+    for (auto desc : params.getUniformDescriptors()) {
       descriptorWrites[cur++] = desc->getDescriptor(*this, i);
     }
     vkUpdateDescriptorSets(context.device,
@@ -117,9 +119,10 @@ void Renderer::createDescriptorSets() {
 
 void Renderer::createDescriptorPool() {
 
-  std::vector<VkDescriptorPoolSize> poolSizes(params.uniforms.size());
+  std::vector<VkDescriptorPoolSize> poolSizes(
+      params.getUniformDescriptors().size());
   int i = 0;
-  for (auto desc : params.uniforms) {
+  for (auto desc : params.getUniformDescriptors()) {
     poolSizes[i].type = desc->type;
     poolSizes[i].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     i++;

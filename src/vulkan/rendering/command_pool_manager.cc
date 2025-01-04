@@ -1,4 +1,5 @@
 #include "command_pool_manager.hh"
+#include "api/parameters.hh"
 #include "api/render/mesh.hh"
 #include "consts.hh"
 #include "vulkan/device/device_utils.hh"
@@ -66,9 +67,15 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     renderer.pipeline.pipeline);
 
-  VkBuffer vertexBuffers[] = {renderer.vertexBuffer.buffer, renderer.instancesMatrixBuffer.buffer};
-  VkDeviceSize offsets[] = {0, 0};
-  vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
+  std::vector<VkBuffer> vertexBuffers;
+  std::vector<VkDeviceSize> offsets;
+  for (auto &attr : renderer.params.getAttributeDescriptors()) {
+    vertexBuffers.push_back(renderer.attributes.find(attr->id)->second.buffer);
+    offsets.push_back(0);
+  }
+
+  vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers.size(),
+                         vertexBuffers.data(), offsets.data());
   vkCmdBindIndexBuffer(commandBuffer, renderer.indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT16);
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -76,7 +83,8 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
                           &renderer.descriptorSets[context.currentImage], 0,
                           nullptr);
   uint32_t nbIndices = static_cast<uint32_t>(mesh.indices.size());
-  vkCmdDrawIndexed(commandBuffer, nbIndices, renderer.mesh.instances.size(), 0, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, nbIndices, renderer.mesh.instances.size(), 0,
+                   0, 0);
 }
 
 void CommandPoolManager::createCommandBuffers() {

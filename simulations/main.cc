@@ -1,7 +1,6 @@
 
 #include <Eigen/Eigen>
 #include <Eigen/StdVector>
-#include <iostream>
 
 #include "api/flim_api.hh"
 #include "api/parameters.hh"
@@ -10,9 +9,12 @@
 #include "api/scene.hh"
 #include "api/tree/camera.hh"
 #include "api/tree/instance.hh"
+#include "vulkan/buffers/attribute_descriptors.hh"
+#include <Eigen/src/Core/Matrix.h>
 #include <cstdlib>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <vulkan/vulkan_core.h>
 
 using namespace Flim;
 
@@ -55,14 +57,26 @@ int main() {
   Mesh cube = MeshUtils::createCube();
   Mesh boule = MeshUtils::createSphere();
 
-  RenderParams sphereParams = {
-      Shader("shaders/default.vert.spv"),
-      Shader("shaders/default.frag.spv"),
-  };
+  RenderParams sphereParams;
+  sphereParams.vertexShader = Shader("shaders/default.vert.spv"),
+  sphereParams.fragmentShader = Shader("shaders/default.frag.spv");
   sphereParams.mode = RenderMode::RENDERER_MODE_POINTS;
-  sphereParams.addGeneralDescriptor(0)->attach<LocationUniform>();
-  sphereParams.addGeneralDescriptor(1)->attach<MaterialUniform>();
-  sphereParams.addGeneralDescriptor(2)->attach<PointUniform>(pointDesc);
+  sphereParams.addUniform(0).attach<LocationUniform>();
+  sphereParams.addUniform(1).attach<MaterialUniform>();
+  sphereParams.addUniform(2).attach<PointUniform>(pointDesc);
+
+  sphereParams.addAttribute(0)
+      .attach<Flim::Vertex>()
+      .add(offsetof(Flim::Vertex, pos), VK_FORMAT_R32G32B32_SFLOAT)
+      .add(offsetof(Flim::Vertex, normal), VK_FORMAT_R32G32B32_SFLOAT)
+      .add(offsetof(Flim::Vertex, uv), VK_FORMAT_R32G32_SFLOAT);
+
+  sphereParams.addAttribute(1, AttributeRate::INSTANCE)
+      .attach<Matrix4f>()
+      .add(0 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
+      .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
+      .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
+      .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
 
   /* sphereParams.registerComputeShader("./shaders/particles.compute"); */
 
@@ -76,8 +90,8 @@ int main() {
 
   scene.registerMesh(boule, cubeParams);
 
-  auto& boule_istc = scene.instantiate(boule);
-  boule_istc.transform.scale = Vector3f(0.2,0.2,0.2);
+  auto &boule_istc = scene.instantiate(boule);
+  boule_istc.transform.scale = Vector3f(0.2, 0.2, 0.2);
   boule_istc.transform.position = Vector3f(0, 1, -1);
 
   constexpr long amount = 10;
@@ -132,7 +146,7 @@ int main() {
     ImGui::SliderFloat("Bounds", &bounds, 0.1f, 2.0f * originalBounds);
 
     cubeIstc.transform.scale = 2.0f * Vector3f(bounds, bounds, bounds);
-    cube.updateModelViews();
+    /* cube.updateModelViews(); */
   });
   api.cleanup();
   return ret;

@@ -1,7 +1,7 @@
 #include "pipeline.hh"
 #include "api/parameters.hh"
-#include "vulkan/context.hh"
 #include "api/render/mesh.hh"
+#include "vulkan/context.hh"
 #include "vulkan/rendering/renderer.hh"
 #include <iostream>
 #include <vulkan/vulkan_core.h>
@@ -11,46 +11,35 @@ void Pipeline::cleanup() {
   vkDestroyPipelineLayout(context.device, pipelineLayout, nullptr);
 }
 
-inline std::vector<VkVertexInputBindingDescription> getBindingDescription() {
-  std::vector<VkVertexInputBindingDescription> bindingDescriptions(2);
-  bindingDescriptions[0].binding = 0;
-  bindingDescriptions[0].stride = sizeof(Flim::Vertex);
-  bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-  bindingDescriptions[1].binding = 1;
-  bindingDescriptions[1].stride = sizeof(Matrix4f);
-  bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-
+std::vector<VkVertexInputBindingDescription> Pipeline::getBindingDescription() {
+  Flim::RenderParams &params = renderer.params;
+  auto &descs = params.getAttributeDescriptors();
+  auto nbBindings = descs.size();
+  std::vector<VkVertexInputBindingDescription> bindingDescriptions(nbBindings);
+  for (size_t i = 0; i < nbBindings; i++)
+    bindingDescriptions[i] = descs[i]->getBindingDescription();
   return bindingDescriptions;
 }
 
-inline std::vector<VkVertexInputAttributeDescription>
-getAttributeDescriptions() {
-  std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3 +
-                                                                       4 * 1);
+std::vector<VkVertexInputAttributeDescription>
+Pipeline::getAttributeDescriptions() {
+  Flim::RenderParams &params = renderer.params;
+  auto &descs = params.getAttributeDescriptors();
 
-  attributeDescriptions[0].binding = 0;
-  attributeDescriptions[0].location = 0;
-  attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attributeDescriptions[0].offset = offsetof(Flim::Vertex, pos);
+  int amount = 0;
+  for (auto &d : descs)
+    amount += d->getAmountOffset();
 
-  attributeDescriptions[1].binding = 0;
-  attributeDescriptions[1].location = 1;
-  attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-  attributeDescriptions[1].offset = offsetof(Flim::Vertex, normal);
+  std::vector<VkVertexInputAttributeDescription> attributeDescriptions(amount);
 
-  attributeDescriptions[2].binding = 0;
-  attributeDescriptions[2].location = 2;
-  attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-  attributeDescriptions[2].offset = offsetof(Flim::Vertex, uv);
-
-  for (int i = 0; i < 4; i++) { // attribute for a Matrix4f
-    attributeDescriptions[3 + i].binding = 1;
-    attributeDescriptions[3 + i].location = 3 + i;
-    attributeDescriptions[3 + i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[3 + i].offset = sizeof(Vector4f) * i;
+  int cur = 0;
+  for (auto &desc : descs) {
+    for (int i = 0; i < desc->getAmountOffset(); i++) {
+      attributeDescriptions[cur + i] = desc->getAttributeDesc(i);
+      attributeDescriptions[cur + i].location = cur + i;
+    }
+    cur += desc->getAmountOffset();
   }
-
   return attributeDescriptions;
 }
 

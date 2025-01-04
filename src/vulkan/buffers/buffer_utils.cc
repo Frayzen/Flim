@@ -132,6 +132,15 @@ void populateBufferFromData(Buffer &buffer, VkBufferUsageFlags usage,
   vkDestroyBuffer(context.device, stagingBuffer.buffer, nullptr);
   vkFreeMemory(context.device, stagingBuffer.bufferMemory, nullptr);
 }
+
+void *createMappedBuffer(Buffer &buffer, VkBufferUsageFlags usage,
+                         size_t bufSize, VkMemoryPropertyFlags properties) {
+  createBuffer(bufSize, usage, properties, buffer);
+  void *mappedPtr;
+  vkMapMemory(context.device, buffer.bufferMemory, 0, bufSize, 0, &mappedPtr);
+  return mappedPtr;
+}
+
 void destroyBuffer(Buffer &buffer) {
   vkDestroyBuffer(context.device, buffer.buffer, nullptr);
   vkFreeMemory(context.device, buffer.bufferMemory, nullptr);

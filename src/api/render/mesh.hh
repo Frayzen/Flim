@@ -21,7 +21,7 @@ struct Vertex {
   Vector2f uv;
 };
 
-static int curid = 0;
+static int meshid = 0;
 class Mesh {
 
 public:
@@ -40,7 +40,7 @@ public:
   std::span<Matrix4f> modelViews;
 
 protected:
-  Mesh() : id(curid++), material(), vertices(), indices(), modelViews() {};
+  Mesh() : id(meshid++), material(), vertices(), indices(), modelViews() {};
 
   Material material;
 
