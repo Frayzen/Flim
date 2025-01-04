@@ -12,8 +12,10 @@
 #include "vulkan/buffers/attribute_descriptors.hh"
 #include <Eigen/src/Core/Matrix.h>
 #include <cstdlib>
+#include <cstring>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 using namespace Flim;
@@ -66,13 +68,20 @@ int main() {
   sphereParams.addUniform(2).attach<PointUniform>(pointDesc);
 
   sphereParams.addAttribute(0)
-      .attach<Flim::Vertex>()
+      .attach<Flim::Vertex>([](const Mesh &m, Flim::Vertex *vertices) {
+        memcpy(vertices, m.vertices.data(),
+               m.vertices.size() * sizeof(Flim::Vertex));
+      })
       .add(offsetof(Flim::Vertex, pos), VK_FORMAT_R32G32B32_SFLOAT)
       .add(offsetof(Flim::Vertex, normal), VK_FORMAT_R32G32B32_SFLOAT)
       .add(offsetof(Flim::Vertex, uv), VK_FORMAT_R32G32_SFLOAT);
 
   sphereParams.addAttribute(1, AttributeRate::INSTANCE)
-      .attach<Matrix4f>()
+      .attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) {
+        for (size_t i = 0; i < m.instances.size(); i++) {
+          mats[i] = m.instances[i].transform.getViewMatrix();
+        }
+      })
       .add(0 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
       .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
       .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
@@ -123,6 +132,7 @@ int main() {
 
   float timeSpeed = 0.0f;
   int ret = api.run([&](float deltaTime) {
+    /* std::cout << deltaTime << std::endl; */
     ImGui::Text("%f ms (%f FPS)", deltaTime, 1.0f / deltaTime);
     const char *items[] = {"Triangles", "Bars", "Dots"};
     if (ImGui::Combo("Rendering type", ((int *)&(sphereParams.mode)), items,

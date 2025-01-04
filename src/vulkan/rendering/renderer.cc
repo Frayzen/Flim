@@ -38,9 +38,9 @@ void Renderer::update(const Flim::Camera &cam) {
   for (auto desc : params.getUniformDescriptors()) {
     desc->update(*this, mesh, cam);
   }
-  /* for (auto desc : params.getAttributeDescriptors()) { */
-  /*   desc->update(*this); */
-  /* } */
+  for (auto desc : params.getAttributeDescriptors()) {
+    desc->update(*this);
+  }
   if (params.version != version) {
     vkDeviceWaitIdle(context.device);
     pipeline.cleanup();

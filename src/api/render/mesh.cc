@@ -10,9 +10,6 @@ const std::vector<uint16_t> &Mesh::getTriangles() const { return indices; }
 
 void Mesh::attachMaterial(Material m) { material = m; }
 void Mesh::updateModelViews() {
-  for (auto &istc : instances) {
-    modelViews[istc.getId()] = istc.transform.getViewMatrix();
-  }
 }
 
 } // namespace Flim
