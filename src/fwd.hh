@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Eigen/StdVector>
 #include <Eigen/Core>
-#include <Eigen/Eigen>
 #include <Eigen/Dense>
+#include <Eigen/Eigen>
+#include <Eigen/StdVector>
 
 using namespace Eigen;
 
@@ -33,6 +33,9 @@ typedef struct CommandPool {
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
   std::vector<VkFence> inFlightFences;
+
+  std::vector<VkSemaphore> computeFinishedSemaphores;
+  std::vector<VkFence> computeInFlightFences;
 } CommandPool;
 
 typedef struct Image {

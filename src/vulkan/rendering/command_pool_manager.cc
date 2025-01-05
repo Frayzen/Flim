@@ -29,6 +29,23 @@ void CommandPoolManager::createCommandPool() {
   }
 }
 
+static VkAccessFlags getAccessMask(VkImageLayout layout) {
+  // from: VK_IMAGE_LAYOUT_UNDEFINED, to
+  // VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL from:
+  // VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, to
+  // VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+  switch (layout) {
+  case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+    return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  case VK_IMAGE_LAYOUT_UNDEFINED:
+    return VK_ACCESS_TRANSFER_READ_BIT;
+  case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+    return VK_ACCESS_MEMORY_READ_BIT;
+  default:
+    throw std::runtime_error("unexpected layout");
+  }
+}
+
 static void createImageMemoryBarrier(const VkCommandBuffer &commandBuffer,
                                      VkImageLayout from, VkImageLayout to,
                                      const VkImage &image) {
@@ -46,24 +63,35 @@ static void createImageMemoryBarrier(const VkCommandBuffer &commandBuffer,
   barrier.subresourceRange.layerCount = 1;
 
   // Define access masks
-  barrier.srcAccessMask =
-      VK_ACCESS_NONE_KHR; // For VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-  barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-  vkCmdPipelineBarrier(
-      commandBuffer,
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Source stage
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Destination stage
-      0,                                             // Flags
-      0, nullptr,                                    // Memory barriers
-      0, nullptr,                                    // Buffer memory barriers
-      1, &barrier                                    // Image memory barrier
+  if (to == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+    barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  } else {
+    barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  }
+
+  VkPipelineStageFlagBits srcstage, dststage;
+  if (to == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+    srcstage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dststage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  } else {
+    srcstage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    dststage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  }
+
+  vkCmdPipelineBarrier(commandBuffer,
+                       srcstage,   // Source stage
+                       dststage,   // Destination stage
+                       0,          // Flags
+                       0, nullptr, // Memory barriers
+                       0, nullptr, // Buffer memory barriers
+                       1, &barrier // Image memory barrier
   );
 }
 
 void CommandPoolManager::recordCommandBuffer(const Computer &computer) {
   VkCommandBuffer computeBuffer =
-      commandPool.computeBuffers[context.currentUpdate];
+      commandPool.computeBuffers[context.currentImage];
 
   (void)computer;
   /* vkCmdBindPipeline(computeBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -125,9 +153,15 @@ void CommandPoolManager::createSyncObjects() {
   auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
   auto &inFlightFences = commandPool.inFlightFences;
 
+  auto &computeFinishedSemaphores = commandPool.computeFinishedSemaphores;
+  auto &computeInFlightFences = commandPool.computeInFlightFences;
+
   imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
   renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
   inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
+  computeInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+  computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 
   VkSemaphoreCreateInfo semaphoreInfo{};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -144,6 +178,10 @@ void CommandPoolManager::createSyncObjects() {
         vkCreateSemaphore(device, &semaphoreInfo, nullptr,
                           &renderFinishedSemaphores[i]) != VK_SUCCESS ||
         vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) !=
+            VK_SUCCESS ||
+        vkCreateSemaphore(device, &semaphoreInfo, nullptr,
+                          &computeFinishedSemaphores[i]) != VK_SUCCESS ||
+        vkCreateFence(device, &fenceInfo, nullptr, &computeInFlightFences[i]) !=
             VK_SUCCESS) {
 
       throw std::runtime_error(
@@ -184,17 +222,20 @@ bool CommandPoolManager::acquireFrame() {
   if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
     throw std::runtime_error("failed to acquire swap chain image!");
   auto &inFlightFences = commandPool.inFlightFences;
+  auto &computeInFlightFences = commandPool.computeInFlightFences;
 
   // Only reset the fence if we are submitting work
   vkResetFences(context.device, 1, &inFlightFences[context.currentImage]);
+  vkResetFences(context.device, 1,
+                &computeInFlightFences[context.currentImage]);
 
   VkCommandBuffer &graphicBuffer =
       commandPool.graphicBuffers[context.currentImage];
   beginCmdBuffer(graphicBuffer);
 
-  VkCommandBuffer &commandBuffer =
-      commandPool.computeBuffers[context.currentUpdate];
-  beginCmdBuffer(commandBuffer);
+  VkCommandBuffer &computeBuffer =
+      commandPool.computeBuffers[context.currentImage];
+  beginCmdBuffer(computeBuffer);
 
   VkRenderingAttachmentInfo depthInfo{};
   depthInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
@@ -246,11 +287,11 @@ bool CommandPoolManager::acquireFrame() {
   return false;
 }
 
-static void
-endCmdBuffer(VkCommandBuffer &cmdBuffer, VkQueue &queue,
-             std::optional<VkSemaphore> waitSemaphore = std::nullopt,
-             std::optional<VkSemaphore> signalSemaphore = std::nullopt,
-             std::optional<VkFence> fence = std::nullopt) {
+static void endCmdBuffer(
+    VkCommandBuffer &cmdBuffer, VkQueue &queue,
+    std::optional<std::vector<VkSemaphore>> waitSemaphore = std::nullopt,
+    std::optional<VkSemaphore> signalSemaphore = std::nullopt,
+    std::optional<VkFence> fence = std::nullopt) {
   if (vkEndCommandBuffer(cmdBuffer) != VK_SUCCESS) {
     throw std::runtime_error("failed to record command buffer!");
   }
@@ -258,13 +299,16 @@ endCmdBuffer(VkCommandBuffer &cmdBuffer, VkQueue &queue,
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
+  // TODO handle that in parameters
   VkPipelineStageFlags waitStages[] = {
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      VK_PIPELINE_STAGE_VERTEX_INPUT_BIT};
   if (waitSemaphore.has_value()) {
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &waitSemaphore.value();
+    auto &wsems = waitSemaphore.value();
+    submitInfo.waitSemaphoreCount = wsems.size();
+    submitInfo.pWaitSemaphores = wsems.data();
+    submitInfo.pWaitDstStageMask = waitStages;
   }
-  submitInfo.pWaitDstStageMask = waitStages;
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &cmdBuffer;
 
@@ -280,12 +324,19 @@ endCmdBuffer(VkCommandBuffer &cmdBuffer, VkQueue &queue,
 }
 
 bool CommandPoolManager::submitFrame(bool framebufferResized) {
-
   auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
   auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
   auto &inFlightFences = commandPool.inFlightFences;
   auto &graphicsBuffer = commandPool.graphicBuffers[context.currentImage];
-  auto &computeBuffer = commandPool.computeBuffers[context.currentUpdate];
+
+  auto &computeFinishedSemaphores = commandPool.computeFinishedSemaphores;
+  auto &computeInFlightFences = commandPool.computeInFlightFences;
+  auto &computeBuffer = commandPool.computeBuffers[context.currentImage];
+
+  // COMPUTE QUEUE
+  endCmdBuffer(computeBuffer, context.queues.computeQueue, std::nullopt,
+               computeFinishedSemaphores[context.currentImage],
+               computeInFlightFences[context.currentImage]);
 
   // GRAPHIC QUEUE
   auto vkCmdEndRenderingKHR = (PFN_vkCmdEndRenderingKHR)vkGetInstanceProcAddr(
@@ -296,17 +347,17 @@ bool CommandPoolManager::submitFrame(bool framebufferResized) {
                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                            context.swapChain.swapChainImages[imageIndex]);
-
-  endCmdBuffer(graphicsBuffer, context.queues.graphicsQueue,
-               imageAvailableSemaphores[context.currentImage],
+  std::vector<VkSemaphore> waitSemaphores = {
+      imageAvailableSemaphores[context.currentImage],
+      computeFinishedSemaphores[context.currentImage],
+  };
+  endCmdBuffer(graphicsBuffer, context.queues.graphicsQueue, waitSemaphores,
                renderFinishedSemaphores[context.currentImage],
                inFlightFences[context.currentImage]);
 
-  // COMPUTE QUEUE
-  endCmdBuffer(computeBuffer, context.queues.computeQueue);
-
   // PRESENT
 
+  vkDeviceWaitIdle(context.device);
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   // specify which semaphores to wait on before presentation can hcontext
@@ -333,11 +384,17 @@ bool CommandPoolManager::submitFrame(bool framebufferResized) {
 void CommandPoolManager::cleanup() {
   auto device = context.device;
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    // Graphic
     vkDestroySemaphore(device, commandPool.renderFinishedSemaphores[i],
                        nullptr);
     vkDestroySemaphore(device, commandPool.imageAvailableSemaphores[i],
                        nullptr);
     vkDestroyFence(device, commandPool.inFlightFences[i], nullptr);
+
+    // Compute
+    vkDestroySemaphore(device, commandPool.computeFinishedSemaphores[i],
+                       nullptr);
+    vkDestroyFence(device, commandPool.computeInFlightFences[i], nullptr);
   }
   vkDestroyCommandPool(context.device, commandPool.pool, nullptr);
 }
