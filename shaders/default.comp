@@ -1,0 +1,25 @@
+#version 450
+
+layout (binding = 0) uniform ParameterUBO {
+    float deltaTime;
+} ubo;
+
+layout(std140, binding = 0) readonly buffer Velocities {
+   vec3 velocities[ ];
+};
+
+layout(std140, binding = 1) buffer Positions {
+   vec3 positions[ ];
+};
+
+layout(std140, binding = 2) readonly buffer PrevPositions {
+   vec3 prevPositions[ ];
+};
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+void main() 
+{
+    uint index = gl_GlobalInvocationID.x;  
+    positions[index]= prevPositions[index] + velocities[index] * ubo.deltaTime;
+}
