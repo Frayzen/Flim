@@ -50,7 +50,6 @@ protected:
   int stage;
   const int id;
   VkDescriptorType type;
-  friend class DescriptorHolder;
 };
 
 class ImageUniDesc : public UniformDescriptor {

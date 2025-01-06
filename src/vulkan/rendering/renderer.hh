@@ -1,7 +1,7 @@
 #pragma once
 
-#include "api/tree/camera.hh"
 #include "api/parameters/render_params.hh"
+#include "api/tree/camera.hh"
 #include "fwd.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/rendering/pipeline.hh"
@@ -26,14 +26,13 @@ public:
   const std::vector<Flim::Instance> &getInstances();
 
   Renderer(Flim::Mesh &mesh, Flim::RenderParams &params)
-      : DescriptorHolder(mesh, params), params(params), version(0),
+      : DescriptorHolder(mesh, params, false), params(params), version(0),
         pipeline(*this) {};
   Flim::RenderParams &params;
 
   Buffer indexBuffer;
+  Pipeline pipeline;
 
 private:
-  Pipeline pipeline;
   int version;
-  friend class CommandPoolManager;
 };

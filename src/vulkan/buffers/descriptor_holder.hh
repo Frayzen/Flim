@@ -11,9 +11,10 @@ class Mesh;
 
 class DescriptorHolder {
 public:
-  DescriptorHolder(Flim::Mesh &mesh, Flim::BaseParams &params)
-      : mesh(mesh), params(params), descriptorPool(0),
-        descriptorSetLayout(0) {};
+  DescriptorHolder(Flim::Mesh &mesh, Flim::BaseParams &params,
+                   bool computeHolder)
+      : mesh(mesh), params(params), descriptorPool(0), descriptorSetLayout(0),
+        isComputeHolder(computeHolder) {};
 
   std::map<int, std::vector<Buffer>> uniforms;
   std::map<int, std::vector<void *>> mappedUniforms;
@@ -32,6 +33,7 @@ protected:
   void cleanupDescriptors();
 
 private:
+  bool isComputeHolder; // if this is a computer class
   Flim::BaseParams &params;
 
   void createDescriptorSetLayout();

@@ -73,6 +73,8 @@ void VulkanApplication::initVulkan() {
 void VulkanApplication::setupGraphics(Flim::Scene &scene) {
   for (auto &r : scene.renderers)
     r.second->setup();
+  for (auto &c : scene.computers)
+    c.second->setup();
 }
 
 void VulkanApplication::recreateSwapChain() {
@@ -141,6 +143,9 @@ void VulkanApplication::cleanup(Flim::Scene &scene) {
   swap_chain_manager.cleanup();
   for (auto &r : scene.renderers) {
     r.second->cleanup();
+  }
+  for (auto &c : scene.computers) {
+    c.second->cleanup();
   }
 
   /* pipeline_manager.cleanup(); */

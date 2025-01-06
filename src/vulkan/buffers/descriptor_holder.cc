@@ -1,8 +1,7 @@
 #include "descriptor_holder.hh"
 #include "api/parameters/base_params.hh"
 
-void DescriptorHolder::cleanupDescriptors()
-{
+void DescriptorHolder::cleanupDescriptors() {
   for (auto desc : params.getUniformDescriptors()) {
     desc.second->cleanup(*this);
   }
@@ -22,23 +21,31 @@ void DescriptorHolder::setupDescriptors() {
     desc.second->setup(*this);
   }
   createDescriptorSetLayout();
-  createDescriptorPool();
-  createDescriptorSets();
+  if (!isComputeHolder) {
+    createDescriptorPool();
+    createDescriptorSets();
+  }
 }
 
-
 void DescriptorHolder::createDescriptorSetLayout() {
-  std::vector<VkDescriptorSetLayoutBinding> bindings(
-      params.getUniformDescriptors().size());
-  int i = 0;
+  std::vector<VkDescriptorSetLayoutBinding> bindings;
+  VkDescriptorSetLayoutBinding cur;
   for (auto desc : params.getUniformDescriptors()) {
-    bindings[i] = {};
-    bindings[i].binding = desc.second->binding;
-    bindings[i].descriptorType = desc.second->type;
-    bindings[i].descriptorCount = 1;
-    bindings[i].stageFlags = desc.second->stage;
-    i++;
+    cur = {};
+    cur.binding = desc.second->getBinding();
+    cur.descriptorType = desc.second->getType();
+    cur.descriptorCount = 1;
+    cur.stageFlags = desc.second->getStage();
+    bindings.push_back(cur);
   }
+  if (isComputeHolder)
+    for (auto desc : params.getAttributeDescriptors()) {
+      cur.binding = desc.second->getBinding();
+      cur.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+      cur.descriptorCount = 1;
+      cur.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+      bindings.push_back(cur);
+    }
   VkDescriptorSetLayoutCreateInfo layoutInfo{};
   layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());

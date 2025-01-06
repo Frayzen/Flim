@@ -8,7 +8,7 @@ public:
   Computer(Computer &) = delete;
   Computer() = delete;
   Computer(Flim::ComputeParams &params, Renderer &renderer)
-      : DescriptorHolder(renderer.mesh, params), params(params),
+      : DescriptorHolder(renderer.mesh, params, true), params(params),
         renderer(renderer) {};
 
   void setup();
