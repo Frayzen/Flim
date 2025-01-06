@@ -102,7 +102,7 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   VkCommandBuffer graphicBuffer =
       commandPool.graphicBuffers[context.currentImage];
   // Draw calls here
-  Flim::Mesh &mesh = renderer.mesh;
+  const Flim::Mesh &mesh = renderer.mesh;
 
   vkCmdBindPipeline(graphicBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     renderer.pipeline.pipeline);

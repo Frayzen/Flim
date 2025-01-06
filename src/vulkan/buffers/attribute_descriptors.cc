@@ -2,8 +2,8 @@
 #include "api/render/mesh.hh"
 #include "fwd.hh"
 #include "vulkan/buffers/buffer_utils.hh"
+#include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/context.hh"
-#include "vulkan/rendering/renderer.hh"
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
@@ -42,10 +42,10 @@ AttributeDescriptor::getBindingDescription() const {
   return desc;
 }
 
-inline int getElemSize(AttributeRate &rate, Renderer &r) {
+inline int getElemSize(AttributeRate &rate, DescriptorHolder &r) {
   switch (rate) {
   case AttributeRate::INSTANCE:
-    return r.getInstances().size();
+    return r.mesh.instances.size();
   case AttributeRate::VERTEX:
     return r.mesh.vertices.size();
   }
@@ -53,7 +53,7 @@ inline int getElemSize(AttributeRate &rate, Renderer &r) {
   return 0;
 }
 
-void AttributeDescriptor::setup(Renderer &renderer) {
+void AttributeDescriptor::setup(DescriptorHolder &holder) {
   VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
   if (isComputeFriendly) {
     assert(
@@ -62,16 +62,16 @@ void AttributeDescriptor::setup(Renderer &renderer) {
     usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
   }
   assert(size != 0 && "please populate the attribute descriptor");
-  Flim::Mesh &mesh = renderer.mesh;
-  size_t bufSize = getElemSize(rate, renderer) * size;
-  auto &buffers = renderer.attributes[id];
-  auto &datas = renderer.mappedAttributes[id];
+  const Flim::Mesh &mesh = holder.mesh;
+  size_t bufSize = getElemSize(rate, holder) * size;
+  auto &buffers = holder.attributes[id];
+  auto &datas = holder.mappedAttributes[id];
   for (int i = 0; i < redudancyAmount(); i++) {
     Buffer &buffer = buffers.emplace_back();
     void *&data = datas.emplace_back(nullptr);
     if (isOnlySetup) {
       void *tmp = malloc(bufSize);
-      updateFunction(renderer.mesh, tmp);
+      updateFunction(holder.mesh, tmp);
       createBufferFromData(buffer, usage, tmp, bufSize);
       free(tmp);
       data = nullptr;
@@ -90,25 +90,25 @@ AttributeDescriptor &AttributeDescriptor::onlySetup(bool val) {
   return *this;
 }
 
-void AttributeDescriptor::update(Renderer &renderer) {
+void AttributeDescriptor::update(DescriptorHolder &holder) {
   if (isOnlySetup)
     return;
   int cur = context.currentImage % redudancyAmount();
-  updateFunction(renderer.mesh, renderer.mappedAttributes[id][cur]);
+  updateFunction(holder.mesh, holder.mappedAttributes[id][cur]);
 }
 
-const Buffer &AttributeDescriptor::getBuffer(const Renderer &renderer,
+const Buffer &AttributeDescriptor::getBuffer(const DescriptorHolder &holder,
                                              int currentImage) const {
   if (usesPreviousFrame)
     currentImage--;
   currentImage = std::clamp(currentImage, 0, redudancyAmount());
-  auto &buffers = renderer.attributes.find(id)->second;
+  auto &buffers = holder.attributes.find(id)->second;
   return buffers[currentImage];
 }
 
-void AttributeDescriptor::cleanup(Renderer &renderer) {
-  auto &buffers = renderer.attributes[id];
-  auto &mapped = renderer.mappedAttributes[id];
+void AttributeDescriptor::cleanup(DescriptorHolder &holder) {
+  auto &buffers = holder.attributes[id];
+  auto &mapped = holder.mappedAttributes[id];
   for (int i = 0; i < redudancyAmount(); i++) {
     if (!isOnlySetup)
       vkUnmapMemory(context.device, buffers[i].bufferMemory);

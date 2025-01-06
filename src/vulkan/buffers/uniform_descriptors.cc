@@ -3,7 +3,7 @@
 #include "vulkan/buffers/buffer_utils.hh"
 #include "vulkan/buffers/texture_utils.hh"
 #include "vulkan/context.hh"
-#include "vulkan/rendering/renderer.hh"
+#include "vulkan/buffers/descriptor_holder.hh"
 #include <cassert>
 #include <fwd.hh>
 #include <iostream>
@@ -17,7 +17,7 @@ ImageUniDesc::ImageUniDesc(int binding, std::string path, int shaderStage)
                         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER),
       path(path), imageSetup(false) {}
 
-void ImageUniDesc::setup(Renderer &) {
+void ImageUniDesc::setup(DescriptorHolder &) {
   if (imageSetup)
     return;
   imageSetup = true;
@@ -108,7 +108,7 @@ void ImageUniDesc::setup(Renderer &) {
   }
 }
 
-VkWriteDescriptorSet ImageUniDesc::getDescriptor(Renderer &renderer, int i) {
+VkWriteDescriptorSet ImageUniDesc::getDescriptor(DescriptorHolder &holder, int i) {
   assert(imageSetup);
   static VkDescriptorImageInfo imageInfo{};
   imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -116,7 +116,7 @@ VkWriteDescriptorSet ImageUniDesc::getDescriptor(Renderer &renderer, int i) {
   imageInfo.sampler = image.sampler;
   VkWriteDescriptorSet descriptor{};
   descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptor.dstSet = renderer.descriptorSets[i];
+  descriptor.dstSet = holder.descriptorSets[i];
   descriptor.dstBinding = binding;
   descriptor.dstArrayElement = 0;
   descriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -125,7 +125,7 @@ VkWriteDescriptorSet ImageUniDesc::getDescriptor(Renderer &renderer, int i) {
   return descriptor;
 }
 
-void ImageUniDesc::cleanup(Renderer &) {
+void ImageUniDesc::cleanup(DescriptorHolder &) {
   if (!imageSetup)
     return;
   vkDestroySampler(context.device, image.sampler, nullptr);
@@ -135,30 +135,30 @@ void ImageUniDesc::cleanup(Renderer &) {
   imageSetup = false;
 }
 
-void GeneralUniDesc::setup(Renderer &renderer) {
+void GeneralUniDesc::setup(DescriptorHolder &holder) {
   assert(bufferSize != 0);
 
-  renderer.mappedUniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
-  renderer.uniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
+  holder.mappedUniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
+  holder.uniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                 renderer.uniforms[id][i]);
-    vkMapMemory(context.device, renderer.uniforms[id][i].bufferMemory, 0,
-                bufferSize, 0, &renderer.mappedUniforms[id][i]);
+                 holder.uniforms[id][i]);
+    vkMapMemory(context.device, holder.uniforms[id][i].bufferMemory, 0,
+                bufferSize, 0, &holder.mappedUniforms[id][i]);
   }
 }
 
-VkWriteDescriptorSet GeneralUniDesc::getDescriptor(Renderer &renderer, int i) {
+VkWriteDescriptorSet GeneralUniDesc::getDescriptor(DescriptorHolder &holder, int i) {
   assert(bufferSize != 0);
-  bufferInfo.buffer = renderer.uniforms[id][i].buffer;
+  bufferInfo.buffer = holder.uniforms[id][i].buffer;
   bufferInfo.offset = 0;
   bufferInfo.range = bufferSize;
   VkWriteDescriptorSet descriptor{};
   descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptor.dstSet = renderer.descriptorSets[i];
+  descriptor.dstSet = holder.descriptorSets[i];
   descriptor.dstBinding = binding;
   descriptor.dstArrayElement = 0;
   descriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -167,15 +167,15 @@ VkWriteDescriptorSet GeneralUniDesc::getDescriptor(Renderer &renderer, int i) {
   return descriptor;
 }
 
-void GeneralUniDesc::cleanup(Renderer &renderer) {
-  for (size_t i = 0; i < renderer.uniforms[id].size(); i++) {
-    vkDestroyBuffer(context.device, renderer.uniforms[id][i].buffer, nullptr);
-    vkFreeMemory(context.device, renderer.uniforms[id][i].bufferMemory,
+void GeneralUniDesc::cleanup(DescriptorHolder &holder) {
+  for (size_t i = 0; i < holder.uniforms[id].size(); i++) {
+    vkDestroyBuffer(context.device, holder.uniforms[id][i].buffer, nullptr);
+    vkFreeMemory(context.device, holder.uniforms[id][i].bufferMemory,
                  nullptr);
   }
 }
 
-void GeneralUniDesc::update(Renderer &renderer, const Flim::Camera &cam) {
-  void *curBuf = renderer.mappedUniforms[id][context.currentUpdate];
-  updateFunction(renderer.mesh, cam, curBuf);
+void GeneralUniDesc::update(DescriptorHolder &holder, const Flim::Camera &cam) {
+  void *curBuf = holder.mappedUniforms[id][context.currentUpdate];
+  updateFunction(holder.mesh, cam, curBuf);
 };

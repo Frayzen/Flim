@@ -1,7 +1,7 @@
 #pragma once
 
 #include "api/transform.hh"
-#include "vulkan/rendering/renderer.hh"
+class Renderer;
 namespace Flim {
 
 class Mesh;

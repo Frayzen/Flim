@@ -1,6 +1,7 @@
 #pragma once
 #include "api/render/mesh.hh"
 #include "api/tree/camera.hh"
+#include "vulkan/buffers/descriptor_holder.hh"
 #include <functional>
 #include <memory>
 #include <vulkan/vulkan_core.h>
@@ -9,7 +10,7 @@ namespace Flim {
 class Mesh;
 };
 
-class Renderer;
+class DescriptorHolder;
 
 #define VERTEX_SHADER_STAGE VK_SHADER_STAGE_VERTEX_BIT
 #define FRAGMENT_SHADER_STAGE VK_SHADER_STAGE_FRAGMENT_BIT
@@ -26,10 +27,10 @@ public:
   UniformDescriptor(int binding, int shaderStage, VkDescriptorType type)
       : binding(binding), type(type), stage(shaderStage), id(uniid++) {};
 
-  virtual VkWriteDescriptorSet getDescriptor(Renderer &renderer, int i) = 0;
-  virtual void setup(Renderer &renderer) = 0;
-  virtual void update(Renderer &renderer, const Flim::Camera &cam) = 0;
-  virtual void cleanup(Renderer &) {};
+  virtual VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i) = 0;
+  virtual void setup(DescriptorHolder &holder) = 0;
+  virtual void update(DescriptorHolder &holder, const Flim::Camera &cam) = 0;
+  virtual void cleanup(DescriptorHolder &) {};
   virtual ~UniformDescriptor() {};
 
   virtual std::shared_ptr<UniformDescriptor> clone() const = 0;
@@ -37,26 +38,32 @@ public:
   int getBinding() const {
     return binding;
   }
+  VkDescriptorType getType() const {
+    return type;
+  }
+  int getStage() const {
+    return stage;
+  }
 
 protected:
   const int binding;
   int stage;
   const int id;
   VkDescriptorType type;
-  friend class Renderer;
+  friend class DescriptorHolder;
 };
 
 class ImageUniDesc : public UniformDescriptor {
 public:
   ImageUniDesc(int binding, std::string path, int shaderStage);
 
-  void setup(Renderer &renderer) override;
-  void update(Renderer &, const Flim::Camera &) override {};
-  void cleanup(Renderer &renderer) override;
+  void setup(DescriptorHolder &holder) override;
+  void update(DescriptorHolder &, const Flim::Camera &) override {};
+  void cleanup(DescriptorHolder &holder) override;
 
   ImageUniDesc &setType(VkDescriptorType type);
 
-  VkWriteDescriptorSet getDescriptor(Renderer &renderer, int i) override;
+  VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i) override;
 
   virtual std::shared_ptr<UniformDescriptor> clone() const override {
     return std::make_shared<ImageUniDesc>(*this);
@@ -100,12 +107,12 @@ public:
     });
   };
 
-  VkWriteDescriptorSet getDescriptor(Renderer &renderer, int i) override;
+  VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i) override;
 
-  void setup(Renderer &renderer) override;
+  void setup(DescriptorHolder &holder) override;
 
-  virtual void update(Renderer &renderer, const Flim::Camera &cam) override;
-  void cleanup(Renderer &renderer) override;
+  virtual void update(DescriptorHolder &holder, const Flim::Camera &cam) override;
+  void cleanup(DescriptorHolder &holder) override;
 
   virtual std::shared_ptr<UniformDescriptor> clone() const override {
     return std::make_shared<GeneralUniDesc>(*this);

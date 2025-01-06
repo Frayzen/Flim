@@ -1,7 +1,6 @@
 #pragma once
 
 #include "consts.hh"
-#include "vulkan/rendering/renderer.hh"
 #include <Eigen/Core>
 #include <functional>
 #include <fwd.hh>
@@ -9,7 +8,10 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
+class DescriptorHolder;
 namespace Flim {
+
+class Mesh;
 
 enum AttributeRate {
   VERTEX,
@@ -26,11 +28,11 @@ public:
   virtual VkVertexInputAttributeDescription getAttributeDesc(int id) const = 0;
   virtual VkVertexInputBindingDescription getBindingDescription() const = 0;
 
-  virtual void update(Renderer &renderer) = 0;
-  virtual void setup(Renderer &renderer) = 0;
-  virtual void cleanup(Renderer &renderer) = 0;
+  virtual void update(DescriptorHolder &holder) = 0;
+  virtual void setup(DescriptorHolder &holder) = 0;
+  virtual void cleanup(DescriptorHolder &holder) = 0;
 
-  virtual const Buffer &getBuffer(const Renderer &renderer,
+  virtual const Buffer &getBuffer(const DescriptorHolder &holder,
                                   int currentImage) const = 0;
 
   virtual std::shared_ptr<BaseAttributeDescriptor> clone() const = 0;
@@ -69,9 +71,9 @@ public:
   VkVertexInputAttributeDescription getAttributeDesc(int id) const override;
   VkVertexInputBindingDescription getBindingDescription() const override;
 
-  void update(Renderer &renderer) override;
-  void setup(Renderer &renderer) override;
-  void cleanup(Renderer &renderer) override;
+  void update(DescriptorHolder &holder) override;
+  void setup(DescriptorHolder &holder) override;
+  void cleanup(DescriptorHolder &holder) override;
 
   template <typename T>
   AttributeDescriptor &
@@ -86,7 +88,7 @@ public:
   AttributeDescriptor &onlySetup(bool val = true);
   AttributeDescriptor &computeFriendly(bool val = true);
 
-  const Buffer &getBuffer(const Renderer &renderer,
+  const Buffer &getBuffer(const DescriptorHolder &holder,
                           int currentImage) const override;
 
   template <typename T> AttributeDescriptor &attach() {

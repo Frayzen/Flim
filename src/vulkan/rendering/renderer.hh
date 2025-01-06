@@ -1,9 +1,10 @@
 #pragma once
 
 #include "api/tree/camera.hh"
+#include "api/parameters/render_params.hh"
 #include "fwd.hh"
+#include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/rendering/pipeline.hh"
-#include <map>
 #include <vector>
 namespace Flim {
 class RenderParams;
@@ -11,7 +12,7 @@ class Instance;
 class Mesh;
 }; // namespace Flim
 
-class Renderer {
+class Renderer : public DescriptorHolder {
 public:
   Renderer(Renderer &) = delete;
   Renderer() = delete;
@@ -19,32 +20,17 @@ public:
   void cleanup();
   void update(const Flim::Camera &cam);
 
-  void createDescriptorSetLayout();
   void setupUniforms();
   void updateUniforms(const Flim::Instance &obj, const Flim::Camera &cam);
-  void createDescriptorSets();
-  void createDescriptorPool();
 
   const std::vector<Flim::Instance> &getInstances();
 
   Renderer(Flim::Mesh &mesh, Flim::RenderParams &params)
-      : mesh(mesh), params(params), version(0), pipeline(*this),
-        descriptorSetLayout(0), descriptorPool(0) {};
-  Flim::Mesh &mesh;
+      : DescriptorHolder(mesh, params), params(params), version(0),
+        pipeline(*this) {};
   Flim::RenderParams &params;
 
-  std::map<int, std::vector<Buffer>> uniforms;
-  std::map<int, std::vector<void *>> mappedUniforms;
-
-  std::map<int, std::vector<Buffer>> attributes;
-  std::map<int, std::vector<void *>> mappedAttributes;
-
-  // per index
   Buffer indexBuffer;
-
-  std::vector<VkDescriptorSet> descriptorSets;
-  VkDescriptorSetLayout descriptorSetLayout;
-  VkDescriptorPool descriptorPool;
 
 private:
   Pipeline pipeline;

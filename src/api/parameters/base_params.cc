@@ -47,11 +47,11 @@ BaseParams::getAttributeDescriptors() const {
   return attributes;
 }
 
-AttributeDescriptor &BaseParams::copyAttribute(int fromBinding, int toBinding)
-{
+AttributeDescriptor &BaseParams::copyAttribute(int fromBinding, int toBinding) {
   assert(attributes.contains(fromBinding));
   attributes[toBinding] = attributes[fromBinding]->clone();
-  return *std::dynamic_pointer_cast<AttributeDescriptor>(attributes[fromBinding]);
+  return *std::dynamic_pointer_cast<AttributeDescriptor>(
+      attributes[fromBinding]);
 }
 
 bool BaseParams::usable() const { return true; }

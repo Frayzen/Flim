@@ -4,6 +4,7 @@
 #include "base_params.hh"
 
 namespace Flim {
+
 class RenderParams : public BaseParams {
 public:
   RenderParams() = default;

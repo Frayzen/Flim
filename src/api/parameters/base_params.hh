@@ -6,11 +6,11 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <type_traits>
 #include <vulkan/vulkan_core.h>
 
 class Pipeline;
 namespace Flim {
+
 enum RenderMode {
   RENDERER_MODE_TRIS = 0,
   RENDERER_MODE_LINE,
