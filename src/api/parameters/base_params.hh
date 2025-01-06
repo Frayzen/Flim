@@ -76,6 +76,10 @@ public:
 
   virtual bool usable() const;
 
+  std::vector<VkVertexInputBindingDescription> getBindingDescription();
+
+  std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+
 protected:
   std::map<int, std::shared_ptr<UniformDescriptor>> uniforms;
   std::map<int, std::shared_ptr<BaseAttributeDescriptor>> attributes;

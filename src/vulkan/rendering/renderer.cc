@@ -12,20 +12,11 @@
 void Renderer::setup() {
   assert(mesh.vertices.size() > 0);
   assert(mesh.indices.size() > 0);
-
   createBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                        mesh.indices.data(),
                        mesh.indices.size() * sizeof(mesh.indices[0]));
 
-  for (auto &desc : params.getAttributeDescriptors()) {
-    desc.second->setup(*this);
-  }
-  for (auto desc : params.getUniformDescriptors()) {
-    desc.second->setup(*this);
-  }
-  createDescriptorSetLayout();
-  createDescriptorPool();
-  createDescriptorSets();
+  setupDescriptors();
   pipeline.create();
 }
 
@@ -49,15 +40,7 @@ void Renderer::update(const Flim::Camera &cam) {
 }
 
 void Renderer::cleanup() {
-  destroyBuffer(indexBuffer);
-  for (auto desc : params.getUniformDescriptors()) {
-    desc.second->cleanup(*this);
-  }
-
-  for (auto desc : params.getAttributeDescriptors()) {
-    desc.second->cleanup(*this);
-  }
   pipeline.cleanup();
-  vkDestroyDescriptorPool(context.device, descriptorPool, nullptr);
-  vkDestroyDescriptorSetLayout(context.device, descriptorSetLayout, nullptr);
+  cleanupDescriptors();
+  destroyBuffer(indexBuffer);
 }

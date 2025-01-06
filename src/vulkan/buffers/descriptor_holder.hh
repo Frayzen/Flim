@@ -14,7 +14,6 @@ public:
   DescriptorHolder(Flim::Mesh &mesh, Flim::BaseParams &params)
       : mesh(mesh), params(params), descriptorPool(0),
         descriptorSetLayout(0) {};
-  void setupDescriptors();
 
   std::map<int, std::vector<Buffer>> uniforms;
   std::map<int, std::vector<void *>> mappedUniforms;
@@ -29,6 +28,10 @@ public:
   VkDescriptorPool descriptorPool;
 
 protected:
+  void setupDescriptors();
+  void cleanupDescriptors();
+
+private:
   Flim::BaseParams &params;
 
   void createDescriptorSetLayout();

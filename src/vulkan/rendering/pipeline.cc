@@ -11,69 +11,12 @@ void Pipeline::cleanup() {
   vkDestroyPipelineLayout(context.device, pipelineLayout, nullptr);
 }
 
-std::vector<VkVertexInputBindingDescription> Pipeline::getBindingDescription() {
-  Flim::RenderParams &params = renderer.params;
-  auto nbBindings = params.attributes.size();
-  std::vector<VkVertexInputBindingDescription> bindingDescriptions(nbBindings);
-  for (size_t i = 0; i < nbBindings; i++)
-    bindingDescriptions[i] = params.attributes[i]->getBindingDescription();
-  return bindingDescriptions;
-}
 
-std::vector<VkVertexInputAttributeDescription>
-Pipeline::getAttributeDescriptions() {
-  Flim::RenderParams &params = renderer.params;
-  auto &descs = params.getAttributeDescriptors();
-
-  int amount = 0;
-  for (auto &d : descs)
-    amount += d.second->getAmountOffset();
-
-  std::vector<VkVertexInputAttributeDescription> attributeDescriptions(amount);
-
-  int cur = 0;
-  for (auto &desc : descs) {
-    for (int i = 0; i < desc.second->getAmountOffset(); i++) {
-      attributeDescriptions[cur + i] = desc.second->getAttributeDesc(i);
-      attributeDescriptions[cur + i].location = cur + i;
-    }
-    cur += desc.second->getAmountOffset();
-  }
-  return attributeDescriptions;
-}
-
-/*
-Shader stages: the shader modules that define the functionality of the
-programmable stages of the graphics pipeline
-
-Fixed-function state: all of the structures that define the fixed-function
-stages of the pipeline, like input assembly, rasterizer, viewport and color
-blending
-
-Pipeline layout: the uniform and push values referenced by the shader that can
-be updated at draw time
-
-Render pass: the attachments referenced by the pipeline stages and their usage
-*/
-
-static VkShaderModule createShaderModule(VulkanContext &context,
-                                         const std::vector<char> &code) {
-  VkShaderModuleCreateInfo createInfo{};
-  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  createInfo.codeSize = code.size();
-  createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
-  VkShaderModule shaderModule;
-  if (vkCreateShaderModule(context.device, &createInfo, nullptr,
-                           &shaderModule) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create shader module!");
-  }
-  return shaderModule;
-}
 
 void Pipeline::create() {
   Flim::RenderParams &params = renderer.params;
-  vertShaderModule = createShaderModule(context, params.vertexShader.code);
-  fragShaderModule = createShaderModule(context, params.fragmentShader.code);
+  vertShaderModule = params.vertexShader.createShaderModule();
+  fragShaderModule = params.fragmentShader.createShaderModule();
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
   vertShaderStageInfo.sType =
@@ -199,8 +142,8 @@ void Pipeline::create() {
     throw std::runtime_error("failed to create pipeline layout!");
   }
 
-  auto bindingDescriptions = getBindingDescription();
-  auto attributeDescriptions = getAttributeDescriptions();
+  auto bindingDescriptions = renderer.params.getBindingDescription();
+  auto attributeDescriptions = renderer.params.getAttributeDescriptions();
 
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType =

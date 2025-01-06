@@ -6,9 +6,10 @@
 namespace Flim {
 class ComputeParams : public BaseParams {
 public:
-  ComputeParams() = default;
+  ComputeParams() : mainFunction("main") {};
 
   Shader shader;
+  std::string mainFunction;
 
   void linkWriteableAttribute(int fromBinding, int toBinding);
 

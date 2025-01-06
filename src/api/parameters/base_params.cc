@@ -55,4 +55,33 @@ AttributeDescriptor &BaseParams::copyAttribute(int fromBinding, int toBinding) {
 }
 
 bool BaseParams::usable() const { return true; }
+
+std::vector<VkVertexInputBindingDescription>
+BaseParams::getBindingDescription() {
+  auto nbBindings = attributes.size();
+  std::vector<VkVertexInputBindingDescription> bindingDescriptions(nbBindings);
+  for (size_t i = 0; i < nbBindings; i++)
+    bindingDescriptions[i] = attributes[i]->getBindingDescription();
+  return bindingDescriptions;
+}
+
+std::vector<VkVertexInputAttributeDescription>
+BaseParams::getAttributeDescriptions() {
+  int amount = 0;
+  for (auto &d : attributes)
+    amount += d.second->getAmountOffset();
+
+  std::vector<VkVertexInputAttributeDescription> attributeDescriptions(amount);
+
+  int cur = 0;
+  for (auto &desc : attributes) {
+    for (int i = 0; i < desc.second->getAmountOffset(); i++) {
+      attributeDescriptions[cur + i] = desc.second->getAttributeDesc(i);
+      attributeDescriptions[cur + i].location = cur + i;
+    }
+    cur += desc.second->getAmountOffset();
+  }
+  return attributeDescriptions;
+}
+
 }; // namespace Flim

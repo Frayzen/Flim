@@ -1,6 +1,19 @@
 #include "descriptor_holder.hh"
 #include "api/parameters/base_params.hh"
 
+void DescriptorHolder::cleanupDescriptors()
+{
+  for (auto desc : params.getUniformDescriptors()) {
+    desc.second->cleanup(*this);
+  }
+
+  for (auto desc : params.getAttributeDescriptors()) {
+    desc.second->cleanup(*this);
+  }
+  vkDestroyDescriptorPool(context.device, descriptorPool, nullptr);
+  vkDestroyDescriptorSetLayout(context.device, descriptorSetLayout, nullptr);
+}
+
 void DescriptorHolder::setupDescriptors() {
   for (auto &desc : params.getAttributeDescriptors()) {
     desc.second->setup(*this);
