@@ -1,6 +1,5 @@
 #pragma once
 
-#include "consts.hh"
 #include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/rendering/rendering_context.hh"
 #include <Eigen/Core>

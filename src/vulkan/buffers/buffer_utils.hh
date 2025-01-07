@@ -5,7 +5,15 @@
 
 class Buffer {
 public:
-  Buffer(void *ptr, int size) : Buffer(size) { populate(ptr); };
+  Buffer(void *ptr, int size, VkBufferUsageFlags usage = 0,
+         VkMemoryPropertyFlags properties = 0)
+      : Buffer(size) {
+    create(VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage,
+           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | properties);
+    populate(ptr);
+  };
+
   Buffer(int size) : size(size), created(false), mappedPtr(nullptr) {};
 
   const VkDeviceMemory &getVkBufferMemory() const { return bufferMemory; };
