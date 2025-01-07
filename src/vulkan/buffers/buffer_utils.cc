@@ -81,7 +81,7 @@ void Buffer::copy(const Buffer &from) const {
   copyRegion.dstOffset = 0; // Optional
   copyRegion.size = size;
   // Append it to the list
-  vkCmdCopyBuffer(commandBuffer, buffer, from.buffer, 1, &copyRegion);
+  vkCmdCopyBuffer(commandBuffer, from.buffer, buffer, 1, &copyRegion);
 
   endSingleTimeCommands(commandBuffer);
 }
