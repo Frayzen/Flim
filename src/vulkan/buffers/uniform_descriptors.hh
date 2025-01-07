@@ -1,7 +1,9 @@
 #pragma once
 #include "api/render/mesh.hh"
 #include "api/tree/camera.hh"
+#include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
+#include "vulkan/rendering/rendering_context.hh"
 #include <functional>
 #include <memory>
 #include <vulkan/vulkan_core.h>
@@ -19,36 +21,28 @@ class DescriptorHolder;
   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |                  \
       VK_SHADER_STAGE_COMPUTE_BIT
 
-static int uniid = 0;
-
-class UniformDescriptor {
+class UniformDescriptor : public BufferHolder {
 public:
   UniformDescriptor() = delete;
   UniformDescriptor(int binding, int shaderStage, VkDescriptorType type)
-      : binding(binding), type(type), stage(shaderStage), id(uniid++) {};
+      : binding(binding), type(type), stage(shaderStage) {};
 
-  virtual VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i) = 0;
-  virtual void setup(DescriptorHolder &holder) = 0;
-  virtual void update(DescriptorHolder &holder, const Flim::Camera &cam) = 0;
-  virtual void cleanup(DescriptorHolder &) {};
+  virtual VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder,
+                                             int i) = 0;
+  virtual void setup() = 0;
+  virtual void update() = 0;
+  virtual void cleanup() {};
   virtual ~UniformDescriptor() {};
 
   virtual std::shared_ptr<UniformDescriptor> clone() const = 0;
 
-  int getBinding() const {
-    return binding;
-  }
-  VkDescriptorType getType() const {
-    return type;
-  }
-  int getStage() const {
-    return stage;
-  }
+  int getBinding() const { return binding; }
+  VkDescriptorType getType() const { return type; }
+  int getStage() const { return stage; }
 
 protected:
   const int binding;
   int stage;
-  const int id;
   VkDescriptorType type;
 };
 
@@ -56,9 +50,9 @@ class ImageUniDesc : public UniformDescriptor {
 public:
   ImageUniDesc(int binding, std::string path, int shaderStage);
 
-  void setup(DescriptorHolder &holder) override;
-  void update(DescriptorHolder &, const Flim::Camera &) override {};
-  void cleanup(DescriptorHolder &holder) override;
+  void setup() override;
+  void update() override {};
+  void cleanup() override;
 
   ImageUniDesc &setType(VkDescriptorType type);
 
@@ -108,10 +102,9 @@ public:
 
   VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i) override;
 
-  void setup(DescriptorHolder &holder) override;
-
-  virtual void update(DescriptorHolder &holder, const Flim::Camera &cam) override;
-  void cleanup(DescriptorHolder &holder) override;
+  void setup() override;
+  virtual void update() override;
+  void cleanup() override;
 
   virtual std::shared_ptr<UniformDescriptor> clone() const override {
     return std::make_shared<GeneralUniDesc>(*this);

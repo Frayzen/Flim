@@ -111,14 +111,13 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   std::vector<VkDeviceSize> offsets;
   for (auto &attr : renderer.params.getAttributeDescriptors()) {
     const std::shared_ptr<Flim::BaseAttributeDescriptor> &desc = attr.second;
-    vertexBuffers.push_back(
-        desc->getBuffer(renderer, context.currentImage).buffer);
+    vertexBuffers.push_back(desc->getBuffer().getVkBuffer());
     offsets.push_back(0);
   }
 
   vkCmdBindVertexBuffers(graphicBuffer, 0, vertexBuffers.size(),
                          vertexBuffers.data(), offsets.data());
-  vkCmdBindIndexBuffer(graphicBuffer, renderer.indexBuffer.buffer, 0,
+  vkCmdBindIndexBuffer(graphicBuffer, renderer.indexBuffer.getVkBuffer(), 0,
                        VK_INDEX_TYPE_UINT16);
   vkCmdBindDescriptorSets(graphicBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           renderer.pipeline.pipelineLayout, 0, 1,

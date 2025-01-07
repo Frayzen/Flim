@@ -1,9 +1,11 @@
 #include "uniform_descriptors.hh"
 
+#include "api/scene.hh"
+
 #include "vulkan/buffers/buffer_utils.hh"
+#include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/buffers/texture_utils.hh"
 #include "vulkan/context.hh"
-#include "vulkan/buffers/descriptor_holder.hh"
 #include <cassert>
 #include <fwd.hh>
 #include <iostream>
@@ -15,9 +17,11 @@
 ImageUniDesc::ImageUniDesc(int binding, std::string path, int shaderStage)
     : UniformDescriptor(binding, shaderStage,
                         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER),
-      path(path), imageSetup(false) {}
+      path(path), imageSetup(false) {
+  redundancy = 0;
+}
 
-void ImageUniDesc::setup(DescriptorHolder &) {
+void ImageUniDesc::setup() {
   if (imageSetup)
     return;
   imageSetup = true;
@@ -37,18 +41,7 @@ void ImageUniDesc::setup(DescriptorHolder &) {
                 << std::endl;
   }
   VkDeviceSize imageSize = texWidth * texHeight * 4;
-
-  Buffer staging;
-
-  createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               staging);
-
-  void *data;
-  vkMapMemory(context.device, staging.bufferMemory, 0, imageSize, 0, &data);
-  memcpy(data, pixels, static_cast<size_t>(imageSize));
-  vkUnmapMemory(context.device, staging.bufferMemory);
+  Buffer staging = Buffer(pixels, imageSize);
   if (loaded)
     stbi_image_free(pixels);
   else
@@ -62,17 +55,13 @@ void ImageUniDesc::setup(DescriptorHolder &) {
               VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   transitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  copyBufferToImage(staging.buffer, image);
+  copyBufferToImage(staging.getVkBuffer(), image);
   transitionImageLayout(image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  vkDestroyBuffer(context.device, staging.buffer, nullptr);
-  vkFreeMemory(context.device, staging.bufferMemory, nullptr);
-
+  staging.destroy();
   // Image view
   createImageView(image, VK_IMAGE_ASPECT_COLOR_BIT);
-
   // Sampler
-
   VkSamplerCreateInfo samplerInfo{};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   samplerInfo.magFilter = VK_FILTER_LINEAR; // when oversampling
@@ -80,7 +69,6 @@ void ImageUniDesc::setup(DescriptorHolder &) {
   samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
   // Apply anisotropy (for rendering object viewed at a sharp angle)
   VkPhysicalDeviceProperties properties{};
   vkGetPhysicalDeviceProperties(context.physicalDevice, &properties);
@@ -108,7 +96,8 @@ void ImageUniDesc::setup(DescriptorHolder &) {
   }
 }
 
-VkWriteDescriptorSet ImageUniDesc::getDescriptor(DescriptorHolder &holder, int i) {
+VkWriteDescriptorSet ImageUniDesc::getDescriptor(DescriptorHolder &holder,
+                                                 int i) {
   assert(imageSetup);
   static VkDescriptorImageInfo imageInfo{};
   imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -125,7 +114,7 @@ VkWriteDescriptorSet ImageUniDesc::getDescriptor(DescriptorHolder &holder, int i
   return descriptor;
 }
 
-void ImageUniDesc::cleanup(DescriptorHolder &) {
+void ImageUniDesc::cleanup() {
   if (!imageSetup)
     return;
   vkDestroySampler(context.device, image.sampler, nullptr);
@@ -135,25 +124,19 @@ void ImageUniDesc::cleanup(DescriptorHolder &) {
   imageSetup = false;
 }
 
-void GeneralUniDesc::setup(DescriptorHolder &holder) {
+void GeneralUniDesc::setup() {
   assert(bufferSize != 0);
-
-  holder.mappedUniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
-  holder.uniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
-
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                 holder.uniforms[id][i]);
-    vkMapMemory(context.device, holder.uniforms[id][i].bufferMemory, 0,
-                bufferSize, 0, &holder.mappedUniforms[id][i]);
-  }
+  setupBuffers(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  for (auto &b : getBuffers())
+    b.map();
 }
 
-VkWriteDescriptorSet GeneralUniDesc::getDescriptor(DescriptorHolder &holder, int i) {
+VkWriteDescriptorSet GeneralUniDesc::getDescriptor(DescriptorHolder &holder,
+                                                   int i) {
   assert(bufferSize != 0);
-  bufferInfo.buffer = holder.uniforms[id][i].buffer;
+  bufferInfo.buffer = getBuffer(i).getVkBuffer();
   bufferInfo.offset = 0;
   bufferInfo.range = bufferSize;
   VkWriteDescriptorSet descriptor{};
@@ -167,15 +150,9 @@ VkWriteDescriptorSet GeneralUniDesc::getDescriptor(DescriptorHolder &holder, int
   return descriptor;
 }
 
-void GeneralUniDesc::cleanup(DescriptorHolder &holder) {
-  for (size_t i = 0; i < holder.uniforms[id].size(); i++) {
-    vkDestroyBuffer(context.device, holder.uniforms[id][i].buffer, nullptr);
-    vkFreeMemory(context.device, holder.uniforms[id][i].bufferMemory,
-                 nullptr);
-  }
-}
+void GeneralUniDesc::cleanup() { cleanupBuffers(); }
 
-void GeneralUniDesc::update(DescriptorHolder &holder, const Flim::Camera &cam) {
-  void *curBuf = holder.mappedUniforms[id][context.currentUpdate];
-  updateFunction(holder.mesh, cam, curBuf);
+void GeneralUniDesc::update() {
+  auto &ctx = context.rctx;
+  updateFunction(*ctx.mesh, ctx.scene->camera, getBuffer().getVkBuffer());
 };

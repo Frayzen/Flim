@@ -2,7 +2,6 @@
 
 #include "api/parameters/render_params.hh"
 #include "api/tree/camera.hh"
-#include "fwd.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/rendering/pipeline.hh"
 #include <vector>
@@ -16,9 +15,9 @@ class Renderer : public DescriptorHolder {
 public:
   Renderer(Renderer &) = delete;
   Renderer() = delete;
+  void update();
   void setup();
   void cleanup();
-  void update(const Flim::Camera &cam);
 
   void setupUniforms();
   void updateUniforms(const Flim::Instance &obj, const Flim::Camera &cam);
@@ -26,8 +25,12 @@ public:
   const std::vector<Flim::Instance> &getInstances();
 
   Renderer(Flim::Mesh &mesh, Flim::RenderParams &params)
-      : DescriptorHolder(mesh, params, false), params(params), version(0),
+      : DescriptorHolder(params, false), params(params), version(0), mesh(mesh),
+        indexBuffer(mesh.indices.data(),
+                    mesh.indices.size() * sizeof(mesh.indices[0])),
         pipeline(*this) {};
+
+  const Flim::Mesh &mesh;
   Flim::RenderParams &params;
 
   Buffer indexBuffer;

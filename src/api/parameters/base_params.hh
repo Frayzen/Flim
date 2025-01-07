@@ -3,6 +3,7 @@
 #include "consts.hh"
 #include "vulkan/buffers/attribute_descriptors.hh"
 #include "vulkan/buffers/uniform_descriptors.hh"
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>

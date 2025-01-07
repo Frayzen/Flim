@@ -1,13 +1,14 @@
 #include "descriptor_holder.hh"
 #include "api/parameters/base_params.hh"
+#include "vulkan/rendering/rendering_context.hh"
 
 void DescriptorHolder::cleanupDescriptors() {
   for (auto desc : params.getUniformDescriptors()) {
-    desc.second->cleanup(*this);
+    desc.second->cleanup();
   }
 
   for (auto desc : params.getAttributeDescriptors()) {
-    desc.second->cleanup(*this);
+    desc.second->cleanup();
   }
   vkDestroyDescriptorPool(context.device, descriptorPool, nullptr);
   vkDestroyDescriptorSetLayout(context.device, descriptorSetLayout, nullptr);
@@ -15,10 +16,10 @@ void DescriptorHolder::cleanupDescriptors() {
 
 void DescriptorHolder::setupDescriptors() {
   for (auto &desc : params.getAttributeDescriptors()) {
-    desc.second->setup(*this);
+    desc.second->setup();
   }
   for (auto desc : params.getUniformDescriptors()) {
-    desc.second->setup(*this);
+    desc.second->setup();
   }
   createDescriptorSetLayout();
   if (!isComputeHolder) {

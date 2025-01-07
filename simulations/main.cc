@@ -112,7 +112,8 @@ int main() {
   particlesCompute.setAttribute(positions, 2).previousFrame(true);
 
   Scene &scene = api.getScene();
-  scene.registerMesh(sphere, particlesParams, particlesCompute);
+  scene.registerMesh(sphere, particlesParams);
+  scene.registerComputer(particlesCompute);
   scene.registerMesh(cube, cubeParams);
 
   constexpr long amount = 10;

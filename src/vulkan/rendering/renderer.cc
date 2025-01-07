@@ -2,20 +2,16 @@
 
 #include "api/parameters/render_params.hh"
 #include "api/render/mesh.hh"
-#include "api/tree/camera.hh"
 #include "api/tree/instance.hh"
-#include "vulkan/buffers/buffer_utils.hh"
+#include "vulkan/rendering/rendering_context.hh"
 #include <Eigen/src/Core/Matrix.h>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
 void Renderer::setup() {
+  context.rctx.mesh = &mesh;
   assert(mesh.vertices.size() > 0);
   assert(mesh.indices.size() > 0);
-  createBufferFromData(indexBuffer, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                       mesh.indices.data(),
-                       mesh.indices.size() * sizeof(mesh.indices[0]));
-
   setupDescriptors();
   pipeline.create();
 }
@@ -24,12 +20,13 @@ const std::vector<Flim::Instance> &Renderer::getInstances() {
   return mesh.instances;
 }
 
-void Renderer::update(const Flim::Camera &cam) {
+void Renderer::update() {
+  context.rctx.mesh = &mesh;
   for (auto desc : params.getUniformDescriptors()) {
-    desc.second->update(*this, cam);
+    desc.second->update();
   }
   for (auto desc : params.getAttributeDescriptors()) {
-    desc.second->update(*this);
+    desc.second->update();
   }
   if (params.version != version) {
     vkDeviceWaitIdle(context.device);
@@ -42,5 +39,5 @@ void Renderer::update(const Flim::Camera &cam) {
 void Renderer::cleanup() {
   pipeline.cleanup();
   cleanupDescriptors();
-  destroyBuffer(indexBuffer);
+  indexBuffer.destroy();
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "consts.hh"
+#include "vulkan/buffers/buffer_manager.hh"
+#include "vulkan/rendering/rendering_context.hh"
 #include <Eigen/Core>
 #include <functional>
 #include <fwd.hh>
@@ -18,25 +20,19 @@ enum AttributeRate {
   INSTANCE,
 };
 
-static int attrid = 0;
-
-class BaseAttributeDescriptor {
+class BaseAttributeDescriptor : public BufferHolder {
 public:
   BaseAttributeDescriptor(int binding)
-      : id(attrid++), binding(binding), usesPreviousFrame(false) {};
+      : BufferHolder(), binding(binding), usesPreviousFrame(false) {};
   virtual int getAmountOffset() const = 0;
   virtual VkVertexInputAttributeDescription getAttributeDesc(int id) const = 0;
   virtual VkVertexInputBindingDescription getBindingDescription() const = 0;
 
-  virtual void update(DescriptorHolder &holder) = 0;
-  virtual void setup(DescriptorHolder &holder) = 0;
-  virtual void cleanup(DescriptorHolder &holder) = 0;
-
-  virtual const Buffer &getBuffer(const DescriptorHolder &holder,
-                                  int currentImage) const = 0;
+  virtual void setup() = 0;
+  virtual void update() = 0;
+  virtual void cleanup() = 0;
 
   virtual std::shared_ptr<BaseAttributeDescriptor> clone() const = 0;
-  const int id;
 
   void previousFrame(bool val) { usesPreviousFrame = val; };
   int getBinding() const { return binding; }
@@ -71,9 +67,9 @@ public:
   VkVertexInputAttributeDescription getAttributeDesc(int id) const override;
   VkVertexInputBindingDescription getBindingDescription() const override;
 
-  void update(DescriptorHolder &holder) override;
-  void setup(DescriptorHolder &holder) override;
-  void cleanup(DescriptorHolder &holder) override;
+  void setup() override;
+  void update() override;
+  void cleanup() override;
 
   template <typename T>
   AttributeDescriptor &
@@ -88,9 +84,6 @@ public:
   AttributeDescriptor &onlySetup(bool val = true);
   AttributeDescriptor &computeFriendly(bool val = true);
 
-  const Buffer &getBuffer(const DescriptorHolder &holder,
-                          int currentImage) const override;
-
   template <typename T> AttributeDescriptor &attach() {
     return attach<T>([](const Mesh &, T *) {});
   }
@@ -100,12 +93,7 @@ public:
   }
 
 private:
-  int redudancyAmount() const {
-    if (isOnlySetup && !isComputeFriendly)
-      return 1;
-    return MAX_FRAMES_IN_FLIGHT;
-  }
-
+  DescriptorHolder* holder;
   AttributeRate rate;
   std::vector<std::pair<long, VkFormat>> offsets;
   int size;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "api/scene.hh"
-#include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/device/device_manager.hh"
 #include "vulkan/extension_manager.hh"
 #include "vulkan/gui/gui_manager.hh"
@@ -27,7 +26,6 @@ private:
   DeviceManager device_manager;
   SurfaceManager surface_manager;
   CommandPoolManager command_pool_manager;
-  BufferManager buffer_manager;
   GUIManager gui_manager;
 
   void createInstance();

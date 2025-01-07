@@ -7,7 +7,6 @@
 #include "api/tree/camera.hh"
 #include "vulkan/computing/computer.hh"
 #include "vulkan/rendering/renderer.hh"
-#include <map>
 
 class VulkanApplication;
 
@@ -21,11 +20,12 @@ public:
   Instance &instantiate(Mesh &mesh) const;
 
   void registerMesh(Mesh &mesh, RenderParams &params);
-  void registerMesh(Mesh &mesh, RenderParams &rparams, ComputeParams& cparams);
+  void registerComputer(ComputeParams &cparams);
+
   FlimAPI &api;
   Camera camera;
-  std::map<int, std::shared_ptr<Renderer>> renderers; // key is mesh.id
-  std::map<int, std::shared_ptr<Computer>> computers; // key is mesh.id
+  std::map<int, std::shared_ptr<Renderer>> renderers;
+  std::vector<std::shared_ptr<Computer>> computers;
 
 private:
   Scene(FlimAPI &api) : api(api), camera(*this) {};

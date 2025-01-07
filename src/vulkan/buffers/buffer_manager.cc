@@ -1,18 +1,51 @@
 #include "buffer_manager.hh"
-#include "vulkan/buffers/texture_utils.hh"
+#include "consts.hh"
+#include "fwd.hh"
 #include "vulkan/context.hh"
-#include "vulkan/rendering/utils.hh"
 
-void BufferManager::createDepthResources() {
-  VkFormat depthFormat = findDepthFormat(context);
-  VkExtent2D &extent = context.swapChain.swapChainExtent;
-  context.depthImage.width = extent.width;
-  context.depthImage.height = extent.height;
-  createImage(context.depthImage, depthFormat, VK_IMAGE_TILING_OPTIMAL,
-              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  createImageView(context.depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+BufferManager &bufferManager = BufferManager::get();
 
-  transitionImageLayout(context.depthImage,
-                        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+// Manager
+
+BufferManager &BufferManager::get() {
+  static BufferManager instance;
+  return instance;
+}
+int BufferManager::createId() const {
+  static int cur = 0;
+  return cur++;
+}
+
+// Holder
+
+BufferHolder::BufferHolder(int id)
+    : bufferId(id), redundancy(MAX_FRAMES_IN_FLIGHT) {}
+BufferHolder::BufferHolder() : BufferHolder(bufferManager.createId()) {}
+
+void BufferHolder::setupBuffers(int bufferSize, VkBufferUsageFlags usage,
+                                VkMemoryPropertyFlags properties) {
+  if (bufferManager.buffers.contains(bufferId))
+    return;
+  bufferManager.buffers[bufferId] = std::vector<Buffer>(redundancy, bufferSize);
+  for (Buffer b : bufferManager.buffers[bufferId])
+    b.create(usage, properties);
+}
+void BufferHolder::cleanupBuffers() {
+  if (!bufferManager.buffers.contains(bufferId))
+    return;
+  for (auto &b : bufferManager.buffers[bufferId])
+    b.destroy();
+  bufferManager.buffers[bufferId].clear();
+}
+
+std::vector<Buffer> &BufferHolder::getBuffers() const {
+  return bufferManager.buffers[bufferId];
+}
+
+Buffer &BufferHolder::getBuffer(int i) const {
+  int cur = i;
+  if (i == -1)
+    cur = context.currentImage;
+  cur %= redundancy;
+  return bufferManager.buffers[bufferId][cur];
 }

@@ -20,14 +20,9 @@ void Scene::registerMesh(Mesh &mesh, RenderParams &params) {
       std::pair(mesh.id, std::make_shared<Renderer>(mesh, params)));
 }
 
-void Scene::registerMesh(Mesh &mesh, RenderParams &rparams,
-                         ComputeParams &cparams) {
+void Scene::registerComputer(ComputeParams &cparams) {
   assert(cparams.usable());
-  assert(rparams.usable());
-  renderers.insert(
-      std::pair(mesh.id, std::make_shared<Renderer>(mesh, rparams)));
-  computers.insert(std::pair(
-      mesh.id, std::make_shared<Computer>(cparams, *renderers[mesh.id])));
+  computers.emplace_back(std::make_shared<Computer>(cparams));
 }
 
 }; // namespace Flim

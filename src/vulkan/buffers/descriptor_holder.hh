@@ -1,8 +1,7 @@
 #pragma once
 
-#include "fwd.hh"
-#include <map>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace Flim {
 class BaseParams;
@@ -11,18 +10,9 @@ class Mesh;
 
 class DescriptorHolder {
 public:
-  DescriptorHolder(Flim::Mesh &mesh, Flim::BaseParams &params,
-                   bool computeHolder)
-      : mesh(mesh), params(params), descriptorPool(0), descriptorSetLayout(0),
+  DescriptorHolder(Flim::BaseParams &params, bool computeHolder)
+      : params(params), descriptorPool(0), descriptorSetLayout(0),
         isComputeHolder(computeHolder) {};
-
-  std::map<int, std::vector<Buffer>> uniforms;
-  std::map<int, std::vector<void *>> mappedUniforms;
-
-  std::map<int, std::vector<Buffer>> attributes;
-  std::map<int, std::vector<void *>> mappedAttributes;
-
-  Flim::Mesh &mesh;
 
   std::vector<VkDescriptorSet> descriptorSets;
   VkDescriptorSetLayout descriptorSetLayout;

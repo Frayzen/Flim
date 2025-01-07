@@ -1,10 +1,8 @@
 #include "attribute_descriptors.hh"
 #include "api/render/mesh.hh"
-#include "fwd.hh"
 #include "vulkan/buffers/buffer_utils.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/context.hh"
-#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <stdexcept>
@@ -42,18 +40,18 @@ AttributeDescriptor::getBindingDescription() const {
   return desc;
 }
 
-inline int getElemSize(AttributeRate &rate, DescriptorHolder &r) {
+inline int getAmount(const Mesh &m, AttributeRate &rate) {
   switch (rate) {
   case AttributeRate::INSTANCE:
-    return r.mesh.instances.size();
+    return m.instances.size();
   case AttributeRate::VERTEX:
-    return r.mesh.vertices.size();
+    return m.vertices.size();
   }
   throw std::runtime_error("Unexpected attribute rate");
   return 0;
 }
 
-void AttributeDescriptor::setup(DescriptorHolder &holder) {
+void AttributeDescriptor::setup() {
   VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
   if (isComputeFriendly) {
     assert(
@@ -62,21 +60,20 @@ void AttributeDescriptor::setup(DescriptorHolder &holder) {
     usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
   }
   assert(size != 0 && "please populate the attribute descriptor");
-  const Flim::Mesh &mesh = holder.mesh;
-  size_t bufSize = getElemSize(rate, holder) * size;
-  auto &buffers = holder.attributes[id];
-  auto &datas = holder.mappedAttributes[id];
-  for (int i = 0; i < redudancyAmount(); i++) {
-    Buffer &buffer = buffers.emplace_back();
-    void *&data = datas.emplace_back(nullptr);
+  const Flim::Mesh &mesh = *context.rctx.mesh;
+  size_t bufSize = getAmount(mesh, rate) * size;
+  static auto memProp = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+  setupBuffers(bufSize, usage, memProp);
+
+  for (auto &b : getBuffers()) {
     if (isOnlySetup) {
       void *tmp = malloc(bufSize);
-      updateFunction(holder.mesh, tmp);
-      createBufferFromData(buffer, usage, tmp, bufSize);
+      updateFunction(mesh, tmp);
+      b.populate(tmp);
       free(tmp);
-      data = nullptr;
     } else
-      data = createMappedBuffer(buffer, usage, bufSize);
+      b.map();
   }
 }
 
@@ -87,34 +84,16 @@ AttributeDescriptor &AttributeDescriptor::computeFriendly(bool val) {
 
 AttributeDescriptor &AttributeDescriptor::onlySetup(bool val) {
   isOnlySetup = val;
+  redundancy = 1;
   return *this;
 }
 
-void AttributeDescriptor::update(DescriptorHolder &holder) {
+void AttributeDescriptor::update() {
   if (isOnlySetup)
     return;
-  int cur = context.currentImage % redudancyAmount();
-  updateFunction(holder.mesh, holder.mappedAttributes[id][cur]);
+  updateFunction(*context.rctx.mesh, getBuffer().getPtr());
 }
 
-const Buffer &AttributeDescriptor::getBuffer(const DescriptorHolder &holder,
-                                             int currentImage) const {
-  if (usesPreviousFrame)
-    currentImage--;
-  currentImage = std::clamp(currentImage, 0, redudancyAmount());
-  auto &buffers = holder.attributes.find(id)->second;
-  return buffers[currentImage];
-}
-
-void AttributeDescriptor::cleanup(DescriptorHolder &holder) {
-  auto &buffers = holder.attributes[id];
-  auto &mapped = holder.mappedAttributes[id];
-  for (int i = 0; i < redudancyAmount(); i++) {
-    if (!isOnlySetup)
-      vkUnmapMemory(context.device, buffers[i].bufferMemory);
-    vkDestroyBuffer(context.device, buffers[i].buffer, nullptr);
-    vkFreeMemory(context.device, buffers[i].bufferMemory, nullptr);
-  }
-}
+void AttributeDescriptor::cleanup() { cleanupBuffers(); }
 
 } // namespace Flim

@@ -9,7 +9,7 @@ VulkanContext context{};
 VulkanApplication::VulkanApplication()
     : window_manager(), extension_manager(), swap_chain_manager(),
       device_manager(), surface_manager(), command_pool_manager(),
-      buffer_manager(), gui_manager() {
+      gui_manager() {
   context.currentImage = 0;
   context.currentUpdate = 1;
 }
@@ -66,7 +66,7 @@ void VulkanApplication::initVulkan() {
   command_pool_manager.createSyncObjects();
 
   // Frame and depth buffer
-  buffer_manager.createDepthResources();
+  surface_manager.createDepthResources();
   gui_manager.setup();
 }
 
@@ -74,7 +74,7 @@ void VulkanApplication::setupGraphics(Flim::Scene &scene) {
   for (auto &r : scene.renderers)
     r.second->setup();
   for (auto &c : scene.computers)
-    c.second->setup();
+    c->setup();
 }
 
 void VulkanApplication::recreateSwapChain() {
@@ -89,7 +89,7 @@ void VulkanApplication::recreateSwapChain() {
   swap_chain_manager.createSwapChain();
   surface_manager.setupSwapChainImages();
   surface_manager.createImageViews();
-  buffer_manager.createDepthResources();
+  surface_manager.createDepthResources();
   context.currentImage = 0;
 }
 
@@ -107,10 +107,10 @@ bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
   }
 
   for (auto &r : scene.renderers)
-    r.second->update(camera);
+    r.second->update();
 
   for (auto computer : scene.computers) {
-    command_pool_manager.recordCommandBuffer(*computer.second);
+    command_pool_manager.recordCommandBuffer(*computer);
   }
 
   for (auto renderer : scene.renderers) {
@@ -145,10 +145,9 @@ void VulkanApplication::cleanup(Flim::Scene &scene) {
     r.second->cleanup();
   }
   for (auto &c : scene.computers) {
-    c.second->cleanup();
+    c->cleanup();
   }
 
-  /* pipeline_manager.cleanup(); */
   command_pool_manager.cleanup();
   vkDestroyDevice(context.device, nullptr);
   extension_manager.cleanUp();

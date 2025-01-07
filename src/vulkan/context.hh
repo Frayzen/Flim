@@ -1,5 +1,6 @@
 #pragma once
 
+#include "vulkan/rendering/rendering_context.hh"
 #include <cstdint>
 #include <fwd.hh>
 #include <vulkan/vulkan_core.h>
@@ -21,4 +22,5 @@ public:
   CommandPool commandPool;
   SwapChain swapChain;
   Image depthImage;
+  RenderingContext rctx;
 } extern context;

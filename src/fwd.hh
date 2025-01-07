@@ -57,8 +57,3 @@ typedef struct SwapChain {
   VkFormat swapChainImageFormat;
   VkExtent2D swapChainExtent;
 } SwapChain;
-
-typedef struct Buffer {
-  VkDeviceMemory bufferMemory;
-  VkBuffer buffer;
-} Buffer;
