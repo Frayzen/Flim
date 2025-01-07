@@ -8,9 +8,9 @@ public:
   Buffer(void *ptr, int size) : Buffer(size) { populate(ptr); };
   Buffer(int size) : size(size), created(false), mappedPtr(nullptr) {};
 
-  const VkBuffer &getVkBufferMemory() const;
-  const VkBuffer &getVkBuffer() const;
-  void *getPtr() const;
+  const VkDeviceMemory &getVkBufferMemory() const { return bufferMemory; };
+  const VkBuffer &getVkBuffer() const { return buffer; };
+  void *getPtr() const { return mappedPtr; };
   void map();
   void unmap();
 
