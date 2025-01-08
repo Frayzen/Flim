@@ -3,6 +3,7 @@
 #include "buffer_utils.hh"
 #include <cwchar>
 #include <fwd.hh>
+#include <memory>
 #include <vulkan/vulkan_core.h>
 
 struct UniformLocationObject {
@@ -31,7 +32,7 @@ public:
 private:
   BufferManager() = default;
 
-  std::map<int, std::vector<Buffer>> buffers;
+  std::map<int, std::vector<std::shared_ptr<Buffer>>> buffers;
   friend class BufferHolder;
 };
 
@@ -43,14 +44,15 @@ extern BufferManager &bufferManager;
  */
 class BufferHolder {
 public:
-  Buffer &getBuffer(int i = -1) const;
+  std::shared_ptr<Buffer> getBuffer(int i = -1) const;
 
 protected:
+  BufferHolder(const BufferHolder &);
   BufferHolder();
   BufferHolder(int id);
   const int bufferId;
   int redundancy;
-  std::vector<Buffer> &getBuffers() const;
+  std::vector<std::shared_ptr<Buffer>> &getBuffers() const;
   void setupBuffers(int bufferSize, VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags properties);
   void cleanupBuffers();

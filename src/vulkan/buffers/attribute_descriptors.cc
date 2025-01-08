@@ -65,14 +65,14 @@ void AttributeDescriptor::setup() {
                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
   setupBuffers(bufSize, usage, memProp);
 
-  for (auto &b : getBuffers()) {
+  for (auto b : getBuffers()) {
     if (isOnlySetup) {
       void *tmp = malloc(bufSize);
       updateFunction(mesh, tmp);
-      b.populate(tmp);
+      b->populate(tmp);
       free(tmp);
     } else
-      b.map();
+      b->map();
   }
 }
 
@@ -90,7 +90,7 @@ AttributeDescriptor &AttributeDescriptor::onlySetup(bool val) {
 void AttributeDescriptor::update() {
   if (isOnlySetup)
     return;
-  updateFunction(*context.rctx.mesh, getBuffer().getPtr());
+  updateFunction(*context.rctx.mesh, getBuffer()->getPtr());
 }
 
 void AttributeDescriptor::cleanup() { cleanupBuffers(); }

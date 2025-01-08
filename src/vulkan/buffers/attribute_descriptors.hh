@@ -92,7 +92,7 @@ public:
   }
 
 private:
-  DescriptorHolder* holder;
+  DescriptorHolder *holder;
   AttributeRate rate;
   std::vector<std::pair<long, VkFormat>> offsets;
   int size;

@@ -14,7 +14,8 @@ public:
     populate(ptr);
   };
 
-  Buffer(int size) : size(size), created(false), mappedPtr(nullptr) {};
+  Buffer(int size)
+      : size(size), created(false), mappedPtr(nullptr), buffer(0) {};
 
   const VkDeviceMemory &getVkBufferMemory() const { return bufferMemory; };
   const VkBuffer &getVkBuffer() const { return buffer; };

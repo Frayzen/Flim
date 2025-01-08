@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
+#include <string>
 #include <sys/types.h>
 #include <vulkan/vulkan_core.h>
 
@@ -116,8 +118,10 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
 
   if (messageSeverity >= VK_DEBUG_LEVEL) {
-    // Message is important enough to show
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    std::string error = "validation error";
+    error.append(pCallbackData->pMessage);
+    error.append("\n");
+    std::runtime_error(error.c_str());
   }
 
   return VK_FALSE;

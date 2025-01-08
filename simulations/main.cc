@@ -105,15 +105,15 @@ int main() {
   cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
   cubeParams.useBackfaceCulling = false;
 
-  ComputeParams particlesCompute;
-  particlesCompute.shader = Shader("shaders/default.comp.spv");
-  particlesCompute.setAttribute(velocities, 0);
-  particlesCompute.setAttribute(positions, 1);
-  particlesCompute.setAttribute(positions, 2).previousFrame(true);
+  /* ComputeParams particlesCompute; */
+  /* particlesCompute.shader = Shader("shaders/default.comp.spv"); */
+  /* particlesCompute.setAttribute(velocities, 0); */
+  /* particlesCompute.setAttribute(positions, 1); */
+  /* particlesCompute.setAttribute(positions, 2).previousFrame(true); */
 
   Scene &scene = api.getScene();
   scene.registerMesh(sphere, particlesParams);
-  scene.registerComputer(particlesCompute);
+  /* scene.registerComputer(particlesCompute); */
   scene.registerMesh(cube, cubeParams);
 
   constexpr long amount = 10;

@@ -130,13 +130,13 @@ void GeneralUniDesc::setup() {
                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   for (auto &b : getBuffers())
-    b.map();
+    b->map();
 }
 
 VkWriteDescriptorSet GeneralUniDesc::getDescriptor(DescriptorHolder &holder,
                                                    int i) {
   assert(bufferSize != 0);
-  bufferInfo.buffer = getBuffer(i).getVkBuffer();
+  bufferInfo.buffer = getBuffer(i)->getVkBuffer();
   bufferInfo.offset = 0;
   bufferInfo.range = bufferSize;
   VkWriteDescriptorSet descriptor{};
@@ -154,5 +154,5 @@ void GeneralUniDesc::cleanup() { cleanupBuffers(); }
 
 void GeneralUniDesc::update() {
   auto &ctx = context.rctx;
-  updateFunction(*ctx.mesh, ctx.scene->camera, getBuffer().getVkBuffer());
+  updateFunction(*ctx.mesh, ctx.scene->camera, getBuffer()->getPtr());
 };

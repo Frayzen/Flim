@@ -87,12 +87,14 @@ void Buffer::copy(const Buffer &from) const {
 }
 
 void Buffer::map() {
-  assert(mappedPtr == nullptr);
+  if (mappedPtr != nullptr)
+    return;
   vkMapMemory(context.device, bufferMemory, 0, size, 0, &mappedPtr);
 }
 
 void Buffer::unmap() {
-  assert(mappedPtr != nullptr);
+  if (mappedPtr == nullptr)
+    return;
   vkUnmapMemory(context.device, bufferMemory);
   mappedPtr = nullptr;
 }

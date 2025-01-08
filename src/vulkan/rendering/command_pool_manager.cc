@@ -111,7 +111,7 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   std::vector<VkDeviceSize> offsets;
   for (auto &attr : renderer.params.getAttributeDescriptors()) {
     const std::shared_ptr<Flim::BaseAttributeDescriptor> &desc = attr.second;
-    vertexBuffers.push_back(desc->getBuffer().getVkBuffer());
+    vertexBuffers.push_back(desc->getBuffer()->getVkBuffer());
     offsets.push_back(0);
   }
 
