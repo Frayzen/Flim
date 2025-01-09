@@ -52,6 +52,8 @@ inline int getAmount(const Mesh &m, AttributeRate &rate) {
 
 void AttributeDescriptor::setup() {
   VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+  if (isOnlySetup)
+    usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
   if (isComputeFriendly) {
     assert(
         isOnlySetup &&

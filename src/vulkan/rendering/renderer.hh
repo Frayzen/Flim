@@ -5,6 +5,7 @@
 #include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/rendering/pipeline.hh"
 #include <vector>
+#include <vulkan/vulkan_core.h>
 namespace Flim {
 class RenderParams;
 class Instance;
@@ -27,7 +28,8 @@ public:
   Renderer(Flim::Mesh &mesh, Flim::RenderParams &params)
       : DescriptorHolder(params, false), params(params), version(0), mesh(mesh),
         indexBuffer(mesh.indices.data(),
-                    mesh.indices.size() * sizeof(mesh.indices[0])),
+                    mesh.indices.size() * sizeof(mesh.indices[0]),
+                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
         pipeline(*this) {};
 
   const Flim::Mesh &mesh;

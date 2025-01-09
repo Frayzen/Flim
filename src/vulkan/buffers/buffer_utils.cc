@@ -138,4 +138,5 @@ void Buffer::create(VkBufferUsageFlags usage,
   }
 
   vkBindBufferMemory(context.device, buffer, bufferMemory, 0);
+  created = true;
 }

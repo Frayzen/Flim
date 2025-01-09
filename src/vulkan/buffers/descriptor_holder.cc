@@ -1,6 +1,5 @@
 #include "descriptor_holder.hh"
 #include "api/parameters/base_params.hh"
-#include "vulkan/rendering/rendering_context.hh"
 
 void DescriptorHolder::cleanupDescriptors() {
   for (auto desc : params.getUniformDescriptors()) {
