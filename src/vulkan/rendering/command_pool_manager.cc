@@ -92,10 +92,13 @@ static void createImageMemoryBarrier(const VkCommandBuffer &commandBuffer,
 void CommandPoolManager::recordCommandBuffer(const Computer &computer) {
   VkCommandBuffer computeBuffer =
       commandPool.computeBuffers[context.currentImage];
-
-  (void)computer;
-  /* vkCmdBindPipeline(computeBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-   * computer.pipeline.pipeline); */
+  vkCmdBindPipeline(computeBuffer, VK_PIPELINE_BIND_POINT_COMPUTE,
+                    computer.pipeline);
+  vkCmdBindDescriptorSets(computeBuffer, VK_PIPELINE_BIND_POINT_COMPUTE,
+                          computer.pipelineLayout, 0, 1,
+                          &computer.descriptorSets[context.currentImage], 0, 0);
+  vkCmdDispatch(computeBuffer, computer.dispatchAmount.x(),
+                computer.dispatchAmount.y(), computer.dispatchAmount.z());
 }
 
 void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {

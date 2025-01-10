@@ -3,6 +3,7 @@
 #include "vulkan/buffers/descriptor_holder.hh"
 #include <cassert>
 #include <cstdlib>
+#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
@@ -52,6 +53,8 @@ inline int getAmount(const Mesh &m, AttributeRate &rate) {
 }
 
 void AttributeDescriptor::setup() {
+  if (!isComputeFriendly && isOnlySetup)
+    redundancy = 1;
   VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
   if (isOnlySetup)
     usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -80,7 +83,7 @@ void AttributeDescriptor::setup() {
 
 VkWriteDescriptorSet
 AttributeDescriptor::getDescriptor(DescriptorHolder &holder, int i) {
-  static VkWriteDescriptorSet descriptor{};
+  VkWriteDescriptorSet descriptor{};
   descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   descriptor.dstSet = holder.descriptorSets[i];
   descriptor.dstBinding = binding;
@@ -89,12 +92,11 @@ AttributeDescriptor::getDescriptor(DescriptorHolder &holder, int i) {
   descriptor.descriptorCount = 1;
   // pBufferInfo
   int offset = usesPreviousFrame ? -1 : 0;
-  static VkDescriptorBufferInfo storageBufferInfoLastFrame{};
-  storageBufferInfoLastFrame.buffer =
-      getBuffer(i + offset + redundancy)->getVkBuffer();
-  storageBufferInfoLastFrame.offset = 0;
-  storageBufferInfoLastFrame.range = size * getAmount(*mesh, rate);
-  descriptor.pBufferInfo = &storageBufferInfoLastFrame;
+  storageBufferInfo = {};
+  storageBufferInfo.buffer = getBuffer(i + offset + redundancy)->getVkBuffer();
+  storageBufferInfo.offset = 0;
+  storageBufferInfo.range = size * getAmount(*mesh, rate);
+  descriptor.pBufferInfo = &storageBufferInfo;
   return descriptor;
 }
 
@@ -105,7 +107,6 @@ AttributeDescriptor &AttributeDescriptor::computeFriendly(bool val) {
 
 AttributeDescriptor &AttributeDescriptor::onlySetup(bool val) {
   isOnlySetup = val;
-  redundancy = 1;
   return *this;
 }
 

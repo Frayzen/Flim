@@ -1,6 +1,7 @@
 #include "descriptor_holder.hh"
 #include "api/parameters/base_params.hh"
 #include "vulkan/context.hh"
+#include <iostream>
 
 void DescriptorHolder::cleanupDescriptors() {
   for (auto &desc : params.getUniformDescriptors()) {
@@ -22,10 +23,8 @@ void DescriptorHolder::setupDescriptors() {
     desc.second->setup();
   }
   createDescriptorSetLayout();
-  if (!isComputeHolder) {
-    createDescriptorPool();
-    createDescriptorSets();
-  }
+  createDescriptorPool();
+  createDescriptorSets();
 }
 
 void DescriptorHolder::createDescriptorSetLayout() {
@@ -41,6 +40,7 @@ void DescriptorHolder::createDescriptorSetLayout() {
   }
   if (isComputeHolder)
     for (auto desc : params.getAttributeDescriptors()) {
+      cur = {};
       cur.binding = desc.second->getBinding();
       cur.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
       cur.descriptorCount = 1;
@@ -55,6 +55,13 @@ void DescriptorHolder::createDescriptorSetLayout() {
                                   &descriptorSetLayout) != VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor set layout!");
   }
+}
+
+int DescriptorHolder::getDescriptorsSize() const {
+  int descsSize = params.getUniformDescriptors().size();
+  if (isComputeHolder)
+    descsSize += params.getAttributeDescriptors().size();
+  return descsSize;
 }
 
 void DescriptorHolder::createDescriptorSets() {
@@ -73,19 +80,15 @@ void DescriptorHolder::createDescriptorSets() {
     throw std::runtime_error("failed to allocate descriptor sets!");
   }
 
-  int descsSize = params.getUniformDescriptors().size();
-  if (isComputeHolder)
-    descsSize += params.getAttributeDescriptions().size();
+  std::vector<VkWriteDescriptorSet> descriptorWrites(getDescriptorsSize());
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-
-    std::vector<VkWriteDescriptorSet> descriptorWrites(descsSize);
 
     int cur = 0;
     for (auto desc : params.getUniformDescriptors()) {
       descriptorWrites[cur++] = desc.second->getDescriptor(*this, i);
     }
     if (isComputeHolder) {
-      for (auto desc : params.getAttributeDescriptors()) {
+      for (auto &desc : params.getAttributeDescriptors()) {
         descriptorWrites[cur++] = desc.second->getDescriptor(*this, i);
       }
     }
@@ -97,13 +100,20 @@ void DescriptorHolder::createDescriptorSets() {
 
 void DescriptorHolder::createDescriptorPool() {
 
-  std::vector<VkDescriptorPoolSize> poolSizes(
-      params.getUniformDescriptors().size());
+  std::vector<VkDescriptorPoolSize> poolSizes(getDescriptorsSize());
   int i = 0;
   for (auto desc : params.getUniformDescriptors()) {
     poolSizes[i].type = desc.second->getType();
     poolSizes[i].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     i++;
+  }
+  if (isComputeHolder) {
+    for (auto desc : params.getAttributeDescriptors()) {
+      poolSizes[i].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+      poolSizes[i].descriptorCount =
+          static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * 2;
+      i++;
+    }
   }
   VkDescriptorPoolCreateInfo poolInfo{};
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -114,4 +124,9 @@ void DescriptorHolder::createDescriptorPool() {
                              &descriptorPool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor pool!");
   }
+}
+
+void DescriptorHolder::printBufferIds() const {
+  for (auto &a : params.getAttributeDescriptors())
+    std::cout << a.second->getBufferId() << '\n';
 }

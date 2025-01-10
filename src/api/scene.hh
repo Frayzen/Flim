@@ -20,7 +20,8 @@ public:
   Instance &instantiate(Mesh &mesh) const;
 
   void registerMesh(Mesh &mesh, RenderParams &params);
-  void registerComputer(ComputeParams &cparams);
+  void registerComputer(ComputeParams &cparams, int dispatchX = 1,
+                             int dispatchY = 1, int dispatchZ = 1);
 
   FlimAPI &api;
   Camera camera;

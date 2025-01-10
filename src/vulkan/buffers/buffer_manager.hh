@@ -45,9 +45,10 @@ extern BufferManager &bufferManager;
 class BufferHolder {
 public:
   std::shared_ptr<Buffer> getBuffer(int i = -1) const;
+  int getBufferId() const;
 
 protected:
-  BufferHolder(const BufferHolder &);
+  /* BufferHolder(const BufferHolder &); */
   BufferHolder();
   BufferHolder(int id);
   const int bufferId;

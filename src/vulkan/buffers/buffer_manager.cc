@@ -2,6 +2,7 @@
 #include "consts.hh"
 #include "fwd.hh"
 #include "vulkan/context.hh"
+#include <iostream>
 #include <memory>
 
 BufferManager &bufferManager = BufferManager::get();
@@ -18,8 +19,8 @@ int BufferManager::createId() const {
 }
 
 // Holder
-BufferHolder::BufferHolder(const BufferHolder &other)
-    : bufferId(bufferManager.createId()), redundancy(other.redundancy) {}
+/* BufferHolder::BufferHolder(const BufferHolder &other) */
+/*     : bufferId(bufferManager.createId()), redundancy(other.redundancy) {} */
 BufferHolder::BufferHolder(int id)
     : bufferId(id), redundancy(MAX_FRAMES_IN_FLIGHT) {}
 BufferHolder::BufferHolder() : BufferHolder(bufferManager.createId()) {}
@@ -54,3 +55,5 @@ std::shared_ptr<Buffer> BufferHolder::getBuffer(int i) const {
   cur %= redundancy;
   return bufferManager.buffers[bufferId][cur];
 }
+
+int BufferHolder::getBufferId() const { return bufferId; }

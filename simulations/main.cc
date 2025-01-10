@@ -33,7 +33,7 @@ struct MaterialUniform {
 };
 
 struct PointUniform {
-  float pointSize = 1.0f;
+  float pointSize = 10.0f;
   float edgeSize = 0.3f;
   bool applyDiffuse = true;
 } pointDesc;
@@ -92,14 +92,15 @@ int main() {
           .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
           .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
 
-  auto &velocities = particlesParams.setAttribute(2, AttributeRate::INSTANCE)
-                         .attach<Vector3f>([](const Mesh &m, Vector3f *vels) {
-                           for (size_t i = 0; i < m.instances.size(); i++)
-                             vels[i] = Vector3f::Random().normalized();
-                         })
-                         .add(0, VK_FORMAT_R32G32B32_SFLOAT)
-                         .computeFriendly(true)
-                         .onlySetup(true);
+  auto &velocities =
+      particlesParams.setAttribute(2, AttributeRate::INSTANCE)
+          .attach<Vector4f>([](const Mesh &m, Vector4f *vels) {
+            for (size_t i = 0; i < m.instances.size(); i++)
+              vels[i] = Vector3f::Random().normalized().homogeneous();
+          })
+          .add(0, VK_FORMAT_R32G32B32A32_SFLOAT)
+          .computeFriendly(true)
+          .onlySetup(true);
 
   RenderParams cubeParams = particlesParams.clone(cube);
   cubeParams.updateAttribute(1).onlySetup(false).computeFriendly(false);
@@ -121,7 +122,7 @@ int main() {
 
   scene.registerMesh(particle, particlesParams);
   scene.registerComputer(particlesCompute);
-  scene.registerMesh(cube, cubeParams);
+  /* scene.registerMesh(cube, cubeParams); */
 
   constexpr long amount = 2;
 
@@ -139,7 +140,7 @@ int main() {
             pos * offset - Vector3f(bounds, bounds, bounds);
       }
 
-  Instance &cubeIstc = scene.instantiate(cube);
+  /* Instance &cubeIstc = scene.instantiate(cube); */
 
   /* scene.camera.is2D = true; */
   scene.camera.speed = 10;
@@ -155,11 +156,11 @@ int main() {
       particlesParams.invalidate();
     }
 
-    ImGui::SliderFloat3("Ambient color", (float *)&particle.getMaterial().ambient,
-                        0.0f, 1.0f);
+    ImGui::SliderFloat3("Ambient color",
+                        (float *)&particle.getMaterial().ambient, 0.0f, 1.0f);
 
-    ImGui::SliderFloat3("Diffuse color", (float *)&particle.getMaterial().diffuse,
-                        0.0f, 1.0f);
+    ImGui::SliderFloat3("Diffuse color",
+                        (float *)&particle.getMaterial().diffuse, 0.0f, 1.0f);
 
     if (particlesParams.mode == RenderMode::RENDERER_MODE_POINTS) {
       ImGui::SliderFloat("Point size", &pointDesc.pointSize, 0.5f, 20.0f);

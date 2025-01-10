@@ -105,6 +105,7 @@ private:
 
   bool isOnlySetup;
   bool isComputeFriendly;
+  VkDescriptorBufferInfo storageBufferInfo;
 
   std::function<void(const Mesh &m, void *)> updateFunction;
 };

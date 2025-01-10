@@ -3,6 +3,7 @@
 #include "consts.hh"
 #include "vulkan/buffers/attribute_descriptors.hh"
 #include "vulkan/buffers/uniform_descriptors.hh"
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -65,6 +66,7 @@ public:
     std::shared_ptr<BaseAttributeDescriptor> cloned = attr.clone();
     cloned->binding = binding;
     attributes[binding] = cloned;
+    std::cout << &attributes[binding] << " ID " << attributes[binding]->bufferId << " SET TO " << binding << std::endl;
     return *std::dynamic_pointer_cast<T>(attributes[binding]);
   }
   AttributeDescriptor &copyAttribute(int fromBinding, int toBinding);

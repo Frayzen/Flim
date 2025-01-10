@@ -2,6 +2,7 @@
 #include "api/parameters/compute_params.hh"
 #include "api/tree/instance.hh"
 #include "vulkan/rendering/renderer.hh"
+#include <Eigen/src/Core/Matrix.h>
 #include <cassert>
 
 namespace Flim {
@@ -20,9 +21,11 @@ void Scene::registerMesh(Mesh &mesh, RenderParams &params) {
       std::pair(mesh.id, std::make_shared<Renderer>(mesh, params)));
 }
 
-void Scene::registerComputer(ComputeParams &cparams) {
+void Scene::registerComputer(ComputeParams &cparams, int dispatchX,
+                             int dispatchY, int dispatchZ) {
   assert(cparams.usable());
-  computers.emplace_back(std::make_shared<Computer>(cparams));
+  computers.emplace_back(std::make_shared<Computer>(
+      Vector3i(dispatchX, dispatchY, dispatchZ), cparams));
 }
 
 }; // namespace Flim

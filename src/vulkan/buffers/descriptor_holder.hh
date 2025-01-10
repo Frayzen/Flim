@@ -14,9 +14,11 @@ public:
       : params(params), descriptorPool(0), descriptorSetLayout(0),
         isComputeHolder(computeHolder) {};
 
-  std::vector<VkDescriptorSet> descriptorSets;
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorPool descriptorPool;
+  std::vector<VkDescriptorSet> descriptorSets;
+
+  void printBufferIds() const;
 
 protected:
   void setupDescriptors();
@@ -29,5 +31,6 @@ private:
   void createDescriptorSetLayout();
   void createDescriptorSets();
   void createDescriptorPool();
-  friend class CommandPoolManager;
+
+  int getDescriptorsSize() const;
 };

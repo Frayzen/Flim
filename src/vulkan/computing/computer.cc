@@ -1,5 +1,7 @@
 #include "computer.hh"
+#include "consts.hh"
 #include "vulkan/context.hh"
+#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 void Computer::createPipeline() {
