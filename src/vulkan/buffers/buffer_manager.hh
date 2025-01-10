@@ -51,7 +51,7 @@ protected:
   /* BufferHolder(const BufferHolder &); */
   BufferHolder();
   BufferHolder(int id);
-  const int bufferId;
+  int bufferId;
   int redundancy;
   std::vector<std::shared_ptr<Buffer>> &getBuffers() const;
   void setupBuffers(int bufferSize, VkBufferUsageFlags usage,

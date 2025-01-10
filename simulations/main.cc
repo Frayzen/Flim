@@ -135,8 +135,6 @@ int main() {
   constexpr long amount = 2;
 
   const float offset = 5;
-  const float originalBounds = cmpParam.bounds;
-
   for (int i = 0; i < amount; i++)
     for (int j = 0; j < amount; j++)
       for (int k = 0; k < amount; k++) {
@@ -179,7 +177,7 @@ int main() {
     ImGui::SliderFloat("Time speed", &timeSpeed, 0.0f, 2.0f);
     cmpParam.delatTime = deltaTime * timeSpeed;
 
-    ImGui::SliderFloat("Bounds", &cmpParam.bounds, 1.0f, 100.0f * originalBounds);
+    ImGui::SliderFloat("Bounds", &cmpParam.bounds, 0.1f, 2.0f);
 
     cubeIstc.transform.scale =
         2.0f * Vector3f(cmpParam.bounds, cmpParam.bounds, cmpParam.bounds);

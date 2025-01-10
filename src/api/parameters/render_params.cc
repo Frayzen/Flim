@@ -8,6 +8,7 @@ RenderParams RenderParams::clone(Mesh &m) {
   for (auto &attr : rp.attributes) {
     rp.attributes[attr.first] = attr.second->clone();
     rp.attributes[attr.first]->mesh = &m;
+    rp.attributes[attr.first]->bufferId = bufferManager.createId();
   }
   return rp;
 }
