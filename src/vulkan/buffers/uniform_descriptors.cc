@@ -1,7 +1,5 @@
 #include "uniform_descriptors.hh"
 
-#include "api/scene.hh"
-
 #include "vulkan/buffers/buffer_utils.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/buffers/texture_utils.hh"

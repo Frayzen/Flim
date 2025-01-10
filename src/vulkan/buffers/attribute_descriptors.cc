@@ -78,6 +78,26 @@ void AttributeDescriptor::setup() {
   }
 }
 
+VkWriteDescriptorSet
+AttributeDescriptor::getDescriptor(DescriptorHolder &holder, int i) {
+  static VkWriteDescriptorSet descriptor{};
+  descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptor.dstSet = holder.descriptorSets[i];
+  descriptor.dstBinding = binding;
+  descriptor.dstArrayElement = 0;
+  descriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  descriptor.descriptorCount = 1;
+  // pBufferInfo
+  int offset = usesPreviousFrame ? -1 : 0;
+  static VkDescriptorBufferInfo storageBufferInfoLastFrame{};
+  storageBufferInfoLastFrame.buffer =
+      getBuffer(i + offset + redundancy)->getVkBuffer();
+  storageBufferInfoLastFrame.offset = 0;
+  storageBufferInfoLastFrame.range = size * getAmount(*mesh, rate);
+  descriptor.pBufferInfo = &storageBufferInfoLastFrame;
+  return descriptor;
+}
+
 AttributeDescriptor &AttributeDescriptor::computeFriendly(bool val) {
   isComputeFriendly = val;
   return *this;

@@ -73,14 +73,21 @@ void DescriptorHolder::createDescriptorSets() {
     throw std::runtime_error("failed to allocate descriptor sets!");
   }
 
+  int descsSize = params.getUniformDescriptors().size();
+  if (isComputeHolder)
+    descsSize += params.getAttributeDescriptions().size();
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 
-    std::vector<VkWriteDescriptorSet> descriptorWrites(
-        params.getUniformDescriptors().size());
+    std::vector<VkWriteDescriptorSet> descriptorWrites(descsSize);
 
     int cur = 0;
     for (auto desc : params.getUniformDescriptors()) {
       descriptorWrites[cur++] = desc.second->getDescriptor(*this, i);
+    }
+    if (isComputeHolder) {
+      for (auto desc : params.getAttributeDescriptors()) {
+        descriptorWrites[cur++] = desc.second->getDescriptor(*this, i);
+      }
     }
     vkUpdateDescriptorSets(context.device,
                            static_cast<uint32_t>(descriptorWrites.size()),

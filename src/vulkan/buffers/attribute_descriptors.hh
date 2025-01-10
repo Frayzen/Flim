@@ -30,6 +30,9 @@ public:
   virtual void update() = 0;
   virtual void cleanup() = 0;
 
+  virtual VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder,
+                                             int i) = 0;
+
   virtual std::shared_ptr<BaseAttributeDescriptor> clone() const = 0;
 
   void previousFrame(bool val) { usesPreviousFrame = val; };
@@ -71,10 +74,15 @@ public:
   void update() override;
   void cleanup() override;
 
+  VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i) override;
+
   template <typename T>
-  AttributeDescriptor &attach(const std::function<void(const Mesh& m, T *)> &updateFn) {
+  AttributeDescriptor &
+  attach(const std::function<void(const Mesh &m, T *)> &updateFn) {
     size = sizeof(T);
-    updateFunction = [updateFn](const Mesh& m, void *d) { updateFn(m, (T *)d); };
+    updateFunction = [updateFn](const Mesh &m, void *d) {
+      updateFn(m, (T *)d);
+    };
     return *this;
   }
 
@@ -98,7 +106,7 @@ private:
   bool isOnlySetup;
   bool isComputeFriendly;
 
-  std::function<void(const Mesh& m, void *)> updateFunction;
+  std::function<void(const Mesh &m, void *)> updateFunction;
 };
 
 } // namespace Flim
