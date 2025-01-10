@@ -13,6 +13,7 @@ public:
         params(params) {};
 
   void setup();
+  void update();
   void cleanup();
 
   Vector3i dispatchAmount;

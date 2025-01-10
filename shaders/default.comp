@@ -1,10 +1,6 @@
 #version 450
 
-//layout (binding = 0) uniform ParameterUBO {
-//    float deltaTime;
-//} ubo;
-
-layout(std140, binding = 0) readonly buffer Velocities {
+layout(std140, binding = 0) buffer Velocities {
    vec3 velocities[ ];
 };
 
@@ -16,12 +12,22 @@ layout(std140, binding = 2) readonly buffer PrevPositions {
    mat4 prevPositions[ ];
 };
 
+layout (binding = 3) uniform ParameterUBO {
+    float deltaTime;
+    float bounds;
+} ubo;
+
+
 layout (local_size_x = 8, local_size_y = 1, local_size_z = 1) in;
 
 void main() 
 {
     uint index = gl_GlobalInvocationID.x;  
-    float deltaTime = 0.016;
     vec3 lastpos = vec3(prevPositions[index][3]);
-    positions[index][3] = vec4(lastpos + velocities[index] * deltaTime,1);
+    lastpos += velocities[index] * ubo.deltaTime;
+    for (int i = 0; i < 3; i++)
+      if (abs(lastpos[i]) > ubo.bounds)
+        velocities[index][i] *= -1;
+    lastpos = clamp(lastpos, vec3(-ubo.bounds), vec3(ubo.bounds));
+    positions[index][3] = vec4(lastpos,1);
 }

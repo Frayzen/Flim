@@ -88,6 +88,7 @@ public:
 
   AttributeDescriptor &onlySetup(bool val = true);
   AttributeDescriptor &computeFriendly(bool val = true);
+  AttributeDescriptor &singleBuffered(bool val = true);
 
   template <typename T> AttributeDescriptor &attach() {
     return attach<T>([](const Mesh &, T *) {});
@@ -104,6 +105,7 @@ private:
   int size;
 
   bool isOnlySetup;
+  bool isSingleBuffered;
   bool isComputeFriendly;
   VkDescriptorBufferInfo storageBufferInfo;
 

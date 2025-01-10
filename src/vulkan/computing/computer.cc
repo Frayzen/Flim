@@ -1,7 +1,5 @@
 #include "computer.hh"
-#include "consts.hh"
 #include "vulkan/context.hh"
-#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 void Computer::createPipeline() {
@@ -39,6 +37,12 @@ void Computer::createPipeline() {
 void Computer::setup() {
   setupDescriptors();
   createPipeline();
+}
+
+void Computer::update() {
+  for (auto desc : params.getUniformDescriptors()) {
+    desc.second->update();
+  }
 }
 
 void Computer::cleanup() {

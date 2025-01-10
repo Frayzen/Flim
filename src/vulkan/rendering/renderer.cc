@@ -26,7 +26,7 @@ void Renderer::update() {
     desc.second->update();
   }
   if (params.version != version) {
-    vkDeviceWaitIdle(context.device);
+    vkDeviceWaitIdle(context.device); // not ideal, might change later
     pipeline.cleanup();
     pipeline.create();
     version = params.version;

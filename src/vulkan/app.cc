@@ -110,6 +110,9 @@ bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
   for (auto &r : scene.renderers)
     r.second->update();
 
+  for (auto &r : scene.computers)
+    r->update();
+
   for (auto computer : scene.computers) {
     /* std::cout << "COMPUTER" << std::endl; */
     /* computer->printBufferIds(); */

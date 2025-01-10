@@ -15,7 +15,6 @@
 #include <cstring>
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 using namespace Flim;
@@ -37,6 +36,11 @@ struct PointUniform {
   float edgeSize = 0.3f;
   bool applyDiffuse = true;
 } pointDesc;
+
+struct ParticleComputeParam {
+  float delatTime;
+  float bounds = 30.0f;
+} cmpParam;
 
 int main() {
   Flim::FlimAPI api = FlimAPI::init();
@@ -74,6 +78,7 @@ int main() {
                m.vertices.size() * sizeof(Flim::Vertex));
       })
       .onlySetup(true)
+      .singleBuffered(true)
       .add(offsetof(Flim::Vertex, pos), VK_FORMAT_R32G32B32_SFLOAT)
       .add(offsetof(Flim::Vertex, normal), VK_FORMAT_R32G32B32_SFLOAT)
       .add(offsetof(Flim::Vertex, uv), VK_FORMAT_R32G32_SFLOAT);
@@ -92,15 +97,16 @@ int main() {
           .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
           .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
 
-  auto &velocities =
-      particlesParams.setAttribute(2, AttributeRate::INSTANCE)
-          .attach<Vector4f>([](const Mesh &m, Vector4f *vels) {
-            for (size_t i = 0; i < m.instances.size(); i++)
-              vels[i] = Vector3f::Random().normalized().homogeneous();
-          })
-          .add(0, VK_FORMAT_R32G32B32A32_SFLOAT)
-          .computeFriendly(true)
-          .onlySetup(true);
+  auto &velocities = particlesParams.setAttribute(2, AttributeRate::INSTANCE)
+                         .attach<Vector4f>([](const Mesh &m, Vector4f *vels) {
+                           for (size_t i = 0; i < m.instances.size(); i++)
+                             vels[i] =
+                                 Vector3f::Random().normalized().homogeneous();
+                         })
+                         .add(0, VK_FORMAT_R32G32B32A32_SFLOAT)
+                         .computeFriendly(true)
+                         .singleBuffered(true)
+                         .onlySetup(true);
 
   RenderParams cubeParams = particlesParams.clone(cube);
   cubeParams.updateAttribute(1).onlySetup(false).computeFriendly(false);
@@ -119,16 +125,17 @@ int main() {
   particlesCompute.setAttribute(velocities, 0);
   particlesCompute.setAttribute(positions, 1);
   particlesCompute.setAttribute(positions, 2).previousFrame(true);
+  particlesCompute.setUniform(3, VK_SHADER_STAGE_COMPUTE_BIT)
+      .attachObj(cmpParam);
 
   scene.registerMesh(particle, particlesParams);
   scene.registerComputer(particlesCompute);
-  /* scene.registerMesh(cube, cubeParams); */
+  scene.registerMesh(cube, cubeParams);
 
   constexpr long amount = 2;
 
   const float offset = 5;
-  float bounds = offset * (float)amount / 2.0f;
-  const float originalBounds = bounds;
+  const float originalBounds = cmpParam.bounds;
 
   for (int i = 0; i < amount; i++)
     for (int j = 0; j < amount; j++)
@@ -137,10 +144,11 @@ int main() {
         istc.transform.scale = Vector3f(0.2f, 0.2f, 0.2f);
         auto pos = Vector3f(i, j, k);
         istc.transform.position =
-            pos * offset - Vector3f(bounds, bounds, bounds);
+            pos * offset -
+            Vector3f(cmpParam.bounds, cmpParam.bounds, cmpParam.bounds);
       }
 
-  /* Instance &cubeIstc = scene.instantiate(cube); */
+  Instance &cubeIstc = scene.instantiate(cube);
 
   /* scene.camera.is2D = true; */
   scene.camera.speed = 10;
@@ -168,10 +176,13 @@ int main() {
       ImGui::Checkbox("Point diffuse color", &pointDesc.applyDiffuse);
     }
 
-    ImGui::SliderFloat("Time speed", &timeSpeed, 0.0f, 100.0f);
-    ImGui::SliderFloat("Bounds", &bounds, 0.1f, 2.0f * originalBounds);
+    ImGui::SliderFloat("Time speed", &timeSpeed, 0.0f, 2.0f);
+    cmpParam.delatTime = deltaTime * timeSpeed;
 
-    /* cubeIstc.transform.scale = 2.0f * Vector3f(bounds, bounds, bounds); */
+    ImGui::SliderFloat("Bounds", &cmpParam.bounds, 1.0f, 100.0f * originalBounds);
+
+    cubeIstc.transform.scale =
+        2.0f * Vector3f(cmpParam.bounds, cmpParam.bounds, cmpParam.bounds);
   });
   api.cleanup();
   return ret;

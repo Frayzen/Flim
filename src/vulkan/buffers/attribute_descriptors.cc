@@ -53,7 +53,7 @@ inline int getAmount(const Mesh &m, AttributeRate &rate) {
 }
 
 void AttributeDescriptor::setup() {
-  if (!isComputeFriendly && isOnlySetup)
+  if (isSingleBuffered)
     redundancy = 1;
   VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
   if (isOnlySetup)
@@ -107,6 +107,11 @@ AttributeDescriptor &AttributeDescriptor::computeFriendly(bool val) {
 
 AttributeDescriptor &AttributeDescriptor::onlySetup(bool val) {
   isOnlySetup = val;
+  return *this;
+}
+
+AttributeDescriptor &AttributeDescriptor::singleBuffered(bool val) {
+  isSingleBuffered = val;
   return *this;
 }
 
