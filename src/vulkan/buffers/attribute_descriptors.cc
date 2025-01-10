@@ -3,7 +3,6 @@
 #include "vulkan/buffers/descriptor_holder.hh"
 #include <cassert>
 #include <cstdlib>
-#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
@@ -64,7 +63,6 @@ void AttributeDescriptor::setup() {
   }
   assert(size != 0 && "please populate the attribute descriptor");
   size_t bufSize = getAmount(*mesh, rate) * size;
-  std::cout << bufSize << " AND RATE " << getAmount(*mesh, rate) << std::endl;
   static auto memProp = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
   setupBuffers(bufSize, usage, memProp);

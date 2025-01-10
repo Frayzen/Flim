@@ -41,21 +41,20 @@ struct PointUniform {
 int main() {
   Flim::FlimAPI api = FlimAPI::init();
 
-  /* Mesh teddy = MeshUtils::createNodalMesh(); */
-  Mesh teddy = MeshUtils::loadFromFile("./resources/single_file/teddy.obj");
+  Mesh particle = MeshUtils::createNodalMesh();
   Mesh cube = MeshUtils::createCube();
 
   Scene &scene = api.getScene();
   auto &cam = scene.camera;
 
-  RenderParams particlesParams(teddy);
+  RenderParams particlesParams(particle);
   particlesParams.vertexShader = Shader("shaders/default.vert.spv"),
   particlesParams.fragmentShader = Shader("shaders/default.frag.spv");
 
   particlesParams.mode = RenderMode::RENDERER_MODE_POINTS;
   particlesParams.setUniform(0, VERTEX_SHADER_STAGE)
       .attach<LocationUniform>([&](LocationUniform *uni) {
-        uni->model = teddy.transform.getViewMatrix();
+        uni->model = particle.transform.getViewMatrix();
         uni->view = cam.getViewMat();
         uni->proj =
             cam.getProjMat(context.swapChain.swapChainExtent.width /
@@ -63,9 +62,9 @@ int main() {
       });
   particlesParams.setUniform(1, FRAGMENT_SHADER_STAGE)
       .attach<MaterialUniform>([&](MaterialUniform *uni) {
-        uni->ambient = teddy.getMaterial().ambient;
-        uni->diffuse = teddy.getMaterial().diffuse;
-        uni->specular = teddy.getMaterial().specular;
+        uni->ambient = particle.getMaterial().ambient;
+        uni->diffuse = particle.getMaterial().diffuse;
+        uni->specular = particle.getMaterial().specular;
       });
   particlesParams.setUniform(2).attachObj<PointUniform>(pointDesc);
 
@@ -114,17 +113,17 @@ int main() {
   cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
   cubeParams.useBackfaceCulling = false;
 
-  /* ComputeParams particlesCompute; */
-  /* particlesCompute.shader = Shader("shaders/default.comp.spv"); */
-  /* particlesCompute.setAttribute(velocities, 0); */
-  /* particlesCompute.setAttribute(positions, 1); */
-  /* particlesCompute.setAttribute(positions, 2).previousFrame(true); */
+  ComputeParams particlesCompute;
+  particlesCompute.shader = Shader("shaders/default.comp.spv");
+  particlesCompute.setAttribute(velocities, 0);
+  particlesCompute.setAttribute(positions, 1);
+  particlesCompute.setAttribute(positions, 2).previousFrame(true);
 
-  scene.registerMesh(teddy, particlesParams);
-  /* scene.registerComputer(particlesCompute); */
+  scene.registerMesh(particle, particlesParams);
+  scene.registerComputer(particlesCompute);
   scene.registerMesh(cube, cubeParams);
 
-  constexpr long amount = 1;
+  constexpr long amount = 2;
 
   const float offset = 5;
   float bounds = offset * (float)amount / 2.0f;
@@ -133,7 +132,7 @@ int main() {
   for (int i = 0; i < amount; i++)
     for (int j = 0; j < amount; j++)
       for (int k = 0; k < amount; k++) {
-        Instance &istc = scene.instantiate(teddy);
+        Instance &istc = scene.instantiate(particle);
         istc.transform.scale = Vector3f(0.2f, 0.2f, 0.2f);
         auto pos = Vector3f(i, j, k);
         istc.transform.position =
@@ -156,10 +155,10 @@ int main() {
       particlesParams.invalidate();
     }
 
-    ImGui::SliderFloat3("Ambient color", (float *)&teddy.getMaterial().ambient,
+    ImGui::SliderFloat3("Ambient color", (float *)&particle.getMaterial().ambient,
                         0.0f, 1.0f);
 
-    ImGui::SliderFloat3("Diffuse color", (float *)&teddy.getMaterial().diffuse,
+    ImGui::SliderFloat3("Diffuse color", (float *)&particle.getMaterial().diffuse,
                         0.0f, 1.0f);
 
     if (particlesParams.mode == RenderMode::RENDERER_MODE_POINTS) {
@@ -171,7 +170,7 @@ int main() {
     ImGui::SliderFloat("Time speed", &timeSpeed, 0.0f, 100.0f);
     ImGui::SliderFloat("Bounds", &bounds, 0.1f, 2.0f * originalBounds);
 
-    cubeIstc.transform.scale = 2.0f * Vector3f(bounds, bounds, bounds);
+    /* cubeIstc.transform.scale = 2.0f * Vector3f(bounds, bounds, bounds); */
   });
   api.cleanup();
   return ret;

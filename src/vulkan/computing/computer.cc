@@ -3,11 +3,13 @@
 #include <vulkan/vulkan_core.h>
 
 void Computer::createPipeline() {
+  auto shaderModule = params.shader.createShaderModule();
+
   VkPipelineShaderStageCreateInfo computeShaderStageInfo{};
   computeShaderStageInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-  computeShaderStageInfo.module = params.shader.createShaderModule();
+  computeShaderStageInfo.module = shaderModule;
   computeShaderStageInfo.pName = params.mainFunction.c_str();
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -29,6 +31,7 @@ void Computer::createPipeline() {
                                nullptr, &pipeline) != VK_SUCCESS) {
     throw std::runtime_error("failed to create compute pipeline!");
   }
+  vkDestroyShaderModule(context.device, shaderModule, nullptr);
 }
 
 void Computer::setup() {
