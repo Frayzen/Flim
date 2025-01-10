@@ -3,7 +3,6 @@
 #include "consts.hh"
 #include "vulkan/buffers/attribute_descriptors.hh"
 #include "vulkan/buffers/uniform_descriptors.hh"
-#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -56,8 +55,6 @@ public:
 
   // Attributes
   AttributeDescriptor &updateAttribute(int binding);
-  AttributeDescriptor &setAttribute(int binding,
-                                    AttributeRate rate = AttributeRate::VERTEX);
   void removeAttribute(int binding);
 
   template <typename T>

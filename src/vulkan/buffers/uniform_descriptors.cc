@@ -153,6 +153,5 @@ VkWriteDescriptorSet GeneralUniDesc::getDescriptor(DescriptorHolder &holder,
 void GeneralUniDesc::cleanup() { cleanupBuffers(); }
 
 void GeneralUniDesc::update() {
-  auto &ctx = context.rctx;
-  updateFunction(*ctx.mesh, ctx.scene->camera, getBuffer()->getPtr());
+  updateFunction(getBuffer()->getPtr());
 };

@@ -71,8 +71,9 @@ void VulkanApplication::initVulkan() {
 }
 
 void VulkanApplication::setupGraphics(Flim::Scene &scene) {
-  for (auto &r : scene.renderers)
+  for (auto &r : scene.renderers) {
     r.second->setup();
+  }
   for (auto &c : scene.computers)
     c->setup();
 }
@@ -109,9 +110,9 @@ bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
   for (auto &r : scene.renderers)
     r.second->update();
 
-  for (auto computer : scene.computers) {
-    command_pool_manager.recordCommandBuffer(*computer);
-  }
+  /* for (auto computer : scene.computers) { */
+  /*   command_pool_manager.recordCommandBuffer(*computer); */
+  /* } */
 
   for (auto renderer : scene.renderers) {
     command_pool_manager.recordCommandBuffer(*renderer.second);

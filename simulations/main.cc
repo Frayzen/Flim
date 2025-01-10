@@ -3,18 +3,19 @@
 #include <Eigen/StdVector>
 
 #include "api/flim_api.hh"
-#include "api/parameters/compute_params.hh"
 #include "api/render/mesh.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/scene.hh"
 #include "api/tree/camera.hh"
 #include "api/tree/instance.hh"
 #include "vulkan/buffers/attribute_descriptors.hh"
+#include "vulkan/buffers/uniform_descriptors.hh"
 #include <Eigen/src/Core/Matrix.h>
 #include <cstdlib>
 #include <cstring>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 using namespace Flim;
@@ -40,30 +41,32 @@ struct PointUniform {
 int main() {
   Flim::FlimAPI api = FlimAPI::init();
 
-  Mesh sphere = MeshUtils::createNodalMesh();
+  /* Mesh teddy = MeshUtils::createNodalMesh(); */
+  Mesh teddy = MeshUtils::loadFromFile("./resources/single_file/teddy.obj");
   Mesh cube = MeshUtils::createCube();
 
-  RenderParams particlesParams;
+  Scene &scene = api.getScene();
+  auto &cam = scene.camera;
+
+  RenderParams particlesParams(teddy);
   particlesParams.vertexShader = Shader("shaders/default.vert.spv"),
   particlesParams.fragmentShader = Shader("shaders/default.frag.spv");
 
   particlesParams.mode = RenderMode::RENDERER_MODE_POINTS;
   particlesParams.setUniform(0, VERTEX_SHADER_STAGE)
-      .attach<LocationUniform>(
-          [](const Mesh &mesh, const Camera &cam, LocationUniform *uni) {
-            uni->model = mesh.transform.getViewMatrix();
-            uni->view = cam.getViewMat();
-            uni->proj =
-                cam.getProjMat(context.swapChain.swapChainExtent.width /
-                               (float)context.swapChain.swapChainExtent.height);
-          });
+      .attach<LocationUniform>([&](LocationUniform *uni) {
+        uni->model = teddy.transform.getViewMatrix();
+        uni->view = cam.getViewMat();
+        uni->proj =
+            cam.getProjMat(context.swapChain.swapChainExtent.width /
+                           (float)context.swapChain.swapChainExtent.height);
+      });
   particlesParams.setUniform(1, FRAGMENT_SHADER_STAGE)
-      .attach<MaterialUniform>(
-          [](const Mesh &mesh, const Camera &, MaterialUniform *uni) {
-            uni->ambient = mesh.getMaterial().ambient;
-            uni->diffuse = mesh.getMaterial().diffuse;
-            uni->specular = mesh.getMaterial().specular;
-          });
+      .attach<MaterialUniform>([&](MaterialUniform *uni) {
+        uni->ambient = teddy.getMaterial().ambient;
+        uni->diffuse = teddy.getMaterial().diffuse;
+        uni->specular = teddy.getMaterial().specular;
+      });
   particlesParams.setUniform(2).attachObj<PointUniform>(pointDesc);
 
   particlesParams.setAttribute(0)
@@ -99,9 +102,15 @@ int main() {
                          .computeFriendly(true)
                          .onlySetup(true);
 
-  RenderParams cubeParams = particlesParams;
+  RenderParams cubeParams = particlesParams.clone(cube);
   cubeParams.updateAttribute(1).onlySetup(false).computeFriendly(false);
   cubeParams.removeAttribute(2);
+  cubeParams.setUniform(1, FRAGMENT_SHADER_STAGE)
+      .attach<MaterialUniform>([&](MaterialUniform *uni) {
+        uni->ambient = cube.getMaterial().ambient;
+        uni->diffuse = cube.getMaterial().diffuse;
+        uni->specular = cube.getMaterial().specular;
+      });
   cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
   cubeParams.useBackfaceCulling = false;
 
@@ -111,12 +120,11 @@ int main() {
   /* particlesCompute.setAttribute(positions, 1); */
   /* particlesCompute.setAttribute(positions, 2).previousFrame(true); */
 
-  Scene &scene = api.getScene();
-  scene.registerMesh(sphere, particlesParams);
+  scene.registerMesh(teddy, particlesParams);
   /* scene.registerComputer(particlesCompute); */
   scene.registerMesh(cube, cubeParams);
 
-  constexpr long amount = 10;
+  constexpr long amount = 1;
 
   const float offset = 5;
   float bounds = offset * (float)amount / 2.0f;
@@ -125,7 +133,7 @@ int main() {
   for (int i = 0; i < amount; i++)
     for (int j = 0; j < amount; j++)
       for (int k = 0; k < amount; k++) {
-        Instance &istc = scene.instantiate(sphere);
+        Instance &istc = scene.instantiate(teddy);
         istc.transform.scale = Vector3f(0.2f, 0.2f, 0.2f);
         auto pos = Vector3f(i, j, k);
         istc.transform.position =
@@ -141,18 +149,17 @@ int main() {
 
   float timeSpeed = 0.0f;
   int ret = api.run([&](float deltaTime) {
-    /* std::cout << deltaTime << std::endl; */
     ImGui::Text("%f ms (%f FPS)", deltaTime, 1.0f / deltaTime);
     const char *items[] = {"Triangles", "Bars", "Dots"};
-    if (ImGui::Combo("Rendering type", ((int *)&(cubeParams.mode)), items,
+    if (ImGui::Combo("Rendering type", ((int *)&(particlesParams.mode)), items,
                      IM_ARRAYSIZE(items))) {
-      cubeParams.invalidate();
+      particlesParams.invalidate();
     }
 
-    ImGui::SliderFloat3("Ambient color", (float *)&sphere.getMaterial().ambient,
+    ImGui::SliderFloat3("Ambient color", (float *)&teddy.getMaterial().ambient,
                         0.0f, 1.0f);
 
-    ImGui::SliderFloat3("Diffuse color", (float *)&sphere.getMaterial().diffuse,
+    ImGui::SliderFloat3("Diffuse color", (float *)&teddy.getMaterial().diffuse,
                         0.0f, 1.0f);
 
     if (particlesParams.mode == RenderMode::RENDERER_MODE_POINTS) {

@@ -13,11 +13,10 @@ public:
   static FlimAPI init();
   int run(const std::function<void(float)> &renderMethod);
   int run();
-  void cleanup();
   Scene &getScene();
 
   GLFWwindow *getWindow();
-
+  void cleanup();
 private:
   Scene scene;
   VulkanApplication app;

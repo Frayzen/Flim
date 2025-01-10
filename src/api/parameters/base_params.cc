@@ -35,12 +35,7 @@ AttributeDescriptor &BaseParams::updateAttribute(int binding) {
   attributes[binding] = attributes[binding]->clone();
   return *std::dynamic_pointer_cast<AttributeDescriptor>(attributes[binding]);
 }
-AttributeDescriptor &BaseParams::setAttribute(int binding, AttributeRate rate) {
-  std::shared_ptr<AttributeDescriptor> ptr =
-      std::make_shared<AttributeDescriptor>(binding, rate);
-  attributes[binding] = ptr;
-  return *ptr;
-}
+
 void BaseParams::removeAttribute(int binding) { attributes.erase(binding); }
 const std::map<int, std::shared_ptr<BaseAttributeDescriptor>> &
 BaseParams::getAttributeDescriptors() const {

@@ -16,12 +16,10 @@ Scene &FlimAPI::getScene() { return scene; }
 void FlimAPI::cleanup() { app.cleanup(scene); }
 
 int FlimAPI::run(const std::function<void(float)> &renderMethod) {
-  context.rctx.scene = &scene;
   app.setupGraphics(scene);
   try {
     double lastTime = glfwGetTime();
     while (true) {
-      context.rctx.scene = &scene;
       if (app.mainLoop(renderMethod, scene))
         break;
       double curTime = glfwGetTime();

@@ -1,15 +1,17 @@
-#include "attribute_descriptors.hh"
+#include "vulkan/buffers/attribute_descriptors.hh"
 #include "api/render/mesh.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
-#include "vulkan/context.hh"
 #include <cassert>
 #include <cstdlib>
+#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
 
-AttributeDescriptor::AttributeDescriptor(int binding, AttributeRate rate)
-    : BaseAttributeDescriptor(binding), rate(rate), size(0) {};
+AttributeDescriptor::AttributeDescriptor(Mesh &mesh, int binding,
+                                         AttributeRate rate)
+    : BaseAttributeDescriptor(mesh, binding), rate(rate), size(0),
+      updateFunction(nullptr) {};
 
 AttributeDescriptor &AttributeDescriptor::add(long offset, VkFormat format) {
   offsets.push_back(std::make_pair(offset, format));
@@ -61,8 +63,8 @@ void AttributeDescriptor::setup() {
     usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
   }
   assert(size != 0 && "please populate the attribute descriptor");
-  const Flim::Mesh &mesh = *context.rctx.mesh;
-  size_t bufSize = getAmount(mesh, rate) * size;
+  size_t bufSize = getAmount(*mesh, rate) * size;
+  std::cout << bufSize << " AND RATE " << getAmount(*mesh, rate) << std::endl;
   static auto memProp = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
   setupBuffers(bufSize, usage, memProp);
@@ -70,7 +72,7 @@ void AttributeDescriptor::setup() {
   for (auto b : getBuffers()) {
     if (isOnlySetup) {
       void *tmp = malloc(bufSize);
-      updateFunction(mesh, tmp);
+      updateFunction(*mesh, tmp);
       b->populate(tmp);
       free(tmp);
     } else
@@ -92,7 +94,7 @@ AttributeDescriptor &AttributeDescriptor::onlySetup(bool val) {
 void AttributeDescriptor::update() {
   if (isOnlySetup)
     return;
-  updateFunction(*context.rctx.mesh, getBuffer()->getPtr());
+  updateFunction(*mesh, getBuffer()->getPtr());
 }
 
 void AttributeDescriptor::cleanup() { cleanupBuffers(); }

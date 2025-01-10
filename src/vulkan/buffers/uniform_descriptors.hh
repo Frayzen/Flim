@@ -1,9 +1,6 @@
 #pragma once
-#include "api/render/mesh.hh"
-#include "api/tree/camera.hh"
 #include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
-#include "vulkan/rendering/rendering_context.hh"
 #include <functional>
 #include <memory>
 #include <vulkan/vulkan_core.h>
@@ -77,9 +74,7 @@ public:
         bufferSize(0) {};
 
   template <typename T>
-  GeneralUniDesc &attach(
-      const std::function<void(const Flim::Mesh &, const Flim::Camera &, T *)>
-          updateFn) {
+  GeneralUniDesc &attach(const std::function<void(T *)> updateFn) {
     static_assert(
         std::is_scalar<T>() || alignof(T) % 2 == 0,
         "Non-scalar descriptor attchement should be aligned on 2 bytes. Please "
@@ -87,15 +82,12 @@ public:
         "that every values in the struct are all individually also aligned on "
         "2 bytes. Please consider adding 'alignas(16)' before each attributes");
     bufferSize = sizeof(T);
-    updateFunction = [updateFn](const Flim::Mesh &mesh, const Flim::Camera &cam,
-                                void *ptr) {
-      updateFn(mesh, cam, static_cast<T *>(ptr));
-    };
+    updateFunction = [updateFn](void *ptr) { updateFn(static_cast<T *>(ptr)); };
     return *this;
   };
 
   template <typename T> GeneralUniDesc &attachObj(const T &ref) {
-    return attach<T>([&ref](const Flim::Mesh &, const Flim::Camera &, T *ptr) {
+    return attach<T>([&ref](T *ptr) {
       memcpy(static_cast<T *>(ptr), &ref, sizeof(T));
     });
   };
@@ -113,8 +105,7 @@ public:
 protected:
   size_t bufferSize;
 
-  std::function<void(const Flim::Mesh &, const Flim::Camera &, void *)>
-      updateFunction;
+  std::function<void(void *)> updateFunction;
 
   friend class DescriptorsManager;
 

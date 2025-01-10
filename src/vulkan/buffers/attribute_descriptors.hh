@@ -1,7 +1,6 @@
 #pragma once
 
 #include "vulkan/buffers/buffer_manager.hh"
-#include "vulkan/rendering/rendering_context.hh"
 #include <Eigen/Core>
 #include <functional>
 #include <fwd.hh>
@@ -21,8 +20,8 @@ enum AttributeRate {
 
 class BaseAttributeDescriptor : public BufferHolder {
 public:
-  BaseAttributeDescriptor(int binding)
-      : BufferHolder(), binding(binding), usesPreviousFrame(false) {};
+  BaseAttributeDescriptor(Mesh &m, int binding)
+      : BufferHolder(), mesh(&m), binding(binding), usesPreviousFrame(false) {};
   virtual int getAmountOffset() const = 0;
   virtual VkVertexInputAttributeDescription getAttributeDesc(int id) const = 0;
   virtual VkVertexInputBindingDescription getBindingDescription() const = 0;
@@ -37,9 +36,11 @@ public:
   int getBinding() const { return binding; }
 
 protected:
+  Mesh *mesh;
   bool usesPreviousFrame;
   int binding;
   friend class Computer;
+  friend class RenderParams;
   friend class BaseParams;
 };
 
@@ -58,7 +59,7 @@ inline VkVertexInputRate attributeRateToInputRate(AttributeRate rate) {
 class AttributeDescriptor : public BaseAttributeDescriptor {
 
 public:
-  AttributeDescriptor(int binding, AttributeRate rate);
+  AttributeDescriptor(Mesh &mesh, int binding, AttributeRate rate);
 
   AttributeDescriptor &add(long offset, VkFormat format);
 
@@ -71,12 +72,9 @@ public:
   void cleanup() override;
 
   template <typename T>
-  AttributeDescriptor &
-  attach(const std::function<void(const Mesh &, T *)> &updateFn) {
+  AttributeDescriptor &attach(const std::function<void(const Mesh& m, T *)> &updateFn) {
     size = sizeof(T);
-    updateFunction = [updateFn](const Mesh &m, void *d) {
-      updateFn(m, (T *)d);
-    };
+    updateFunction = [updateFn](const Mesh& m, void *d) { updateFn(m, (T *)d); };
     return *this;
   }
 
@@ -100,7 +98,7 @@ private:
   bool isOnlySetup;
   bool isComputeFriendly;
 
-  std::function<void(const Mesh &, void *)> updateFunction;
+  std::function<void(const Mesh& m, void *)> updateFunction;
 };
 
 } // namespace Flim
