@@ -19,6 +19,14 @@
 
 using namespace Flim;
 
+const float offset = 20;
+constexpr long xyzLayout = 8;
+const long amount = 8;
+const long perAxis = amount * xyzLayout;
+const Vector3i nbPerAxis(perAxis, perAxis, perAxis);
+
+const float originalBounds = 2 * offset * amount;
+
 struct LocationUniform {
   Matrix4f model;
   Matrix4f view;
@@ -39,7 +47,7 @@ struct PointUniform {
 
 struct ParticleComputeParam {
   float delatTime;
-  float bounds = 30.0f;
+  float bounds = originalBounds;
 } cmpParam;
 
 int main() {
@@ -129,15 +137,12 @@ int main() {
       .attachObj(cmpParam);
 
   scene.registerMesh(particle, particlesParams);
-  scene.registerComputer(particlesCompute);
+  scene.registerComputer(particlesCompute, perAxis, perAxis, perAxis);
   scene.registerMesh(cube, cubeParams);
 
-  constexpr long amount = 2;
-
-  const float offset = 5;
-  for (int i = 0; i < amount; i++)
-    for (int j = 0; j < amount; j++)
-      for (int k = 0; k < amount; k++) {
+  for (int i = 0; i < nbPerAxis.x(); i++)
+    for (int j = 0; j < nbPerAxis.y(); j++)
+      for (int k = 0; k < nbPerAxis.z(); k++) {
         Instance &istc = scene.instantiate(particle);
         istc.transform.scale = Vector3f(0.2f, 0.2f, 0.2f);
         auto pos = Vector3f(i, j, k);
@@ -149,7 +154,7 @@ int main() {
   Instance &cubeIstc = scene.instantiate(cube);
 
   /* scene.camera.is2D = true; */
-  scene.camera.speed = 10;
+  scene.camera.speed = 100;
   scene.camera.transform.position = Vector3f(0, 0, 10);
   scene.camera.sensivity = 5;
 
@@ -174,10 +179,11 @@ int main() {
       ImGui::Checkbox("Point diffuse color", &pointDesc.applyDiffuse);
     }
 
-    ImGui::SliderFloat("Time speed", &timeSpeed, 0.0f, 2.0f);
+    ImGui::SliderFloat("Time speed", &timeSpeed, 0.0f, 50.0f);
     cmpParam.delatTime = deltaTime * timeSpeed;
 
-    ImGui::SliderFloat("Bounds", &cmpParam.bounds, 0.1f, 2.0f);
+    ImGui::SliderFloat("Bounds", &cmpParam.bounds, 0.1f * originalBounds,
+                       2.0f * originalBounds);
 
     cubeIstc.transform.scale =
         2.0f * Vector3f(cmpParam.bounds, cmpParam.bounds, cmpParam.bounds);

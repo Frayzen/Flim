@@ -17,6 +17,7 @@ public:
   void cleanup();
 
   Vector3i dispatchAmount;
+
   Flim::ComputeParams &params;
 
   VkPipelineLayout pipelineLayout;
