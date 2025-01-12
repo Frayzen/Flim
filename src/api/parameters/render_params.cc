@@ -2,15 +2,13 @@
 
 namespace Flim {
 
-RenderParams RenderParams::clone(Mesh &m) {
-  RenderParams rp(*this);
-  rp.mesh = &m;
-  for (auto &attr : rp.attributes) {
-    rp.attributes[attr.first] = attr.second->clone();
-    rp.attributes[attr.first]->mesh = &m;
-    rp.attributes[attr.first]->bufferId = bufferManager.createId();
+RenderParams RenderParams::clone() {
+  RenderParams other(*this);
+  for (auto &attr : other.attributes) {
+    attributes[attr.first] =
+        attr.second->clone(); // we update the id of the provided one
   }
-  return rp;
+  return other;
 }
 
 bool RenderParams::usable() const {
@@ -22,7 +20,7 @@ void RenderParams::invalidate() { version++; };
 AttributeDescriptor &RenderParams::setAttribute(int binding,
                                                 AttributeRate rate) {
   std::shared_ptr<AttributeDescriptor> ptr =
-      std::make_shared<AttributeDescriptor>(*mesh, binding, rate);
+      std::make_shared<AttributeDescriptor>(binding, rate);
   attributes[binding] = ptr;
   return *ptr;
 }

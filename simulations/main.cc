@@ -21,7 +21,7 @@ using namespace Flim;
 
 const float offset = 20;
 constexpr long xyzLayout = 8;
-const long amount = 8;
+const long amount = 2;
 const long perAxis = amount * xyzLayout;
 const Vector3i nbPerAxis(perAxis, perAxis, perAxis);
 
@@ -53,13 +53,15 @@ struct ParticleComputeParam {
 int main() {
   Flim::FlimAPI api = FlimAPI::init();
 
+  /* Mesh particle =
+   * MeshUtils::loadFromFile("./resources/single_file/teddy.obj"); */
   Mesh particle = MeshUtils::createNodalMesh();
   Mesh cube = MeshUtils::createCube();
 
   Scene &scene = api.getScene();
   auto &cam = scene.camera;
 
-  RenderParams particlesParams(particle);
+  RenderParams particlesParams;
   particlesParams.vertexShader = Shader("shaders/default.vert.spv"),
   particlesParams.fragmentShader = Shader("shaders/default.frag.spv");
 
@@ -92,7 +94,7 @@ int main() {
       .add(offsetof(Flim::Vertex, uv), VK_FORMAT_R32G32_SFLOAT);
 
   auto &positions =
-      particlesParams.setAttribute(1, AttributeRate::INSTANCE)
+      particlesParams.setAttribute(3, AttributeRate::INSTANCE)
           .attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) {
             for (size_t i = 0; i < m.instances.size(); i++) {
               mats[i] = m.instances[i].transform.getViewMatrix();
@@ -104,8 +106,7 @@ int main() {
           .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
           .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
           .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
-
-  auto &velocities = particlesParams.setAttribute(2, AttributeRate::INSTANCE)
+  auto &velocities = particlesParams.setAttribute(7, AttributeRate::INSTANCE)
                          .attach<Vector4f>([](const Mesh &m, Vector4f *vels) {
                            for (size_t i = 0; i < m.instances.size(); i++)
                              vels[i] =
@@ -116,9 +117,9 @@ int main() {
                          .singleBuffered(true)
                          .onlySetup(true);
 
-  RenderParams cubeParams = particlesParams.clone(cube);
-  cubeParams.updateAttribute(1).onlySetup(false).computeFriendly(false);
-  cubeParams.removeAttribute(2);
+  RenderParams cubeParams = particlesParams.clone();
+  cubeParams.updateAttribute(3).onlySetup(false).computeFriendly(false);
+
   cubeParams.setUniform(1, FRAGMENT_SHADER_STAGE)
       .attach<MaterialUniform>([&](MaterialUniform *uni) {
         uni->ambient = cube.getMaterial().ambient;
@@ -135,6 +136,19 @@ int main() {
   particlesCompute.setAttribute(positions, 2).previousFrame(true);
   particlesCompute.setUniform(3, VK_SHADER_STAGE_COMPUTE_BIT)
       .attachObj(cmpParam);
+
+  particlesParams.setAttribute(7, AttributeRate::INSTANCE)
+      .attach<Vector4f>([](const Mesh &m, Vector4f *ptrs) {
+        for (size_t i = 0; i < m.instances.size(); i++) {
+          if (i % 2 == 0)
+            ptrs[i] = Vector4f(1, 0, 0, 1);
+          else
+            ptrs[i] = Vector4f(0, 0, 1, 1);
+        }
+      })
+      .add(0, VK_FORMAT_R32G32B32A32_SFLOAT)
+      .onlySetup(true)
+      .singleBuffered(true);
 
   scene.registerMesh(particle, particlesParams);
   scene.registerComputer(particlesCompute, perAxis, perAxis, perAxis);
@@ -162,9 +176,13 @@ int main() {
   int ret = api.run([&](float deltaTime) {
     ImGui::Text("%f ms (%f FPS)", deltaTime, 1.0f / deltaTime);
     const char *items[] = {"Triangles", "Bars", "Dots"};
-    if (ImGui::Combo("Rendering type", ((int *)&(particlesParams.mode)), items,
+    if (ImGui::Combo("Rendering type", ((int *)&(cubeParams.mode)), items,
                      IM_ARRAYSIZE(items))) {
-      particlesParams.invalidate();
+      cubeParams.invalidate();
+    }
+
+    if (ImGui::Checkbox("Faceculling", &cubeParams.useBackfaceCulling)) {
+      cubeParams.invalidate();
     }
 
     ImGui::SliderFloat3("Ambient color",

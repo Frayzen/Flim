@@ -3,6 +3,7 @@
 #include "consts.hh"
 #include "vulkan/buffers/attribute_descriptors.hh"
 #include "vulkan/buffers/uniform_descriptors.hh"
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -62,7 +63,7 @@ public:
   T &setAttribute(T &attr, int binding = -1) {
     if (binding == -1)
       binding = attr.binding;
-    std::shared_ptr<BaseAttributeDescriptor> cloned = attr.clone();
+    std::shared_ptr<BaseAttributeDescriptor> cloned = attr.clone(true);
     cloned->binding = binding;
     attributes[binding] = cloned;
     return *std::dynamic_pointer_cast<T>(attributes[binding]);
@@ -74,9 +75,10 @@ public:
 
   virtual bool usable() const;
 
-  std::vector<VkVertexInputBindingDescription> getBindingDescription();
+  std::vector<VkVertexInputBindingDescription> getBindingDescription() const;
 
-  std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+  std::vector<VkVertexInputAttributeDescription>
+  getAttributeDescriptions() const;
 
 protected:
   std::map<int, std::shared_ptr<UniformDescriptor>> uniforms;

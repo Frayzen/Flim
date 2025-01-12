@@ -20,6 +20,7 @@ public:
   const VkDeviceMemory &getVkBufferMemory() const { return bufferMemory; };
   const VkBuffer &getVkBuffer() const { return buffer; };
   void *getPtr() const { return mappedPtr; };
+  int getSize() const { return size; };
   void map();
   void unmap();
 

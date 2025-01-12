@@ -7,8 +7,10 @@
 #include "vulkan/rendering/renderer.hh"
 
 #include <cstdint>
+#include <iostream>
 #include <optional>
 #include <stdexcept>
+#include <sys/types.h>
 #include <vulkan/vulkan_core.h>
 
 void CommandPoolManager::createCommandPool() {
@@ -111,15 +113,13 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
                     renderer.pipeline.pipeline);
 
   std::vector<VkBuffer> vertexBuffers;
-  std::vector<VkDeviceSize> offsets;
   for (auto &attr : renderer.params.getAttributeDescriptors()) {
-    const std::shared_ptr<Flim::BaseAttributeDescriptor> &desc = attr.second;
-    vertexBuffers.push_back(desc->getBuffer()->getVkBuffer());
-    offsets.push_back(0);
+    /* std::vector<VkDeviceSize> offsets = attr.second->getOffsets(); */
+    const VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(graphicBuffer, attr.first, 1,
+                           &attr.second->getBuffer()->getVkBuffer(), &offset);
   }
 
-  vkCmdBindVertexBuffers(graphicBuffer, 0, vertexBuffers.size(),
-                         vertexBuffers.data(), offsets.data());
   vkCmdBindIndexBuffer(graphicBuffer, renderer.indexBuffer.getVkBuffer(), 0,
                        VK_INDEX_TYPE_UINT16);
   vkCmdBindDescriptorSets(graphicBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,

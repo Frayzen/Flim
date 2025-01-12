@@ -1,6 +1,5 @@
 #pragma once
 
-#include "api/render/mesh.hh"
 #include "api/shaders/shader.hh"
 #include "base_params.hh"
 
@@ -8,7 +7,7 @@ namespace Flim {
 
 class RenderParams : public BaseParams {
 public:
-  RenderParams(Mesh &m) : mesh(&m) {};
+  RenderParams() = default;
 
   Shader vertexShader;
   Shader fragmentShader;
@@ -19,14 +18,13 @@ public:
 
   AttributeDescriptor &setAttribute(int binding,
                                     AttributeRate rate = AttributeRate::VERTEX);
+  RenderParams clone();
 
   // Validators
   bool usable() const override;
   void invalidate();
-  RenderParams clone(Mesh &m);
 
 private:
-  Mesh *mesh;
   RenderParams(const RenderParams &) = default;
 };
 

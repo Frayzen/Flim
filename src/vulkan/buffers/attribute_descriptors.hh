@@ -9,6 +9,7 @@
 #include <vulkan/vulkan_core.h>
 
 class DescriptorHolder;
+class Renderer;
 namespace Flim {
 
 class Mesh;
@@ -20,9 +21,9 @@ enum AttributeRate {
 
 class BaseAttributeDescriptor : public BufferHolder {
 public:
-  BaseAttributeDescriptor(Mesh &m, int binding)
-      : BufferHolder(), mesh(&m), binding(binding), usesPreviousFrame(false) {};
-  virtual int getAmountOffset() const = 0;
+  BaseAttributeDescriptor(int binding)
+      : BufferHolder(), binding(binding), usesPreviousFrame(false) {};
+  virtual std::vector<VkDeviceSize> getOffsets() const = 0;
   virtual VkVertexInputAttributeDescription getAttributeDesc(int id) const = 0;
   virtual VkVertexInputBindingDescription getBindingDescription() const = 0;
 
@@ -33,16 +34,19 @@ public:
   virtual VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder,
                                              int i) = 0;
 
-  virtual std::shared_ptr<BaseAttributeDescriptor> clone() const = 0;
+  virtual std::shared_ptr<BaseAttributeDescriptor>
+  clone(bool keepBuffers = false) const = 0;
 
   void previousFrame(bool val) { usesPreviousFrame = val; };
   int getBinding() const { return binding; }
 
 protected:
-  Mesh *mesh;
   bool usesPreviousFrame;
   int binding;
+
+  friend class ::Renderer;
   friend class Computer;
+  friend class ComputeParams;
   friend class RenderParams;
   friend class BaseParams;
 };
@@ -62,11 +66,11 @@ inline VkVertexInputRate attributeRateToInputRate(AttributeRate rate) {
 class AttributeDescriptor : public BaseAttributeDescriptor {
 
 public:
-  AttributeDescriptor(Mesh &mesh, int binding, AttributeRate rate);
+  AttributeDescriptor(int binding, AttributeRate rate);
 
   AttributeDescriptor &add(long offset, VkFormat format);
 
-  int getAmountOffset() const override;
+  std::vector<VkDeviceSize> getOffsets() const override;
   VkVertexInputAttributeDescription getAttributeDesc(int id) const override;
   VkVertexInputBindingDescription getBindingDescription() const override;
 
@@ -94,14 +98,17 @@ public:
     return attach<T>([](const Mesh &, T *) {});
   }
 
-  virtual std::shared_ptr<BaseAttributeDescriptor> clone() const override {
-    return std::make_shared<AttributeDescriptor>(*this);
+  virtual std::shared_ptr<BaseAttributeDescriptor> clone(bool keepBuffers = false) const override {
+    auto ret = std::make_shared<AttributeDescriptor>(*this);
+    if (keepBuffers)
+      ret->bufferId = bufferId;
+    return ret;
   }
 
 private:
   DescriptorHolder *holder;
   AttributeRate rate;
-  std::vector<std::pair<long, VkFormat>> offsets;
+  std::vector<std::pair<VkDeviceSize, VkFormat>> offsets;
   int size;
 
   bool isOnlySetup;

@@ -32,6 +32,8 @@ BaseParams::getUniformDescriptors() const {
 
 // Attributes
 AttributeDescriptor &BaseParams::updateAttribute(int binding) {
+  assert(attributes.contains(binding) &&
+         "You are trying to update a not set attribute");
   attributes[binding] = attributes[binding]->clone();
   return *std::dynamic_pointer_cast<AttributeDescriptor>(attributes[binding]);
 }
@@ -52,29 +54,31 @@ AttributeDescriptor &BaseParams::copyAttribute(int fromBinding, int toBinding) {
 bool BaseParams::usable() const { return true; }
 
 std::vector<VkVertexInputBindingDescription>
-BaseParams::getBindingDescription() {
+BaseParams::getBindingDescription() const {
   auto nbBindings = attributes.size();
   std::vector<VkVertexInputBindingDescription> bindingDescriptions(nbBindings);
-  for (size_t i = 0; i < nbBindings; i++)
-    bindingDescriptions[i] = attributes[i]->getBindingDescription();
+  int i = 0;
+  for (auto &attr : attributes)
+    bindingDescriptions[i++] = attr.second->getBindingDescription();
   return bindingDescriptions;
 }
 
 std::vector<VkVertexInputAttributeDescription>
-BaseParams::getAttributeDescriptions() {
+BaseParams::getAttributeDescriptions() const {
   int amount = 0;
   for (auto &d : attributes)
-    amount += d.second->getAmountOffset();
+    amount += d.second->getOffsets().size();
 
   std::vector<VkVertexInputAttributeDescription> attributeDescriptions(amount);
 
   int cur = 0;
   for (auto &desc : attributes) {
-    for (int i = 0; i < desc.second->getAmountOffset(); i++) {
+    int amountOffset = desc.second->getOffsets().size();
+    for (int i = 0; i < amountOffset; i++) {
       attributeDescriptions[cur + i] = desc.second->getAttributeDesc(i);
-      attributeDescriptions[cur + i].location = cur + i;
+      attributeDescriptions[cur + i].location = desc.first + i;
     }
-    cur += desc.second->getAmountOffset();
+    cur += amountOffset;
   }
   return attributeDescriptions;
 }

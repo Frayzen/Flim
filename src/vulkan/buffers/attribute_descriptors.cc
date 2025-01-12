@@ -8,9 +8,8 @@
 #include <vulkan/vulkan_core.h>
 namespace Flim {
 
-AttributeDescriptor::AttributeDescriptor(Mesh &mesh, int binding,
-                                         AttributeRate rate)
-    : BaseAttributeDescriptor(mesh, binding), rate(rate), size(0),
+AttributeDescriptor::AttributeDescriptor(int binding, AttributeRate rate)
+    : BaseAttributeDescriptor(binding), rate(rate), size(0),
       updateFunction(nullptr) {};
 
 AttributeDescriptor &AttributeDescriptor::add(long offset, VkFormat format) {
@@ -18,7 +17,12 @@ AttributeDescriptor &AttributeDescriptor::add(long offset, VkFormat format) {
   return *this;
 }
 
-int AttributeDescriptor::getAmountOffset() const { return offsets.size(); }
+std::vector<VkDeviceSize> AttributeDescriptor::getOffsets() const {
+  std::vector<VkDeviceSize> ret(offsets.size());
+  for (size_t i = 0; i < offsets.size(); i++)
+    ret[i] = offsets[i].first;
+  return ret;
+}
 
 VkVertexInputAttributeDescription
 AttributeDescriptor::getAttributeDesc(int id) const {
@@ -53,6 +57,12 @@ inline int getAmount(const Mesh &m, AttributeRate &rate) {
 }
 
 void AttributeDescriptor::setup() {
+  assert(!offsets.empty() && "Please specify the offsets of the attribute");
+  assert(size != 0 && "please populate the attribute descriptor");
+  assert(
+      getAttachedMesh() != nullptr &&
+      "You cannot use an attribute without registering it"); // should be set by
+                                                             // the renderer
   if (isSingleBuffered)
     redundancy = 1;
   VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
@@ -64,8 +74,7 @@ void AttributeDescriptor::setup() {
         "If the attribute is compute friendly, it also need to be only setup");
     usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
   }
-  assert(size != 0 && "please populate the attribute descriptor");
-  size_t bufSize = getAmount(*mesh, rate) * size;
+  size_t bufSize = getAmount(*getAttachedMesh(), rate) * size;
   static auto memProp = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
   setupBuffers(bufSize, usage, memProp);
@@ -73,7 +82,7 @@ void AttributeDescriptor::setup() {
   for (auto b : getBuffers()) {
     if (isOnlySetup) {
       void *tmp = malloc(bufSize);
-      updateFunction(*mesh, tmp);
+      updateFunction(*getAttachedMesh(), tmp);
       b->populate(tmp);
       free(tmp);
     } else
@@ -93,9 +102,10 @@ AttributeDescriptor::getDescriptor(DescriptorHolder &holder, int i) {
   // pBufferInfo
   int offset = usesPreviousFrame ? -1 : 0;
   storageBufferInfo = {};
-  storageBufferInfo.buffer = getBuffer(i + offset + redundancy)->getVkBuffer();
+  auto buf = getBuffer(i + offset + redundancy);
+  storageBufferInfo.buffer = buf->getVkBuffer();
   storageBufferInfo.offset = 0;
-  storageBufferInfo.range = size * getAmount(*mesh, rate);
+  storageBufferInfo.range = buf->getSize();
   descriptor.pBufferInfo = &storageBufferInfo;
   return descriptor;
 }
@@ -118,7 +128,7 @@ AttributeDescriptor &AttributeDescriptor::singleBuffered(bool val) {
 void AttributeDescriptor::update() {
   if (isOnlySetup)
     return;
-  updateFunction(*mesh, getBuffer()->getPtr());
+  updateFunction(*getAttachedMesh(), getBuffer()->getPtr());
 }
 
 void AttributeDescriptor::cleanup() { cleanupBuffers(); }

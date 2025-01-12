@@ -114,14 +114,10 @@ bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
     r->update();
 
   for (auto computer : scene.computers) {
-    /* std::cout << "COMPUTER" << std::endl; */
-    /* computer->printBufferIds(); */
     command_pool_manager.recordCommandBuffer(*computer);
   }
 
   for (auto renderer : scene.renderers) {
-    /* std::cout << "RENDERER" << std::endl; */
-    /* renderer.second->printBufferIds(); */
     command_pool_manager.recordCommandBuffer(*renderer.second);
   }
 

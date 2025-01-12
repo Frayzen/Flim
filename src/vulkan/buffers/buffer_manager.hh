@@ -1,5 +1,6 @@
 #pragma once
 
+#include "api/render/mesh.hh"
 #include "buffer_utils.hh"
 #include <cwchar>
 #include <fwd.hh>
@@ -26,6 +27,8 @@ public:
   BufferManager(BufferManager &) = delete;
 
   void createDepthResources();
+  void attachMesh(int bufferId, Flim::Mesh* mesh);
+
   int createId() const;
   static BufferManager &get();
 
@@ -33,6 +36,7 @@ private:
   BufferManager() = default;
 
   std::map<int, std::vector<std::shared_ptr<Buffer>>> buffers;
+  std::map<int, Flim::Mesh*> attachedMesh;
   friend class BufferHolder;
 };
 
@@ -46,15 +50,18 @@ class BufferHolder {
 public:
   std::shared_ptr<Buffer> getBuffer(int i = -1) const;
   int getBufferId() const;
+  int newBufferId() const;
+  Flim::Mesh* getAttachedMesh() const;
 
 protected:
-  /* BufferHolder(const BufferHolder &); */
+
+  BufferHolder(const BufferHolder &);
   BufferHolder();
   BufferHolder(int id);
-  int bufferId;
   int redundancy;
   std::vector<std::shared_ptr<Buffer>> &getBuffers() const;
   void setupBuffers(int bufferSize, VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags properties);
   void cleanupBuffers();
+  int bufferId;
 };

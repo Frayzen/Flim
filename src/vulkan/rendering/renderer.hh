@@ -1,9 +1,12 @@
 #pragma once
 
 #include "api/parameters/render_params.hh"
+#include "api/render/mesh.hh"
 #include "api/tree/camera.hh"
+#include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/rendering/pipeline.hh"
+#include <iostream>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
@@ -26,15 +29,19 @@ public:
   const std::vector<Flim::Instance> &getInstances();
 
   Renderer(Flim::Mesh &mesh, Flim::RenderParams &params)
-      : DescriptorHolder(params, false), params(params), version(0), mesh(mesh),
+      : DescriptorHolder(&this->params, false), params(params.clone()),
+        version(0), mesh(mesh),
         indexBuffer(mesh.indices.data(),
                     mesh.indices.size() * sizeof(mesh.indices[0]),
                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
-        pipeline(*this) {};
+        pipeline(*this) {
+    for (auto &attr : this->params.getAttributeDescriptors()) {
+      bufferManager.attachMesh(attr.second->bufferId, &mesh);
+    }
+  };
 
-  const Flim::Mesh &mesh;
-  Flim::RenderParams &params;
-
+  Flim::Mesh &mesh;
+  Flim::RenderParams params;
   Buffer indexBuffer;
   Pipeline pipeline;
 

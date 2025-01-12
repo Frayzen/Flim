@@ -3,14 +3,17 @@
 #include "api/parameters/compute_params.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include <Eigen/src/Core/Matrix.h>
+namespace Flim {
+class ComputeParams;
+} // namespace Flim
 
 class Computer : public DescriptorHolder {
 public:
   Computer(Computer &) = delete;
   Computer() = delete;
   Computer(Vector3i dispatchAmount, Flim::ComputeParams &params)
-      : DescriptorHolder(params, true), dispatchAmount(dispatchAmount),
-        params(params) {};
+      : DescriptorHolder(&this->params, true), params(params.clone()),
+        dispatchAmount(dispatchAmount) {};
 
   void setup();
   void update();
@@ -18,7 +21,7 @@ public:
 
   Vector3i dispatchAmount;
 
-  Flim::ComputeParams &params;
+  Flim::ComputeParams params;
 
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;

@@ -11,8 +11,6 @@ void Pipeline::cleanup() {
   vkDestroyPipelineLayout(context.device, pipelineLayout, nullptr);
 }
 
-
-
 void Pipeline::create() {
   Flim::RenderParams &params = renderer.params;
   vertShaderModule = params.vertexShader.createShaderModule();

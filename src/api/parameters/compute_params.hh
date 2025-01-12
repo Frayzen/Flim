@@ -11,6 +11,8 @@ public:
   Shader shader;
   std::string mainFunction;
 
+  ComputeParams clone();
+
   void linkWriteableAttribute(int fromBinding, int toBinding);
 
   // Validators
