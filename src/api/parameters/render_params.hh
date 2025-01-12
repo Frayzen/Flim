@@ -18,14 +18,14 @@ public:
 
   AttributeDescriptor &setAttribute(int binding,
                                     AttributeRate rate = AttributeRate::VERTEX);
-  RenderParams clone();
-
   // Validators
   bool usable() const override;
   void invalidate();
 
-private:
   RenderParams(const RenderParams &) = default;
+private:
+  RenderParams clone();
+  friend class ::Renderer;
 };
 
 } // namespace Flim

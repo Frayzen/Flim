@@ -7,6 +7,11 @@
 #include <memory>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+class RenderParams;
+class ComputeParams;
+}; // namespace Flim
+
 struct UniformLocationObject {
   Matrix4f model;
   Matrix4f view;
@@ -27,7 +32,7 @@ public:
   BufferManager(BufferManager &) = delete;
 
   void createDepthResources();
-  void attachMesh(int bufferId, Flim::Mesh* mesh);
+  void attachMesh(int bufferId, Flim::Mesh *mesh);
 
   int createId() const;
   static BufferManager &get();
@@ -36,7 +41,7 @@ private:
   BufferManager() = default;
 
   std::map<int, std::vector<std::shared_ptr<Buffer>>> buffers;
-  std::map<int, Flim::Mesh*> attachedMesh;
+  std::map<int, Flim::Mesh *> attachedMesh;
   friend class BufferHolder;
 };
 
@@ -51,17 +56,20 @@ public:
   std::shared_ptr<Buffer> getBuffer(int i = -1) const;
   int getBufferId() const;
   int newBufferId() const;
-  Flim::Mesh* getAttachedMesh() const;
+  Flim::Mesh *getAttachedMesh() const;
 
 protected:
-
   BufferHolder(const BufferHolder &);
   BufferHolder();
   BufferHolder(int id);
-  int redundancy;
   std::vector<std::shared_ptr<Buffer>> &getBuffers() const;
   void setupBuffers(int bufferSize, VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags properties);
   void cleanupBuffers();
+
   int bufferId;
+  int redundancy;
+
+  friend class Flim::RenderParams;
+  friend class Flim::ComputeParams;
 };

@@ -9,8 +9,9 @@
 namespace Flim {
 
 AttributeDescriptor::AttributeDescriptor(int binding, AttributeRate rate)
-    : BaseAttributeDescriptor(binding), rate(rate), size(0),
-      updateFunction(nullptr) {};
+    : BufferHolder(), binding(binding), usesPreviousFrame(false), rate(rate),
+      size(0), updateFunction(nullptr), isSingleBuffered(false),
+      isComputeFriendly(false), isOnlySetup(false) {};
 
 AttributeDescriptor &AttributeDescriptor::add(long offset, VkFormat format) {
   offsets.push_back(std::make_pair(offset, format));

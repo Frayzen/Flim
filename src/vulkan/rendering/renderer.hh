@@ -36,6 +36,9 @@ public:
                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
         pipeline(*this) {
     for (auto &attr : this->params.getAttributeDescriptors()) {
+      assert(attr.second->getAttachedMesh() == nullptr &&
+             "You cannot reuse a render param for a mesh, please make a copy "
+             "first");
       bufferManager.attachMesh(attr.second->bufferId, &mesh);
     }
   };

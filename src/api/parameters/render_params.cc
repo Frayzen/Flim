@@ -2,15 +2,6 @@
 
 namespace Flim {
 
-RenderParams RenderParams::clone() {
-  RenderParams other(*this);
-  for (auto &attr : other.attributes) {
-    attributes[attr.first] =
-        attr.second->clone(); // we update the id of the provided one
-  }
-  return other;
-}
-
 bool RenderParams::usable() const {
   return !vertexShader.code.empty() && !fragmentShader.code.empty();
 }
@@ -23,6 +14,19 @@ AttributeDescriptor &RenderParams::setAttribute(int binding,
       std::make_shared<AttributeDescriptor>(binding, rate);
   attributes[binding] = ptr;
   return *ptr;
+}
+
+RenderParams RenderParams::clone() {
+  RenderParams cloned(*this);
+  for (auto attr : attributes)
+  {
+    cloned.attributes[attr.first]->bufferId = attr.second->bufferId;
+  }
+  for (auto attr : uniforms)
+  {
+    cloned.uniforms[attr.first]->bufferId = attr.second->bufferId;
+  }
+  return cloned;
 }
 
 } // namespace Flim

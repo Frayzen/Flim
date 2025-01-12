@@ -39,9 +39,19 @@ AttributeDescriptor &BaseParams::updateAttribute(int binding) {
 }
 
 void BaseParams::removeAttribute(int binding) { attributes.erase(binding); }
-const std::map<int, std::shared_ptr<BaseAttributeDescriptor>> &
+const std::map<int, std::shared_ptr<AttributeDescriptor>> &
 BaseParams::getAttributeDescriptors() const {
   return attributes;
+}
+
+AttributeDescriptor &BaseParams::setAttribute(AttributeDescriptor &attr,
+                                              int binding) {
+  if (binding == -1)
+    binding = attr.binding;
+  std::shared_ptr<AttributeDescriptor> cloned = attr.clone(true);
+  cloned->binding = binding;
+  attributes[binding] = cloned;
+  return *attributes[binding];
 }
 
 AttributeDescriptor &BaseParams::copyAttribute(int fromBinding, int toBinding) {

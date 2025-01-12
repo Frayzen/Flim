@@ -15,6 +15,7 @@
 #include <cstring>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <iostream>
 #include <vulkan/vulkan_core.h>
 
 using namespace Flim;
@@ -117,7 +118,7 @@ int main() {
                          .singleBuffered(true)
                          .onlySetup(true);
 
-  RenderParams cubeParams = particlesParams.clone();
+  RenderParams cubeParams = particlesParams;
   cubeParams.updateAttribute(3).onlySetup(false).computeFriendly(false);
 
   cubeParams.setUniform(1, FRAGMENT_SHADER_STAGE)
@@ -131,9 +132,9 @@ int main() {
 
   ComputeParams particlesCompute;
   particlesCompute.shader = Shader("shaders/default.comp.spv");
-  particlesCompute.setAttribute(velocities, 0);
-  particlesCompute.setAttribute(positions, 1);
   particlesCompute.setAttribute(positions, 2).previousFrame(true);
+  particlesCompute.setAttribute(positions, 1);
+  particlesCompute.setAttribute(velocities, 0);
   particlesCompute.setUniform(3, VK_SHADER_STAGE_COMPUTE_BIT)
       .attachObj(cmpParam);
 
@@ -151,6 +152,7 @@ int main() {
       .singleBuffered(true);
 
   scene.registerMesh(particle, particlesParams);
+
   scene.registerComputer(particlesCompute, perAxis, perAxis, perAxis);
   scene.registerMesh(cube, cubeParams);
 

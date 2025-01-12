@@ -19,38 +19,6 @@ enum AttributeRate {
   INSTANCE,
 };
 
-class BaseAttributeDescriptor : public BufferHolder {
-public:
-  BaseAttributeDescriptor(int binding)
-      : BufferHolder(), binding(binding), usesPreviousFrame(false) {};
-  virtual std::vector<VkDeviceSize> getOffsets() const = 0;
-  virtual VkVertexInputAttributeDescription getAttributeDesc(int id) const = 0;
-  virtual VkVertexInputBindingDescription getBindingDescription() const = 0;
-
-  virtual void setup() = 0;
-  virtual void update() = 0;
-  virtual void cleanup() = 0;
-
-  virtual VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder,
-                                             int i) = 0;
-
-  virtual std::shared_ptr<BaseAttributeDescriptor>
-  clone(bool keepBuffers = false) const = 0;
-
-  void previousFrame(bool val) { usesPreviousFrame = val; };
-  int getBinding() const { return binding; }
-
-protected:
-  bool usesPreviousFrame;
-  int binding;
-
-  friend class ::Renderer;
-  friend class Computer;
-  friend class ComputeParams;
-  friend class RenderParams;
-  friend class BaseParams;
-};
-
 inline VkVertexInputRate attributeRateToInputRate(AttributeRate rate) {
   switch (rate) {
   case VERTEX:
@@ -63,22 +31,22 @@ inline VkVertexInputRate attributeRateToInputRate(AttributeRate rate) {
   return VK_VERTEX_INPUT_RATE_VERTEX;
 }
 
-class AttributeDescriptor : public BaseAttributeDescriptor {
+class AttributeDescriptor : public BufferHolder {
 
 public:
   AttributeDescriptor(int binding, AttributeRate rate);
 
   AttributeDescriptor &add(long offset, VkFormat format);
 
-  std::vector<VkDeviceSize> getOffsets() const override;
-  VkVertexInputAttributeDescription getAttributeDesc(int id) const override;
-  VkVertexInputBindingDescription getBindingDescription() const override;
+  std::vector<VkDeviceSize> getOffsets() const;
+  VkVertexInputAttributeDescription getAttributeDesc(int id) const;
+  VkVertexInputBindingDescription getBindingDescription() const;
 
-  void setup() override;
-  void update() override;
-  void cleanup() override;
+  void setup();
+  void update();
+  void cleanup();
 
-  VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i) override;
+  VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i);
 
   template <typename T>
   AttributeDescriptor &
@@ -98,14 +66,29 @@ public:
     return attach<T>([](const Mesh &, T *) {});
   }
 
-  virtual std::shared_ptr<BaseAttributeDescriptor> clone(bool keepBuffers = false) const override {
-    auto ret = std::make_shared<AttributeDescriptor>(*this);
+  std::shared_ptr<AttributeDescriptor> clone(bool keepBuffers = false) const {
+    const AttributeDescriptor tmp(*this);
+    std::shared_ptr<AttributeDescriptor> cloned =
+        std::make_shared<AttributeDescriptor>(tmp);
     if (keepBuffers)
-      ret->bufferId = bufferId;
-    return ret;
+      cloned->bufferId = bufferId;
+    return cloned;
   }
+  AttributeDescriptor(const AttributeDescriptor &from) = default;
+  AttributeDescriptor(AttributeDescriptor &from) = delete;
 
-private:
+  void previousFrame(bool val) { usesPreviousFrame = val; };
+  int getBinding() const { return binding; }
+
+protected:
+  bool usesPreviousFrame;
+  int binding;
+
+  friend class ::Renderer;
+  friend class Computer;
+  friend class ComputeParams;
+  friend class RenderParams;
+  friend class BaseParams;
   DescriptorHolder *holder;
   AttributeRate rate;
   std::vector<std::pair<VkDeviceSize, VkFormat>> offsets;

@@ -3,10 +3,10 @@
 #include "consts.hh"
 #include "vulkan/buffers/attribute_descriptors.hh"
 #include "vulkan/buffers/uniform_descriptors.hh"
-#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vulkan/vulkan_core.h>
 
 class Pipeline;
@@ -58,19 +58,11 @@ public:
   AttributeDescriptor &updateAttribute(int binding);
   void removeAttribute(int binding);
 
-  template <typename T>
-    requires Derived<T, BaseAttributeDescriptor>
-  T &setAttribute(T &attr, int binding = -1) {
-    if (binding == -1)
-      binding = attr.binding;
-    std::shared_ptr<BaseAttributeDescriptor> cloned = attr.clone(true);
-    cloned->binding = binding;
-    attributes[binding] = cloned;
-    return *std::dynamic_pointer_cast<T>(attributes[binding]);
-  }
+  AttributeDescriptor &setAttribute(AttributeDescriptor &attr,
+                                    int binding = -1);
   AttributeDescriptor &copyAttribute(int fromBinding, int toBinding);
 
-  const std::map<int, std::shared_ptr<BaseAttributeDescriptor>> &
+  const std::map<int, std::shared_ptr<AttributeDescriptor>> &
   getAttributeDescriptors() const;
 
   virtual bool usable() const;
@@ -82,8 +74,18 @@ public:
 
 protected:
   std::map<int, std::shared_ptr<UniformDescriptor>> uniforms;
-  std::map<int, std::shared_ptr<BaseAttributeDescriptor>> attributes;
-
+  std::map<int, std::shared_ptr<AttributeDescriptor>> attributes;
+  BaseParams() = default;
+  BaseParams(const BaseParams &other) : uniforms(), attributes() {
+    for (auto &attr : other.attributes) {
+      attributes[attr.first] =
+          attr.second->clone(); // we update the id of the provided one
+    }
+    for (auto &uni : other.uniforms) {
+      uniforms[uni.first] =
+          uni.second->clone(); // we update the id of the provided one
+    }
+  };
   friend class ::Pipeline;
 };
 
