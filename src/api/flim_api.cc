@@ -23,7 +23,7 @@ int FlimAPI::run(const std::function<void(float)> &renderMethod) {
       if (app.mainLoop(renderMethod, scene))
         break;
       double curTime = glfwGetTime();
-      double deltaTime = lastTime - curTime;
+      double deltaTime = curTime - lastTime;
       scene.camera.handleInputs(deltaTime);
       lastTime = curTime;
     }

@@ -168,9 +168,9 @@ int main() {
 
   Instance &cubeIstc = scene.instantiate(cube);
 
-  /* scene.camera.is2D = true; */
+  scene.camera.is2D = true;
   scene.camera.speed = 100;
-  scene.camera.transform.position = Vector3f(0, 0, 10);
+  scene.camera.transform.position = Vector3f(0, 0, 0);
   scene.camera.sensivity = 5;
 
   float timeSpeed = 0.0f;
@@ -185,6 +185,9 @@ int main() {
     if (ImGui::Checkbox("Faceculling", &cubeParams.useBackfaceCulling)) {
       cubeParams.invalidate();
     }
+    ImGui::Checkbox("2D cam", &scene.camera.is2D);
+    ImGui::SliderFloat("2D CAM SCLAE", &scene.camera.scale, 0.0f, 0.1f);
+    ImGui::SliderFloat("Cur cam proj", &curcamproj, 0.0f, 1.0f);
 
     ImGui::SliderFloat3("Ambient color",
                         (float *)&particle.getMaterial().ambient, 0.0f, 1.0f);
