@@ -62,7 +62,7 @@ int main() {
   Scene &scene = api.getScene();
   auto &cam = scene.camera;
 
-  RenderParams particlesParams;
+  RenderParams particlesParams("Particles");
   particlesParams.vertexShader = Shader("shaders/default.vert.spv"),
   particlesParams.fragmentShader = Shader("shaders/default.frag.spv");
 
@@ -107,7 +107,7 @@ int main() {
           .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
           .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
           .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
-  auto &velocities = particlesParams.setAttribute(7, AttributeRate::INSTANCE)
+  auto &velocities = particlesParams.setAttribute(8, AttributeRate::INSTANCE)
                          .attach<Vector4f>([](const Mesh &m, Vector4f *vels) {
                            for (size_t i = 0; i < m.instances.size(); i++)
                              vels[i] =
@@ -117,26 +117,6 @@ int main() {
                          .computeFriendly(true)
                          .singleBuffered(true)
                          .onlySetup(true);
-
-  RenderParams cubeParams = particlesParams;
-  cubeParams.updateAttribute(3).onlySetup(false).computeFriendly(false);
-
-  cubeParams.setUniform(1, FRAGMENT_SHADER_STAGE)
-      .attach<MaterialUniform>([&](MaterialUniform *uni) {
-        uni->ambient = cube.getMaterial().ambient;
-        uni->diffuse = cube.getMaterial().diffuse;
-        uni->specular = cube.getMaterial().specular;
-      });
-  cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
-  cubeParams.useBackfaceCulling = false;
-
-  ComputeParams particlesCompute;
-  particlesCompute.shader = Shader("shaders/default.comp.spv");
-  particlesCompute.setAttribute(positions, 2).previousFrame(true);
-  particlesCompute.setAttribute(positions, 1);
-  particlesCompute.setAttribute(velocities, 0);
-  particlesCompute.setUniform(3, VK_SHADER_STAGE_COMPUTE_BIT)
-      .attachObj(cmpParam);
 
   particlesParams.setAttribute(7, AttributeRate::INSTANCE)
       .attach<Vector4f>([](const Mesh &m, Vector4f *ptrs) {
@@ -151,8 +131,27 @@ int main() {
       .onlySetup(true)
       .singleBuffered(true);
 
-  scene.registerMesh(particle, particlesParams);
+  RenderParams cubeParams("Cube", particlesParams);
+  cubeParams.updateAttribute(3).onlySetup(false).computeFriendly(false);
 
+  cubeParams.setUniform(1, FRAGMENT_SHADER_STAGE)
+      .attach<MaterialUniform>([&](MaterialUniform *uni) {
+        uni->ambient = cube.getMaterial().ambient;
+        uni->diffuse = cube.getMaterial().diffuse;
+        uni->specular = cube.getMaterial().specular;
+      });
+  cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
+  cubeParams.useBackfaceCulling = false;
+
+  ComputeParams particlesCompute("Particle");
+  particlesCompute.shader = Shader("shaders/default.comp.spv");
+  particlesCompute.setAttribute(positions, 2).previousFrame(true);
+  particlesCompute.setAttribute(positions, 1);
+  particlesCompute.setAttribute(velocities, 0);
+  particlesCompute.setUniform(3, VK_SHADER_STAGE_COMPUTE_BIT)
+      .attachObj(cmpParam);
+
+  scene.registerMesh(particle, particlesParams);
   scene.registerComputer(particlesCompute, perAxis, perAxis, perAxis);
   scene.registerMesh(cube, cubeParams);
 

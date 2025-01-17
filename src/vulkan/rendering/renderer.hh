@@ -3,6 +3,7 @@
 #include "api/parameters/render_params.hh"
 #include "api/render/mesh.hh"
 #include "api/tree/camera.hh"
+#include "utils/checks.hh"
 #include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/rendering/pipeline.hh"
@@ -36,7 +37,7 @@ public:
                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
         pipeline(*this) {
     for (auto &attr : this->params.getAttributeDescriptors()) {
-      assert(attr.second->getAttachedMesh() == nullptr &&
+      CHECK(attr.second->getAttachedMesh() == nullptr,
              "You cannot reuse a render param for a mesh, please make a copy "
              "first");
       bufferManager.attachMesh(attr.second->bufferId, &mesh);

@@ -1,4 +1,5 @@
 #include "render_params.hh"
+#include "utils/checks.hh"
 
 namespace Flim {
 
@@ -10,6 +11,7 @@ void RenderParams::invalidate() { version++; };
 
 AttributeDescriptor &RenderParams::setAttribute(int binding,
                                                 AttributeRate rate) {
+  CHECK(!attributes.contains(binding), "Cannot 'set' an existing attribute, please use update instead");
   std::shared_ptr<AttributeDescriptor> ptr =
       std::make_shared<AttributeDescriptor>(binding, rate);
   attributes[binding] = ptr;

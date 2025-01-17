@@ -1,4 +1,5 @@
 #include "base_params.hh"
+#include "utils/checks.hh"
 namespace Flim {
 
 // Uniforms
@@ -32,8 +33,8 @@ BaseParams::getUniformDescriptors() const {
 
 // Attributes
 AttributeDescriptor &BaseParams::updateAttribute(int binding) {
-  assert(attributes.contains(binding) &&
-         "You are trying to update a not set attribute");
+  CHECK(attributes.contains(binding),
+        "You are trying to update a not set attribute");
   attributes[binding] = attributes[binding]->clone();
   return *std::dynamic_pointer_cast<AttributeDescriptor>(attributes[binding]);
 }

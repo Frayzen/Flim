@@ -2,12 +2,17 @@
 
 #include "api/shaders/shader.hh"
 #include "base_params.hh"
+#include <string>
 
 namespace Flim {
 
 class RenderParams : public BaseParams {
 public:
-  RenderParams() = default;
+  RenderParams(std::string name) : BaseParams(name) {};
+  RenderParams(std::string name, const RenderParams &from)
+      : RenderParams(from) {
+    name = name;
+  };
 
   Shader vertexShader;
   Shader fragmentShader;
@@ -22,9 +27,9 @@ public:
   bool usable() const override;
   void invalidate();
 
-  RenderParams(const RenderParams &) = default;
 private:
   RenderParams clone();
+  RenderParams(const RenderParams &) = default;
   friend class ::Renderer;
 };
 

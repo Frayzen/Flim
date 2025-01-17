@@ -1,5 +1,6 @@
 #include "vulkan/buffers/attribute_descriptors.hh"
 #include "api/render/mesh.hh"
+#include "utils/checks.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include <cassert>
 #include <cstdlib>
@@ -38,7 +39,7 @@ AttributeDescriptor::getAttributeDesc(int id) const {
 
 VkVertexInputBindingDescription
 AttributeDescriptor::getBindingDescription() const {
-  assert(size != 0 && "please populate the attribute descriptor");
+  CHECK(size != 0, "Please populate the attribute descriptor");
   VkVertexInputBindingDescription desc{};
   desc.binding = binding;
   desc.stride = size;
@@ -58,8 +59,8 @@ inline int getAmount(const Mesh &m, AttributeRate &rate) {
 }
 
 void AttributeDescriptor::setup() {
-  assert(!offsets.empty() && "Please specify the offsets of the attribute");
-  assert(size != 0 && "please populate the attribute descriptor");
+  CHECK(!offsets.empty(), "Please specify the offsets of the attribute");
+  CHECK(size != 0, "please populate the attribute descriptor");
   assert(
       getAttachedMesh() != nullptr &&
       "You cannot use an attribute without registering it"); // should be set by

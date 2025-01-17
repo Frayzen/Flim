@@ -2,13 +2,14 @@
 
 #include "api/shaders/shader.hh"
 #include "base_params.hh"
+#include <string>
 
 class Computer;
 
 namespace Flim {
 class ComputeParams : public BaseParams {
 public:
-  ComputeParams() : BaseParams(), mainFunction("main") {};
+  ComputeParams(std::string name) : BaseParams(name + " compute"), mainFunction("main") {};
 
   Shader shader;
   std::string mainFunction;

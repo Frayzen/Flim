@@ -32,6 +32,9 @@ inline VkPolygonMode renderModeToPolygonMode(RenderMode mode) {
 class BaseParams {
 
 public:
+  BaseParams(std::string name) : name(name) {};
+  std::string name;
+
   // Uniforms
   GeneralUniDesc &updateUniform(int binding);
   ImageUniDesc &setUniformImage(int binding);

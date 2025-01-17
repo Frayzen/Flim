@@ -1,7 +1,6 @@
 #include "buffer_manager.hh"
 #include "consts.hh"
 #include "vulkan/context.hh"
-#include <iostream>
 #include <memory>
 
 BufferManager &bufferManager = BufferManager::get();
@@ -18,7 +17,6 @@ int BufferManager::createId() const {
 }
 void BufferManager::attachMesh(int bufferId, Flim::Mesh *mesh) {
   assert(attachedMesh[bufferId] == nullptr);
-  std::cout << "SET " << bufferId << " TO " << mesh << std::endl;
   attachedMesh[bufferId] = mesh;
 }
 
@@ -33,10 +31,8 @@ BufferHolder::BufferHolder() : BufferHolder(bufferManager.createId()) {}
 
 void BufferHolder::setupBuffers(int bufferSize, VkBufferUsageFlags usage,
                                 VkMemoryPropertyFlags properties) {
-  std::cout << "TRYING SETUP " << bufferId << std::endl;
   if (bufferManager.buffers.contains(bufferId))
     return;
-  std::cout << "SUCCES" << '\n';
   bufferManager.buffers[bufferId] =
       std::vector<std::shared_ptr<Buffer>>(redundancy);
   if (!bufferManager.attachedMesh.contains(bufferId))
