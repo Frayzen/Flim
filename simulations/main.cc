@@ -9,6 +9,7 @@
 #include "api/tree/camera.hh"
 #include "api/tree/instance.hh"
 #include "vulkan/buffers/attribute_descriptors.hh"
+#include "vulkan/buffers/attribute_utils.hh"
 #include "vulkan/buffers/uniform_descriptors.hh"
 #include <Eigen/src/Core/Matrix.h>
 #include <cstdlib>
@@ -83,30 +84,32 @@ int main() {
       });
   particlesParams.setUniform(2).attachObj<PointUniform>(pointDesc);
 
-  particlesParams.setAttribute(0)
-      .attach<Flim::Vertex>([](const Mesh &m, Flim::Vertex *vertices) {
-        memcpy(vertices, m.vertices.data(),
-               m.vertices.size() * sizeof(Flim::Vertex));
-      })
-      .onlySetup(true)
-      .singleBuffered(true)
-      .add(offsetof(Flim::Vertex, pos), VK_FORMAT_R32G32B32_SFLOAT)
-      .add(offsetof(Flim::Vertex, normal), VK_FORMAT_R32G32B32_SFLOAT)
-      .add(offsetof(Flim::Vertex, uv), VK_FORMAT_R32G32_SFLOAT);
+  /* particlesParams.setAttribute(0) */
+  /*     .attach<Flim::Vertex>([](const Mesh &m, Flim::Vertex *vertices) { */
+  /*       memcpy(vertices, m.vertices.data(), */
+  /*              m.vertices.size() * sizeof(Flim::Vertex)); */
+  /*     }) */
+  /*     .onlySetup(true) */
+  /*     .singleBuffered(true) */
+  /*     .add(offsetof(Flim::Vertex, pos), VK_FORMAT_R32G32B32_SFLOAT) */
+  /*     .add(offsetof(Flim::Vertex, normal), VK_FORMAT_R32G32B32_SFLOAT) */
+  /*     .add(offsetof(Flim::Vertex, uv), VK_FORMAT_R32G32_SFLOAT); */
+  AttributeUtils::createVerticesAttribute(particlesParams, 0);
+  /* auto &positions = */
+  /*     particlesParams.setAttribute(3, AttributeRate::INSTANCE) */
+  /*         .attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) { */
+  /*           for (size_t i = 0; i < m.instances.size(); i++) { */
+  /*             mats[i] = m.instances[i].transform.getViewMatrix(); */
+  /*           } */
+  /*         }) */
+  /*         .onlySetup(true) */
+  /*         .computeFriendly(true) */
+  /*         .add(0 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT) */
+  /*         .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT) */
+  /*         .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT) */
+  /*         .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT); */
+  auto& positions = AttributeUtils::createInstanceMatrixAttribute(particlesParams, 3).computeFriendly(true);
 
-  auto &positions =
-      particlesParams.setAttribute(3, AttributeRate::INSTANCE)
-          .attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) {
-            for (size_t i = 0; i < m.instances.size(); i++) {
-              mats[i] = m.instances[i].transform.getViewMatrix();
-            }
-          })
-          .onlySetup(true)
-          .computeFriendly(true)
-          .add(0 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
-          .add(1 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
-          .add(2 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT)
-          .add(3 * sizeof(Vector4f), VK_FORMAT_R32G32B32A32_SFLOAT);
   auto &velocities = particlesParams.setAttribute(8, AttributeRate::INSTANCE)
                          .attach<Vector4f>([](const Mesh &m, Vector4f *vels) {
                            for (size_t i = 0; i < m.instances.size(); i++)
@@ -140,7 +143,7 @@ int main() {
         uni->diffuse = cube.getMaterial().diffuse;
         uni->specular = cube.getMaterial().specular;
       });
-  cubeParams.mode = RenderMode::RENDERER_MODE_LINE;
+  cubeParams.mode = RenderMode::RENDERER_MODE_TRIS;
   cubeParams.useBackfaceCulling = false;
 
   ComputeParams particlesCompute("Particle");
@@ -151,24 +154,24 @@ int main() {
   particlesCompute.setUniform(3, VK_SHADER_STAGE_COMPUTE_BIT)
       .attachObj(cmpParam);
 
-  scene.registerMesh(particle, particlesParams);
-  scene.registerComputer(particlesCompute, perAxis, perAxis, perAxis);
+  /* scene.registerMesh(particle, particlesParams); */
+  /* scene.registerComputer(particlesCompute, perAxis, perAxis, perAxis); */
   scene.registerMesh(cube, cubeParams);
 
-  for (int i = 0; i < nbPerAxis.x(); i++)
-    for (int j = 0; j < nbPerAxis.y(); j++)
-      for (int k = 0; k < nbPerAxis.z(); k++) {
-        Instance &istc = scene.instantiate(particle);
-        istc.transform.scale = Vector3f(0.2f, 0.2f, 0.2f);
-        auto pos = Vector3f(i, j, k);
-        istc.transform.position =
-            pos * offset -
-            Vector3f(cmpParam.bounds, cmpParam.bounds, cmpParam.bounds);
-      }
+  /* for (int i = 0; i < nbPerAxis.x(); i++) */
+  /*   for (int j = 0; j < nbPerAxis.y(); j++) */
+  /*     for (int k = 0; k < nbPerAxis.z(); k++) { */
+  /*       Instance &istc = scene.instantiate(particle); */
+  /*       istc.transform.scale = Vector3f(0.2f, 0.2f, 0.2f); */
+  /*       auto pos = Vector3f(i, j, k); */
+  /*       istc.transform.position = */
+  /*           pos * offset - */
+  /*           Vector3f(cmpParam.bounds, cmpParam.bounds, cmpParam.bounds); */
+  /*     } */
 
   Instance &cubeIstc = scene.instantiate(cube);
 
-  scene.camera.is2D = true;
+  /* scene.camera.is2D = true; */
   scene.camera.speed = 100;
   scene.camera.transform.position = Vector3f(0, 0, 0);
   scene.camera.sensivity = 5;
@@ -186,8 +189,12 @@ int main() {
       cubeParams.invalidate();
     }
     ImGui::Checkbox("2D cam", &scene.camera.is2D);
-    ImGui::SliderFloat("2D CAM SCLAE", &scene.camera.scale, 0.0f, 0.1f);
+    static float lowScale = 0.1;
+    static float highScale = 0;
+    ImGui::SliderFloat("2D CAM LOW SCALE", &lowScale, 0.0f, 0.01f);
+    ImGui::SliderFloat("2D CAM HIGH SCLAE", &highScale, 0.0f, 1000.0f);
     ImGui::SliderFloat("Cur cam proj", &curcamproj, 0.0f, 1.0f);
+    scene.camera.scale = lowScale + highScale;
 
     ImGui::SliderFloat3("Ambient color",
                         (float *)&particle.getMaterial().ambient, 0.0f, 1.0f);

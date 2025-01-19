@@ -5,6 +5,7 @@
 #include "api/tree/instance.hh"
 #include "vulkan/context.hh"
 #include <Eigen/src/Core/Matrix.h>
+#include <iostream>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
@@ -30,6 +31,7 @@ void Renderer::update() {
     vkDeviceWaitIdle(context.device); // not ideal, might change later
     pipeline.cleanup();
     pipeline.create();
+    std::cout << "RECREATED " << std::endl;
     version = params.version;
   }
 }

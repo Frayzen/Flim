@@ -3,6 +3,7 @@
 // COLORS
 
 /* FOREGROUND */
+#include <stdexcept>
 #define RST "\x1B[0m"
 #define KRED "\x1B[31m"
 #define KGRN "\x1B[32m"
@@ -23,11 +24,11 @@
 #define BOLD(x) "\x1B[1m" x RST
 #define UNDL(x) "\x1B[4m" x RST
 
-#include <iostream>
 #include <string>
 inline void check(bool value, std::string msg) {
-  if (!value)
-    std::cerr << BOLD(FRED("[CHECK ERROR] ")) << msg << std::endl;
+  if (!value) {
+    throw std::runtime_error(BOLD(FRED("[CHECK ERROR] ")) + msg + "\n");
+  }
 }
 
 #define CHECK(Cond, Msg) check(Cond, Msg);

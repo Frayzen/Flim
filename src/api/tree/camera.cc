@@ -79,24 +79,24 @@ Matrix4f Camera::getViewMat() const {
 
 Matrix4f Camera::getProjMat(float screenRatio) const {
 
-  Eigen::Matrix4f ortho = Eigen::Matrix4f::Identity();
-  Eigen::Matrix4f proj = Eigen::Matrix4f::Identity();
-
   if (is2D) {
+    Eigen::Matrix4f ortho = Eigen::Matrix4f::Identity();
     // Orthographic projection
     float left = -screenRatio * scale;
     float right = screenRatio * scale;
-    float bottom = -scale;
-    float top = scale;
+    // inverted to match opengl y axis
+    float bottom = 1.0f * scale;
+    float top = -1.0f * scale;
 
     ortho(0, 0) = 2.0f / (right - left);
     ortho(1, 1) = 2.0f / (top - bottom);
-    ortho(2, 2) = -2.0f / (far - near);
+    ortho(2, 2) = -1.0f / (far - near);
     ortho(0, 3) = -(right + left) / (right - left);
     ortho(1, 3) = -(top + bottom) / (top - bottom);
-    ortho(2, 3) = -scale * (far + near) / (far - near);
-    ortho(3, 3) = 1.0f;
+    ortho(2, 3) = -far / (far - near);
+    return ortho;
   } else {
+    Eigen::Matrix4f proj = Eigen::Matrix4f::Identity();
     // Perspective projection
     float tanHalfFov = std::tan(TO_RAD(fov)); // Convert fov to radians
 
@@ -106,9 +106,8 @@ Matrix4f Camera::getProjMat(float screenRatio) const {
     proj(2, 3) = -(2.0f * far * near) / (far - near);
     proj(3, 2) = -1.0f;
     proj(3, 3) = 0.0f;
+    return proj;
   }
-
-  return proj * (curcamproj) + ortho * (1 - curcamproj);
 }
 
 } // namespace Flim

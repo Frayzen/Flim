@@ -7,7 +7,6 @@
 #include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/rendering/pipeline.hh"
-#include <iostream>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
