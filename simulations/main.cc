@@ -117,23 +117,22 @@ int main() {
   particlesCompute.setUniform(3, VK_SHADER_STAGE_COMPUTE_BIT)
       .attachObj(cmpParam);
 
-  /* scene.registerMesh(particle, particlesParams); */
-  /* scene.registerComputer(particlesCompute, perAxis, perAxis, perAxis); */
+  scene.registerMesh(particle, particlesParams);
+  scene.registerComputer(particlesCompute, perAxis, perAxis, perAxis);
   scene.registerMesh(cube, cubeParams);
 
-  /* for (int i = 0; i < nbPerAxis.x(); i++) */
-  /*   for (int j = 0; j < nbPerAxis.y(); j++) */
-  /*     for (int k = 0; k < nbPerAxis.z(); k++) { */
-  /*       Instance &istc = scene.instantiate(particle); */
-  /*       istc.transform.scale = Vector3f(0.2f, 0.2f, 0.2f); */
-  /*       auto pos = Vector3f(i, j, k); */
-  /*       istc.transform.position = */
-  /*           pos * offset - */
-  /*           Vector3f(cmpParam.bounds, cmpParam.bounds, cmpParam.bounds); */
-  /*     } */
+  for (int i = 0; i < nbPerAxis.x(); i++)
+    for (int j = 0; j < nbPerAxis.y(); j++)
+      for (int k = 0; k < nbPerAxis.z(); k++) {
+        Instance &istc = scene.instantiate(particle);
+        istc.transform.scale = Vector3f(0.2f, 0.2f, 0.2f);
+        auto pos = Vector3f(i, j, k);
+        istc.transform.position =
+            pos * offset -
+            Vector3f(cmpParam.bounds, cmpParam.bounds, cmpParam.bounds);
+      }
 
   Instance &cubeIstc = scene.instantiate(cube);
-  cubeIstc.transform.position = Vector3f(0, 0, -2);
 
   /* scene.camera.is2D = true; */
   scene.camera.speed = 100;

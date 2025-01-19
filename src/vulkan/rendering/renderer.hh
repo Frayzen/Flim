@@ -10,6 +10,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
+class Scene;
 class RenderParams;
 class Instance;
 class Mesh;
@@ -27,26 +28,24 @@ public:
   void updateUniforms(const Flim::Instance &obj, const Flim::Camera &cam);
 
   const std::vector<Flim::Instance> &getInstances();
+  Flim::Mesh &mesh;
+  Flim::RenderParams &params;
+  Buffer indexBuffer;
+  Pipeline pipeline;
 
   Renderer(Flim::Mesh &mesh, Flim::RenderParams &params)
-      : DescriptorHolder(&this->params, false), params(params.clone()),
-        version(0), mesh(mesh),
-        indexBuffer(mesh.indices.data(),
-                    mesh.indices.size() * sizeof(mesh.indices[0]),
-                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
+      : DescriptorHolder(params, false), params(params), version(0),
+        mesh(mesh), indexBuffer(mesh.indices.data(),
+                                mesh.indices.size() * sizeof(mesh.indices[0]),
+                                VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
         pipeline(*this) {
     for (auto &attr : this->params.getAttributeDescriptors()) {
       CHECK(attr.second->getAttachedMesh() == nullptr,
-             "You cannot reuse a render param for a mesh, please make a copy "
-             "first");
+            "You cannot reuse a render param for a mesh, please make a copy "
+            "first");
       bufferManager.attachMesh(attr.second->bufferId, &mesh);
     }
   };
-
-  Flim::Mesh &mesh;
-  Flim::RenderParams params;
-  Buffer indexBuffer;
-  Pipeline pipeline;
 
 private:
   int version;

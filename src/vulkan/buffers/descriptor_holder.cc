@@ -4,11 +4,11 @@
 #include <iostream>
 
 void DescriptorHolder::cleanupDescriptors() {
-  for (auto &desc : params->getUniformDescriptors()) {
+  for (auto &desc : params.getUniformDescriptors()) {
     desc.second->cleanup();
   }
 
-  for (auto desc : params->getAttributeDescriptors()) {
+  for (auto desc : params.getAttributeDescriptors()) {
     desc.second->cleanup();
   }
   vkDestroyDescriptorPool(context.device, descriptorPool, nullptr);
@@ -16,10 +16,10 @@ void DescriptorHolder::cleanupDescriptors() {
 }
 
 void DescriptorHolder::setupDescriptors() {
-  for (auto &desc : params->getAttributeDescriptors()) {
+  for (auto &desc : params.getAttributeDescriptors()) {
     desc.second->setup();
   }
-  for (auto desc : params->getUniformDescriptors()) {
+  for (auto desc : params.getUniformDescriptors()) {
     desc.second->setup();
   }
   createDescriptorSetLayout();
@@ -30,7 +30,7 @@ void DescriptorHolder::setupDescriptors() {
 void DescriptorHolder::createDescriptorSetLayout() {
   std::vector<VkDescriptorSetLayoutBinding> bindings;
   VkDescriptorSetLayoutBinding cur;
-  for (auto desc : params->getUniformDescriptors()) {
+  for (auto desc : params.getUniformDescriptors()) {
     cur = {};
     cur.binding = desc.second->getBinding();
     cur.descriptorType = desc.second->getType();
@@ -39,7 +39,7 @@ void DescriptorHolder::createDescriptorSetLayout() {
     bindings.push_back(cur);
   }
   if (isComputeHolder)
-    for (auto desc : params->getAttributeDescriptors()) {
+    for (auto desc : params.getAttributeDescriptors()) {
       cur = {};
       cur.binding = desc.second->getBinding();
       cur.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -58,9 +58,9 @@ void DescriptorHolder::createDescriptorSetLayout() {
 }
 
 int DescriptorHolder::getDescriptorsSize() const {
-  int descsSize = params->getUniformDescriptors().size();
+  int descsSize = params.getUniformDescriptors().size();
   if (isComputeHolder)
-    descsSize += params->getAttributeDescriptors().size();
+    descsSize += params.getAttributeDescriptors().size();
   return descsSize;
 }
 
@@ -84,11 +84,11 @@ void DescriptorHolder::createDescriptorSets() {
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 
     int cur = 0;
-    for (auto desc : params->getUniformDescriptors()) {
+    for (auto desc : params.getUniformDescriptors()) {
       descriptorWrites[cur++] = desc.second->getDescriptor(*this, i);
     }
     if (isComputeHolder) {
-      for (auto &desc : params->getAttributeDescriptors()) {
+      for (auto &desc : params.getAttributeDescriptors()) {
         descriptorWrites[cur++] = desc.second->getDescriptor(*this, i);
       }
     }
@@ -102,13 +102,13 @@ void DescriptorHolder::createDescriptorPool() {
 
   std::vector<VkDescriptorPoolSize> poolSizes(getDescriptorsSize());
   int i = 0;
-  for (auto desc : params->getUniformDescriptors()) {
+  for (auto desc : params.getUniformDescriptors()) {
     poolSizes[i].type = desc.second->getType();
     poolSizes[i].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     i++;
   }
   if (isComputeHolder) {
-    for (auto desc : params->getAttributeDescriptors()) {
+    for (auto desc : params.getAttributeDescriptors()) {
       poolSizes[i].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
       poolSizes[i].descriptorCount =
           static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * 2;
@@ -127,6 +127,6 @@ void DescriptorHolder::createDescriptorPool() {
 }
 
 void DescriptorHolder::printBufferIds() const {
-  for (auto &a : params->getAttributeDescriptors())
+  for (auto &a : params.getAttributeDescriptors())
     std::cout << a.second->getBufferId() << '\n';
 }

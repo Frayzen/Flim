@@ -10,7 +10,7 @@ class Mesh;
 
 class DescriptorHolder {
 public:
-  DescriptorHolder(Flim::BaseParams *params, bool computeHolder)
+  DescriptorHolder(Flim::BaseParams &params, bool computeHolder)
       : params(params), descriptorPool(0), descriptorSetLayout(0),
         isComputeHolder(computeHolder) {};
 
@@ -23,7 +23,7 @@ public:
 protected:
   void setupDescriptors();
   void cleanupDescriptors();
-  Flim::BaseParams *params;
+  Flim::BaseParams &params;
 
 private:
   bool isComputeHolder; // if this is a computer class

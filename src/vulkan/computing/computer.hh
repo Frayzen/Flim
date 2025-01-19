@@ -12,7 +12,7 @@ public:
   Computer(Computer &) = delete;
   Computer() = delete;
   Computer(Vector3i dispatchAmount, Flim::ComputeParams &params)
-      : DescriptorHolder(&this->params, true), params(params.clone()),
+      : DescriptorHolder(params, true), params(params),
         dispatchAmount(dispatchAmount) {};
 
   void setup();
@@ -21,7 +21,7 @@ public:
 
   Vector3i dispatchAmount;
 
-  Flim::ComputeParams params;
+  Flim::ComputeParams& params;
 
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;

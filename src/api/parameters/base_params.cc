@@ -1,4 +1,5 @@
 #include "base_params.hh"
+#include "api/parameters/render_params.hh"
 #include "utils/checks.hh"
 namespace Flim {
 
