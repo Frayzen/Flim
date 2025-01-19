@@ -8,23 +8,22 @@
 
 namespace Flim {
 
-float curcamproj = 0.0f;
-
 void Camera::handleInputs2D(double deltaTime) {
-  auto adaptSpeed = deltaTime * speed;
+  auto curSpeed = deltaTime * speed;
   auto win = scene.api.getWindow();
   if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS)
-    transform.position += adaptSpeed * world.right();
+    transform.position += curSpeed * world.right();
   if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS)
-    transform.position += adaptSpeed * -world.right();
+    transform.position += curSpeed * -world.right();
   if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS)
-    transform.position += adaptSpeed * world.up();
+    transform.position += curSpeed * world.up();
   if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
-    transform.position += adaptSpeed * -world.up();
+    transform.position += curSpeed * -world.up();
   if (glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-    transform.position += adaptSpeed * -world.front();
+    orthoScale += curSpeed;
   if (glfwGetKey(win, GLFW_KEY_SPACE) == GLFW_PRESS)
-    transform.position += adaptSpeed * world.front();
+    orthoScale -= curSpeed;
+  orthoScale = std::clamp(orthoScale, minOrthoScale, maxOrthoScale);
 }
 
 void Camera::handleInputs3D(double deltaTime) {
@@ -82,18 +81,18 @@ Matrix4f Camera::getProjMat(float screenRatio) const {
   if (is2D) {
     Eigen::Matrix4f ortho = Eigen::Matrix4f::Identity();
     // Orthographic projection
-    float left = -screenRatio * scale;
-    float right = screenRatio * scale;
+    float left = -screenRatio * orthoScale;
+    float right = screenRatio * orthoScale;
     // inverted to match opengl y axis
-    float bottom = 1.0f * scale;
-    float top = -1.0f * scale;
+    float bottom = 1.0f * orthoScale;
+    float top = -1.0f * orthoScale;
 
     ortho(0, 0) = 2.0f / (right - left);
     ortho(1, 1) = 2.0f / (top - bottom);
-    ortho(2, 2) = -1.0f / (far - near);
+    ortho(2, 2) = -2.0f / (far - near);
     ortho(0, 3) = -(right + left) / (right - left);
     ortho(1, 3) = -(top + bottom) / (top - bottom);
-    ortho(2, 3) = -far / (far - near);
+    ortho(2, 3) = -(near) / (far - near);
     return ortho;
   } else {
     Eigen::Matrix4f proj = Eigen::Matrix4f::Identity();
@@ -106,6 +105,7 @@ Matrix4f Camera::getProjMat(float screenRatio) const {
     proj(2, 3) = -(2.0f * far * near) / (far - near);
     proj(3, 2) = -1.0f;
     proj(3, 3) = 0.0f;
+
     return proj;
   }
 }

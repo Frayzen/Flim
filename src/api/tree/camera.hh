@@ -5,8 +5,6 @@
 #include <fwd.hh>
 namespace Flim {
 
-extern float curcamproj;
-
 class Scene;
 
 class Camera {
@@ -17,7 +15,9 @@ public:
 
   bool is2D;
 
-  float scale;
+  float orthoScale;
+  float minOrthoScale;
+  float maxOrthoScale;
 
   float near;
   float far;
@@ -36,8 +36,9 @@ public:
 
 private:
   Camera(Scene &scene)
-      : scene(scene), is2D(false), near(0.1f), far(1000), fov(90), speed(1),
-        sensivity(1), pitch(0), yaw(0), lockPitch(45) {};
+      : scene(scene), is2D(false), near(0.1f), far(1000000), fov(90), speed(1),
+        sensivity(1), pitch(0), yaw(0), lockPitch(45), orthoScale(242),
+        minOrthoScale(0.1f), maxOrthoScale(1000) {};
   void handleInputs3D(double deltaTime);
   void handleInputs2D(double deltaTime);
   friend Scene;
