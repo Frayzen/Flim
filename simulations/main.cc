@@ -9,7 +9,7 @@
 #include "api/tree/camera.hh"
 #include "api/tree/instance.hh"
 #include "vulkan/buffers/attribute_descriptors.hh"
-#include "vulkan/buffers/attribute_utils.hh"
+#include "vulkan/buffers/params_utils.hh"
 #include "vulkan/buffers/uniform_descriptors.hh"
 #include <Eigen/src/Core/Matrix.h>
 #include <cstdlib>
@@ -83,8 +83,8 @@ int main() {
       });
   particlesParams.setUniform(2).attachObj<PointUniform>(pointDesc);
 
-  AttributeUtils::createVerticesAttribute(particlesParams, 0).computeFriendly(true);
-  auto& positions = AttributeUtils::createInstanceMatrixAttribute(particlesParams, 3).computeFriendly(true);
+  ParamsUtils::createVerticesAttribute(particlesParams, 0).computeFriendly(true);
+  auto& positions = ParamsUtils::createInstanceMatrixAttribute(particlesParams, 3).computeFriendly(true);
 
   auto &velocities = particlesParams.setAttribute(8, AttributeRate::INSTANCE)
                          .attach<Vector4f>([](const Mesh &m, Vector4f *vels) {
