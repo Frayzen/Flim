@@ -35,7 +35,7 @@ public:
   void updateModelViews();
 
 protected:
-  Mesh() : id(curid++) {};
+  Mesh();
 
   Material material;
   std::vector<Vertex> vertices;

@@ -1,13 +1,14 @@
 #!/bin/sh
+set -e
 
 cd $(dirname $0)
 
 ENV_NAME="flim"
-ENV_YML="debug-env.yml"
+ENV_YML="env.yml"
 
 eval "$(conda shell.bash hook)"
-conda env list | grep $ENV_NAME >/dev/null
-if [ $? -ne 0 ]; then
+
+if ! conda env list | grep "$ENV_NAME " >/dev/null; then
   echo "CREATING ENV '${ENV_NAME}' USING ENV '$ENV_YML'"
   conda env create -n $ENV_NAME -f $ENV_YML 
   conda activate $ENV_NAME
@@ -17,10 +18,11 @@ fi
 conda activate $ENV_NAME
 
 cmake . -B build -DCMAKE_BUILD_TYPE=Debug
-rm compile_commands.json
+rm -rf compile_commands.json
 rm -rf ./build/textures
-ln -s ./textures/ ./build/textures/
-ln -s ./build/compile_commands.json compile_commands.json
+ln -s $(pwd)/build/compile_commands.json compile_commands.json
+ln -s $(pwd)/textures/ $(pwd)/build/textures
+ln -s $(pwd)/resources/ $(pwd)/build/resources
 
 echo "Setup DONE"
 echo "You can now compile the project using:"

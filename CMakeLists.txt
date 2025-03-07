@@ -14,8 +14,13 @@ if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
   find_package(VulkanValidationLayers REQUIRED)
 endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
 
+
 file(GLOB_RECURSE sources src/*.cc)
 add_executable(engine ${sources})
+
+# Kokkos related
+find_package(Kokkos REQUIRED)
+target_link_libraries(engine Kokkos::kokkos)
 
 target_link_libraries(engine ${Vulkan_LIBRARY} glfw glm::glm assimp imgui)
 target_include_directories(engine PUBLIC ${CMAKE_SOURCE_DIR}/src)
