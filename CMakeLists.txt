@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 project(engine)
 
+
+find_package(HIP QUIET)
+if(HIP_FOUND)
+    message(STATUS "Found HIP: " ${HIP_VERSION})
+else()
+    message(FATAL_ERROR "Could not find HIP. Ensure that HIP is either installed in /opt/rocm/hip or the variable HIP_PATH is set to point to the right location.")
+endif()
+
 include(${CMAKE_SOURCE_DIR}/cmake/Dependencies.cmake)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -22,7 +30,7 @@ add_executable(engine ${sources})
 find_package(Kokkos REQUIRED)
 target_link_libraries(engine Kokkos::kokkos)
 
-target_link_libraries(engine ${Vulkan_LIBRARY} glfw glm::glm assimp imgui)
+target_link_libraries(engine ${Vulkan_LIBRARY} glfw glm::glm assimp imgui hip::host hip::device)
 target_include_directories(engine PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 add_subdirectory(shaders)

@@ -41,6 +41,11 @@ void DeviceManager::createLogicalDevice() {
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
   dynamicRenderingFeature.dynamicRendering = VK_TRUE;
 
+  // specify device address feature
+  VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeat = {};
+  bufferDeviceAddressFeat.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+  bufferDeviceAddressFeat.bufferDeviceAddress = VK_TRUE;
+  bufferDeviceAddressFeat.pNext = &dynamicRenderingFeature;
 
   // Specify the feature the context is using by setting them to VK_TRUE
   VkPhysicalDeviceFeatures deviceFeatures{};
@@ -59,7 +64,7 @@ void DeviceManager::createLogicalDevice() {
       static_cast<uint32_t>(deviceExtensions.size());
   createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-  createInfo.pNext = &dynamicRenderingFeature;
+  createInfo.pNext = &bufferDeviceAddressFeat;
 
   if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &context.device) !=
       VK_SUCCESS) {

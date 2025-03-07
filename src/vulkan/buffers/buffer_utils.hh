@@ -6,7 +6,7 @@
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                  VkMemoryPropertyFlags properties, Buffer &buffer);
+                  VkMemoryPropertyFlags properties, Buffer &buffer, void* pNextMem = nullptr, void* pNextBuf = nullptr);
 
 VkCommandBuffer beginSingleTimeCommands();
 

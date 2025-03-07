@@ -19,11 +19,12 @@ uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 }
 
 void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                  VkMemoryPropertyFlags properties, Buffer &buffer) {
+                  VkMemoryPropertyFlags properties, Buffer &buffer, void* pNextMem, void* pNextBuf) {
   VkBufferCreateInfo bufferInfo{};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   bufferInfo.size = size;
   bufferInfo.usage = usage;
+  bufferInfo.pNext = pNextBuf;
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   if (vkCreateBuffer(context.device, &bufferInfo, nullptr, &buffer.buffer) !=
@@ -37,6 +38,7 @@ void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
 
   VkMemoryAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.pNext = pNextMem;
   allocInfo.allocationSize = memRequirements.size;
   allocInfo.memoryTypeIndex =
       findMemoryType(memRequirements.memoryTypeBits, properties);

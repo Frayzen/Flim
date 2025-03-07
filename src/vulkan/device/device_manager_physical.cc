@@ -25,7 +25,7 @@ static bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
   for (const auto &extension : availableExtensions) {
     if (requiredExtensions.erase(extension.extensionName)) {
 #ifndef NDEBUG
-      std::cout << "Check extentsion " << extension.extensionName << std::endl;
+      std::cout << "Check extension " << extension.extensionName << std::endl;
 #endif
     }
   }

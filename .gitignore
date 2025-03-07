@@ -6,6 +6,9 @@
 !src/
 !src/**/
 
+!examples/
+!examples/**/
+
 !*.cc
 !*.hh
 !*.h

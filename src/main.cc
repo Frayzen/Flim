@@ -1,128 +1,110 @@
 #include "api/flim_api.hh"
-#include "api/parameters.hh"
-#include "api/render/mesh.hh"
-#include "api/render/mesh_utils.hh"
-#include "api/scene.hh"
-#include "api/tree/camera.hh"
-#include "api/tree/instance.hh"
-#include <cstdlib>
-#include <glm/common.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/fwd.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <imgui.h>
-#include <imgui_internal.h>
+#include "fwd.hh"
+#include "vulkan/buffers/buffer_utils.hh"
+#include "vulkan/context.hh"
+#include <Kokkos_Core.hpp>
+#include <Kokkos_Core_fwd.hpp>
+#include <decl/Kokkos_Declare_OPENMP.hpp>
+#include <hip/amd_detail/amd_hip_runtime.h>
+#include <iostream>
+#include <setup/Kokkos_Setup_HIP.hpp>
+#include <vulkan/vulkan_core.h>
 
-using namespace Flim;
-
-struct LocationUniform {
-  glm::mat4 model;
-  glm::mat4 view;
-  glm::mat4 proj;
-
-  static void update(const Mesh &mesh, const Camera &cam,
-                     LocationUniform *uni) {
-    uni->model = mesh.transform.getViewMatrix();
-    uni->view = cam.getViewMat();
-    uni->proj = cam.getProjMat(context.swapChain.swapChainExtent.width /
-                               (float)context.swapChain.swapChainExtent.height);
+#include <hip/hip_ext.h>
+#define HIP_CHECK(expression)                                                  \
+  {                                                                            \
+    const hipError_t status = expression;                                      \
+    if (status != hipSuccess) {                                                \
+      std::cerr << "HIP error " << status << ": " << hipGetErrorString(status) \
+                << " at " << __FILE__ << ":" << __LINE__ << std::endl;         \
+    }                                                                          \
   }
-};
-
-struct MaterialUniform {
-  alignas(16) glm::vec3 ambient;
-  alignas(16) glm::vec3 diffuse;
-  alignas(16) glm::vec3 specular;
-
-  static void update(const Mesh &mesh, const Camera &, MaterialUniform *uni) {
-    uni->ambient = mesh.getMaterial().ambient;
-    uni->diffuse = mesh.getMaterial().diffuse;
-    uni->specular = mesh.getMaterial().specular;
-  }
-};
-
-struct PointUniform {
-  float pointSize = 5.0f;
-  bool applyDiffuse = true;
-} pointDesc;
 
 int main() {
-  Flim::FlimAPI api = FlimAPI::init();
+  Kokkos::initialize();
 
-  Mesh teddy = MeshUtils::loadFromFile("resources/single_file/teddy.obj");
-  /* Mesh room = MeshUtils::loadFromFile("resources/viking_room/viking_room.obj"); */
+  Flim::FlimAPI api = Flim::FlimAPI::init();
+  {
+    Buffer buffer;
+    auto bufferSize = 10 * sizeof(float);
 
-  RenderParams renderParams = {
-      Shader("shaders/default.vert.spv"),
-      Shader("shaders/default.frag.spv"),
-  };
-  renderParams.addGeneralDescriptor(0)->attach<LocationUniform>();
-  renderParams.addGeneralDescriptor(1)->attach<MaterialUniform>();
-  renderParams.addGeneralDescriptor(2)->attach<PointUniform>(pointDesc);
-  renderParams.addImageDescriptor(3, teddy.getMaterial().texturePath);
+    VkExportMemoryAllocateInfo exportInfo{};
+    exportInfo.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
+    exportInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
 
-  Scene &scene = api.getScene();
-  scene.registerMesh(teddy, renderParams);
-  /* scene.registerMesh(room, renderParams); */
+    VkExternalMemoryBufferCreateInfo externalBufferInfo{};
+    externalBufferInfo.sType =
+        VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO;
+    externalBufferInfo.handleTypes =
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
 
-  constexpr int amount = 5;
-  vec3 velocities[amount * amount * amount] = {};
-  const float offset = 10;
-  float bounds = offset * (float)amount;
+    VkMemoryAllocateFlagsInfo flags_info{};
+    flags_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+    flags_info.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+    flags_info.pNext = &exportInfo;
 
-  for (int i = 0; i < amount; i++)
-    for (int j = 0; j < amount; j++)
-      for (int k = 0; k < amount; k++) {
-        Instance &teddy_obj = scene.instantiate(teddy);
-        teddy_obj.transform.scale = vec3(0.2f);
-        teddy_obj.transform.position = vec3(i, j, k) * offset;
-        teddy_obj.transform.scale = vec3(0.2f, 0.2f, 0.2f);
-        velocities[i * amount * amount + j * amount + k] = glm::normalize(
-            vec3(std::rand() - RAND_MAX / 2, std::rand() - RAND_MAX / 2,
-                 std::rand() - RAND_MAX / 2));
-      }
+    createBuffer(bufferSize,
+                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                 VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT, buffer, &flags_info,
+                 &externalBufferInfo);
 
-  scene.camera.speed = 30;
-  scene.camera.transform.position = vec3(0, 0, 0);
-  scene.camera.sensivity = 8;
+    // Export the memory handle
+    VkMemoryGetFdInfoKHR getFdInfo = {};
+    getFdInfo.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
+    getFdInfo.memory = buffer.bufferMemory;
+    getFdInfo.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
 
-  float timeSpeed = 0.0f;
-  int ret = api.run([&](float deltaTime) {
-    ImGui::Text("%i ms (%f FPS)", (int)deltaTime * 1000, 1.0f / deltaTime);
-    const char *items[] = {"Triangles", "Bars", "Dots"};
-    if (ImGui::Combo("Rendering type", ((int *)&(renderParams.mode)), items,
-                     IM_ARRAYSIZE(items))) {
-      renderParams.invalidate();
+    auto vkGetMemoryFdKHR = (PFN_vkGetMemoryFdKHR)vkGetInstanceProcAddr(
+        context.instance, "vkGetMemoryFdKHR");
+
+    int fd;
+    assert(vkGetMemoryFdKHR(context.device, &getFdInfo, &fd) == VK_SUCCESS);
+
+    HIP_CHECK(hipSetDevice(0));
+
+    // Import the memory handle into HIP
+    hipExternalMemoryHandleDesc extMemHandleDesc = {};
+    extMemHandleDesc.type = hipExternalMemoryHandleTypeOpaqueFd;
+    extMemHandleDesc.handle.fd = fd;
+    extMemHandleDesc.size = bufferSize;
+
+    hipExternalMemory_t extMem = nullptr;
+
+    HIP_CHECK(hipImportExternalMemory(&extMem, &extMemHandleDesc));
+
+    // Step 3: Map the external memory to a HIP buffer
+        hipExternalMemoryBufferDesc bufferDesc = {};
+    bufferDesc.offset = 0;
+    bufferDesc.size = bufferSize;
+    bufferDesc.flags = 0;
+
+    void *hipBuffer;
+    HIP_CHECK(hipExternalMemoryGetMappedBuffer(&hipBuffer, extMem, &bufferDesc));
+
+    // Now `hipBuffer` can be used in HIP kernels
+
+    Kokkos::View<float *, Kokkos::HIPSpace> tst((float *)hipBuffer, 10);
+    Kokkos::View<float *, Kokkos::HIPSpace> other("OKAY", 10);
+    std::cout << "GOT KOK ADDR " << other.data() << '\n';
+    std::cout << "GOT HIP ADDR" << hipBuffer << '\n';
+
+    Kokkos::parallel_for(
+        "Check", 10, KOKKOS_LAMBDA(const int i) { tst(i) = i * 3.14; });
+
+    Kokkos::View<float *, Kokkos::DefaultHostExecutionSpace> host("host", 10);
+    Kokkos::deep_copy(host, tst);
+    for (int i = 0; i < 10; i++) {
+      std::cout << "VAL " << i << " is " << host(i) << '\n';
     }
-    ImGui::SliderFloat3("Ambient color", (float *)&teddy.getMaterial().ambient,
-                        0.0f, 1.0f);
 
-    ImGui::SliderFloat3("Diffuse color", (float *)&teddy.getMaterial().diffuse,
-                        0.0f, 1.0f);
 
-    if (renderParams.mode == RendererMode::RENDERER_MODE_POINTS) {
-      ImGui::SliderFloat("Point size", &pointDesc.pointSize, 0.0f, 20.0f);
-      ImGui::Checkbox("Point diffuse color", &pointDesc.applyDiffuse);
-    }
-    ImGui::SliderFloat("Time speed", &timeSpeed, 0.0f, 100.0f);
-
-    for (int i = 0; i < amount * amount * amount; i++) {
-      vec3 &vel = velocities[i];
-      vec3 &pos = teddy.instances[i].transform.position;
-      pos += velocities[i] * deltaTime * timeSpeed;
-      if (pos.x < 0 || pos.x > bounds) {
-        vel.x *= -1;
-      }
-      if (pos.y < 0 || pos.y > bounds) {
-        vel.y *= -1;
-      }
-      if (pos.z < 0 || pos.z > bounds) {
-        vel.z *= -1;
-      }
-    }
-
-    teddy.updateModelViews();
-  });
-  api.cleanup();
-  return ret;
+    // Clean up
+    HIP_CHECK(hipFree(hipBuffer));
+    HIP_CHECK(hipDestroyExternalMemory(extMem));
+    close(fd);
+    destroyBuffer(buffer);
+  }
+  Kokkos::finalize();
+  return 0;
 }
