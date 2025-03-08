@@ -1,8 +1,9 @@
-#include "descriptors.hh"
+#include "uniform_descriptors.hh"
+
 #include "vulkan/buffers/buffer_utils.hh"
+#include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/buffers/texture_utils.hh"
 #include "vulkan/context.hh"
-#include "vulkan/rendering/renderer.hh"
 #include <cassert>
 #include <fwd.hh>
 #include <iostream>
@@ -11,11 +12,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <utils/stb_image.h>
 
-ImageDescriptor::ImageDescriptor(int binding, std::string path)
-    : BaseDescriptor(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER),
-      path(path), imageSetup(false) {}
+ImageUniDesc::ImageUniDesc(int binding, std::string path, int shaderStage)
+    : UniformDescriptor(binding, shaderStage,
+                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER),
+      path(path), imageSetup(false) {
+  redundancy = 0;
+}
 
-void ImageDescriptor::setup(Renderer &) {
+void ImageUniDesc::setup() {
   if (imageSetup)
     return;
   imageSetup = true;
@@ -35,18 +39,7 @@ void ImageDescriptor::setup(Renderer &) {
                 << std::endl;
   }
   VkDeviceSize imageSize = texWidth * texHeight * 4;
-
-  Buffer staging;
-
-  createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               staging);
-
-  void *data;
-  vkMapMemory(context.device, staging.bufferMemory, 0, imageSize, 0, &data);
-  memcpy(data, pixels, static_cast<size_t>(imageSize));
-  vkUnmapMemory(context.device, staging.bufferMemory);
+  Buffer staging = Buffer(pixels, imageSize);
   if (loaded)
     stbi_image_free(pixels);
   else
@@ -60,17 +53,13 @@ void ImageDescriptor::setup(Renderer &) {
               VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   transitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  copyBufferToImage(staging.buffer, image);
+  copyBufferToImage(staging.getVkBuffer(), image);
   transitionImageLayout(image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  vkDestroyBuffer(context.device, staging.buffer, nullptr);
-  vkFreeMemory(context.device, staging.bufferMemory, nullptr);
-
+  staging.destroy();
   // Image view
   createImageView(image, VK_IMAGE_ASPECT_COLOR_BIT);
-
   // Sampler
-
   VkSamplerCreateInfo samplerInfo{};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   samplerInfo.magFilter = VK_FILTER_LINEAR; // when oversampling
@@ -78,7 +67,6 @@ void ImageDescriptor::setup(Renderer &) {
   samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
   // Apply anisotropy (for rendering object viewed at a sharp angle)
   VkPhysicalDeviceProperties properties{};
   vkGetPhysicalDeviceProperties(context.physicalDevice, &properties);
@@ -106,7 +94,8 @@ void ImageDescriptor::setup(Renderer &) {
   }
 }
 
-VkWriteDescriptorSet ImageDescriptor::getDescriptor(Renderer &renderer, int i) {
+VkWriteDescriptorSet ImageUniDesc::getDescriptor(DescriptorHolder &holder,
+                                                 int i) {
   assert(imageSetup);
   static VkDescriptorImageInfo imageInfo{};
   imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -114,7 +103,7 @@ VkWriteDescriptorSet ImageDescriptor::getDescriptor(Renderer &renderer, int i) {
   imageInfo.sampler = image.sampler;
   VkWriteDescriptorSet descriptor{};
   descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptor.dstSet = renderer.descriptorSets[i];
+  descriptor.dstSet = holder.descriptorSets[i];
   descriptor.dstBinding = binding;
   descriptor.dstArrayElement = 0;
   descriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -123,10 +112,9 @@ VkWriteDescriptorSet ImageDescriptor::getDescriptor(Renderer &renderer, int i) {
   return descriptor;
 }
 
-void ImageDescriptor::cleanup(Renderer &) {
+void ImageUniDesc::cleanup() {
   if (!imageSetup)
     return;
-  std::cout << "Clean image" << std::endl;
   vkDestroySampler(context.device, image.sampler, nullptr);
   vkDestroyImageView(context.device, image.view, nullptr);
   vkDestroyImage(context.device, image.textureImage, nullptr);
@@ -134,31 +122,24 @@ void ImageDescriptor::cleanup(Renderer &) {
   imageSetup = false;
 }
 
-void GeneralDescriptor::setup(Renderer &renderer) {
+void GeneralUniDesc::setup() {
   assert(bufferSize != 0);
-
-  renderer.mappedUniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
-  renderer.uniforms[id].resize(MAX_FRAMES_IN_FLIGHT);
-
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                 renderer.uniforms[id][i]);
-    vkMapMemory(context.device, renderer.uniforms[id][i].bufferMemory, 0,
-                bufferSize, 0, &renderer.mappedUniforms[id][i]);
-  }
+  setupBuffers(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  for (auto &b : getBuffers())
+    b->map();
 }
 
-VkWriteDescriptorSet GeneralDescriptor::getDescriptor(Renderer &renderer,
-                                                      int i) {
+VkWriteDescriptorSet GeneralUniDesc::getDescriptor(DescriptorHolder &holder,
+                                                   int i) {
   assert(bufferSize != 0);
-  bufferInfo.buffer = renderer.uniforms[id][i].buffer;
+  bufferInfo.buffer = getBuffer(i)->getVkBuffer();
   bufferInfo.offset = 0;
   bufferInfo.range = bufferSize;
   VkWriteDescriptorSet descriptor{};
   descriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptor.dstSet = renderer.descriptorSets[i];
+  descriptor.dstSet = holder.descriptorSets[i];
   descriptor.dstBinding = binding;
   descriptor.dstArrayElement = 0;
   descriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -167,16 +148,8 @@ VkWriteDescriptorSet GeneralDescriptor::getDescriptor(Renderer &renderer,
   return descriptor;
 }
 
-void GeneralDescriptor::cleanup(Renderer &renderer) {
-  for (size_t i = 0; i < renderer.uniforms[id].size(); i++) {
-    vkDestroyBuffer(context.device, renderer.uniforms[id][i].buffer, nullptr);
-    vkFreeMemory(context.device, renderer.uniforms[id][i].bufferMemory,
-                 nullptr);
-  }
-}
+void GeneralUniDesc::cleanup() { cleanupBuffers(); }
 
-void GeneralDescriptor::update(Renderer &renderer, const Flim::Mesh &mesh,
-                               const Flim::Camera &cam) {
-  void *curBuf = renderer.mappedUniforms[id][context.currentImage];
-  updateFunction(mesh, cam, curBuf);
+void GeneralUniDesc::update() {
+  updateFunction(getBuffer()->getPtr());
 };

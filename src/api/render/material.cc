@@ -1,4 +1,5 @@
 #include "material.hh"
+#include <fwd.hh>
 #include <iostream>
 
 namespace Flim {
@@ -14,9 +15,9 @@ Material Material::createFrom(aiMaterial *aiMat) {
   aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, dif);
   aiMat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
 
-  m.ambient = vec3(amb.r, amb.g, amb.b);
-  m.diffuse = vec3(dif.r, dif.g, dif.b);
-  m.specular = vec3(spec.r, spec.g, spec.b);
+  m.ambient = Vector3f(amb.r, amb.g, amb.b);
+  m.diffuse = Vector3f(dif.r, dif.g, dif.b);
+  m.specular = Vector3f(spec.r, spec.g, spec.b);
 
   aiMat->Get(AI_MATKEY_SHININESS, m.shininess);
   aiMat->Get(AI_MATKEY_SHININESS_STRENGTH, m.shininess_strength);

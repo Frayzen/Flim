@@ -14,39 +14,7 @@ uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
       return i;
     }
   }
-
   throw std::runtime_error("failed to find suitable memory type!");
-}
-
-void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                  VkMemoryPropertyFlags properties, Buffer &buffer) {
-  VkBufferCreateInfo bufferInfo{};
-  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  bufferInfo.size = size;
-  bufferInfo.usage = usage;
-  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-  if (vkCreateBuffer(context.device, &bufferInfo, nullptr, &buffer.buffer) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("failed to create buffer!");
-  }
-
-  VkMemoryRequirements memRequirements;
-  vkGetBufferMemoryRequirements(context.device, buffer.buffer,
-                                &memRequirements);
-
-  VkMemoryAllocateInfo allocInfo{};
-  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  allocInfo.allocationSize = memRequirements.size;
-  allocInfo.memoryTypeIndex =
-      findMemoryType(memRequirements.memoryTypeBits, properties);
-
-  if (vkAllocateMemory(context.device, &allocInfo, nullptr,
-                       &buffer.bufferMemory) != VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate buffer memory!");
-  }
-
-  vkBindBufferMemory(context.device, buffer.buffer, buffer.bufferMemory, 0);
 }
 
 VkCommandBuffer beginSingleTimeCommands() {
@@ -90,7 +58,21 @@ void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
                        &commandBuffer);
 }
 
-void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+// Buffer class related -----
+
+void Buffer::populate(void *data) const {
+  Buffer stagingBuffer(size);
+  stagingBuffer.create(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  stagingBuffer.map();
+  memcpy(stagingBuffer.mappedPtr, data, (size_t)size);
+  stagingBuffer.unmap();
+  copy(stagingBuffer);
+  stagingBuffer.destroy();
+}
+
+void Buffer::copy(const Buffer &from) const {
   VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
   // Create the CmdCopyBuffer command
@@ -99,40 +81,62 @@ void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
   copyRegion.dstOffset = 0; // Optional
   copyRegion.size = size;
   // Append it to the list
-  vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+  vkCmdCopyBuffer(commandBuffer, from.buffer, buffer, 1, &copyRegion);
 
   endSingleTimeCommands(commandBuffer);
 }
 
-void populateBufferFromData(Buffer &buffer, VkBufferUsageFlags usage,
-                            void *data, size_t dataSize,
-                            VkMemoryPropertyFlags properties) {
-  Buffer stagingBuffer;
-  createBuffer(
-      dataSize,
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT, // required to be passed as source
-                                        // in a memory transfer operation
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, // means that the state of the
-                                                // bound buffer reflect the
-                                                // state of the actual buffer
-      stagingBuffer);
-  void *mapped;
-  vkMapMemory(context.device, stagingBuffer.bufferMemory, 0, dataSize, 0,
-              &mapped);
-  memcpy(mapped, data, (size_t)dataSize);
-  vkUnmapMemory(context.device, stagingBuffer.bufferMemory);
-
-  // VK_BUFFER_USAGE_TRANSFER_DST_BIT required to be passed as destination in a
-  // memory transfer operation
-
-  createBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage, properties,
-               buffer);
-  copyBuffer(stagingBuffer.buffer, buffer.buffer, dataSize);
-  vkDestroyBuffer(context.device, stagingBuffer.buffer, nullptr);
-  vkFreeMemory(context.device, stagingBuffer.bufferMemory, nullptr);
+void Buffer::map() {
+  if (mappedPtr != nullptr)
+    return;
+  vkMapMemory(context.device, bufferMemory, 0, size, 0, &mappedPtr);
 }
-void destroyBuffer(Buffer &buffer) {
-  vkDestroyBuffer(context.device, buffer.buffer, nullptr);
-  vkFreeMemory(context.device, buffer.bufferMemory, nullptr);
+
+void Buffer::unmap() {
+  if (mappedPtr == nullptr)
+    return;
+  vkUnmapMemory(context.device, bufferMemory);
+  mappedPtr = nullptr;
+}
+
+void Buffer::destroy() {
+  if (!created)
+    return;
+  if (mappedPtr)
+    unmap();
+  vkDestroyBuffer(context.device, buffer, nullptr);
+  vkFreeMemory(context.device, bufferMemory, nullptr);
+}
+
+void Buffer::create(VkBufferUsageFlags usage,
+                    VkMemoryPropertyFlags properties) {
+  if (created)
+    return;
+  VkBufferCreateInfo bufferInfo{};
+  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  bufferInfo.size = size;
+  bufferInfo.usage = usage;
+  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  if (vkCreateBuffer(context.device, &bufferInfo, nullptr, &buffer) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to create buffer!");
+  }
+
+  VkMemoryRequirements memRequirements;
+  vkGetBufferMemoryRequirements(context.device, buffer, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex =
+      findMemoryType(memRequirements.memoryTypeBits, properties);
+
+  if (vkAllocateMemory(context.device, &allocInfo, nullptr, &bufferMemory) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to allocate buffer memory!");
+  }
+
+  vkBindBufferMemory(context.device, buffer, bufferMemory, 0);
+  created = true;
 }

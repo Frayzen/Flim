@@ -20,3 +20,4 @@ endfunction()
 
 add_shaders("VertexShader" default.vert)
 add_shaders("FragmentShader" default.frag)
+add_shaders("ComputeShader" default.comp)

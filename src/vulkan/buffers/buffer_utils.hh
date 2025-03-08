@@ -3,20 +3,46 @@
 #include <fwd.hh>
 #include <vulkan/vulkan_core.h>
 
-uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+class Buffer {
+public:
+  Buffer(void *ptr, int size, VkBufferUsageFlags usage = 0,
+         VkMemoryPropertyFlags properties = 0)
+      : Buffer(size) {
+    create(VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage,
+           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | properties);
+    populate(ptr);
+  };
 
-void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                  VkMemoryPropertyFlags properties, Buffer &buffer);
+  Buffer(int size)
+      : size(size), created(false), mappedPtr(nullptr), buffer(0) {};
+
+  const VkDeviceMemory &getVkBufferMemory() const { return bufferMemory; };
+  const VkBuffer &getVkBuffer() const { return buffer; };
+  void *getPtr() const { return mappedPtr; };
+  int getSize() const { return size; };
+  void map();
+  void unmap();
+
+  void copy(const Buffer &from) const;
+  void populate(void *value) const;
+
+  void create(VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+  void destroy();
+
+private:
+  VkBufferUsageFlags usage;
+  VkMemoryPropertyFlags properties;
+
+  bool created;
+  int size; // in bytes
+  VkDeviceMemory bufferMemory;
+  VkBuffer buffer;
+  void *mappedPtr;
+};
+
+uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 VkCommandBuffer beginSingleTimeCommands();
 
 void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-
-void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
-void populateBufferFromData(Buffer &buffer, VkBufferUsageFlags usage,
-                            void *data, size_t dataSize,
-                            VkMemoryPropertyFlags properties =
-                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-void destroyBuffer(Buffer &buffer);

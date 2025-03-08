@@ -10,4 +10,8 @@ public:
 
   void setupSwapChainImages();
   void createImageViews();
+
+  void createDepthResources();
+
+private:
 };

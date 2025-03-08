@@ -6,12 +6,16 @@
 !src/
 !src/**/
 
+!simulations/
+!simulations/**/
+
 !*.cc
 !*.hh
 !*.h
 
 !*.vert
 !*.frag
+!*.comp
 
 !*.cmake
 

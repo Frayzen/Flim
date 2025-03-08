@@ -1,8 +1,8 @@
 #include "pipeline.hh"
-#include "api/parameters.hh"
+#include "api/parameters/render_params.hh"
+#include "api/render/mesh.hh"
 #include "vulkan/context.hh"
 #include "vulkan/rendering/renderer.hh"
-#include <glm/fwd.hpp>
 #include <iostream>
 #include <vulkan/vulkan_core.h>
 
@@ -11,81 +11,10 @@ void Pipeline::cleanup() {
   vkDestroyPipelineLayout(context.device, pipelineLayout, nullptr);
 }
 
-inline std::vector<VkVertexInputBindingDescription> getBindingDescription() {
-  std::vector<VkVertexInputBindingDescription> bindingDescriptions(2);
-  bindingDescriptions[0].binding = 0;
-  bindingDescriptions[0].stride = sizeof(Flim::Vertex);
-  bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-  bindingDescriptions[1].binding = 1;
-  bindingDescriptions[1].stride = sizeof(glm::mat4);
-  bindingDescriptions[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-
-  return bindingDescriptions;
-}
-
-inline std::vector<VkVertexInputAttributeDescription>
-getAttributeDescriptions() {
-  std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3 +
-                                                                       4 * 1);
-
-  attributeDescriptions[0].binding = 0;
-  attributeDescriptions[0].location = 0;
-  attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attributeDescriptions[0].offset = offsetof(Flim::Vertex, pos);
-
-  attributeDescriptions[1].binding = 0;
-  attributeDescriptions[1].location = 1;
-  attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-  attributeDescriptions[1].offset = offsetof(Flim::Vertex, normal);
-
-  attributeDescriptions[2].binding = 0;
-  attributeDescriptions[2].location = 2;
-  attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-  attributeDescriptions[2].offset = offsetof(Flim::Vertex, uv);
-
-  for (int i = 0; i < 4; i++) { // attribute for a glm::mat4
-    attributeDescriptions[3 + i].binding = 1;
-    attributeDescriptions[3 + i].location = 3 + i;
-    attributeDescriptions[3 + i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[3 + i].offset = sizeof(glm::vec4) * i;
-  }
-
-  return attributeDescriptions;
-}
-
-/*
-Shader stages: the shader modules that define the functionality of the
-programmable stages of the graphics pipeline
-
-Fixed-function state: all of the structures that define the fixed-function
-stages of the pipeline, like input assembly, rasterizer, viewport and color
-blending
-
-Pipeline layout: the uniform and push values referenced by the shader that can
-be updated at draw time
-
-Render pass: the attachments referenced by the pipeline stages and their usage
-*/
-
-static VkShaderModule createShaderModule(VulkanContext &context,
-                                         const std::vector<char> &code) {
-  VkShaderModuleCreateInfo createInfo{};
-  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  createInfo.codeSize = code.size();
-  createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
-  VkShaderModule shaderModule;
-  if (vkCreateShaderModule(context.device, &createInfo, nullptr,
-                           &shaderModule) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create shader module!");
-  }
-  return shaderModule;
-}
-
 void Pipeline::create() {
   Flim::RenderParams &params = renderer.params;
-  vertShaderModule = createShaderModule(context, params.vertexShader.code);
-  fragShaderModule = createShaderModule(context, params.fragmentShader.code);
+  vertShaderModule = params.vertexShader.createShaderModule();
+  fragShaderModule = params.fragmentShader.createShaderModule();
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
   vertShaderStageInfo.sType =
@@ -136,11 +65,10 @@ void Pipeline::create() {
 
   VkPipelineRasterizationStateCreateInfo rasterizer{};
   rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-  rasterizer.depthClampEnable = VK_FALSE;
 
   // If set to VK_TRUE, then fragments that are beyond the near and far planes
   // are clamped to them as opposed to discarding them.
-  rasterizer.rasterizerDiscardEnable = VK_FALSE;
+  rasterizer.depthClampEnable = VK_FALSE;
   // If set to VK_TRUE, then geometry never passes through the rasterizer stage.
   // This basically disables any output to the framebuffer.
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
@@ -157,7 +85,9 @@ void Pipeline::create() {
   rasterizer.lineWidth = 3.0f;
 
   // cullMode variable determines the type of face culling to use
-  rasterizer.cullMode = VK_CULL_MODE_NONE;
+  rasterizer.cullMode = renderer.params.useBackfaceCulling
+                            ? VK_CULL_MODE_FRONT_BIT
+                            : VK_CULL_MODE_NONE;
   // frontFace variable specifies the vertex order for faces to be considered
   // front-facing
   rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -210,8 +140,8 @@ void Pipeline::create() {
     throw std::runtime_error("failed to create pipeline layout!");
   }
 
-  auto bindingDescriptions = getBindingDescription();
-  auto attributeDescriptions = getAttributeDescriptions();
+  auto bindingDescriptions = renderer.params.getBindingDescription();
+  auto attributeDescriptions = renderer.params.getAttributeDescriptions();
 
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType =

@@ -1,11 +1,16 @@
 #include "command_pool_manager.hh"
+#include "api/parameters/render_params.hh"
 #include "api/render/mesh.hh"
 #include "consts.hh"
+#include "vulkan/context.hh"
 #include "vulkan/device/device_utils.hh"
 #include "vulkan/rendering/renderer.hh"
 
 #include <cstdint>
+#include <iostream>
+#include <optional>
 #include <stdexcept>
+#include <sys/types.h>
 #include <vulkan/vulkan_core.h>
 
 void CommandPoolManager::createCommandPool() {
@@ -17,11 +22,29 @@ void CommandPoolManager::createCommandPool() {
   // Allow command buffers to be rerecorded individually, without this flag they
   // all have to be reset together
   poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+  poolInfo.queueFamilyIndex =
+      queueFamilyIndices.graphicsAndComputeFamily.value();
 
   if (vkCreateCommandPool(context.device, &poolInfo, nullptr,
                           &commandPool.pool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create command pool!");
+  }
+}
+
+static VkAccessFlags getAccessMask(VkImageLayout layout) {
+  // from: VK_IMAGE_LAYOUT_UNDEFINED, to
+  // VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL from:
+  // VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, to
+  // VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+  switch (layout) {
+  case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+    return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  case VK_IMAGE_LAYOUT_UNDEFINED:
+    return VK_ACCESS_TRANSFER_READ_BIT;
+  case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+    return VK_ACCESS_MEMORY_READ_BIT;
+  default:
+    throw std::runtime_error("unexpected layout");
   }
 }
 
@@ -42,57 +65,89 @@ static void createImageMemoryBarrier(const VkCommandBuffer &commandBuffer,
   barrier.subresourceRange.layerCount = 1;
 
   // Define access masks
-  barrier.srcAccessMask =
-      VK_ACCESS_NONE_KHR; // For VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-  barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-  vkCmdPipelineBarrier(
-      commandBuffer,
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Source stage
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Destination stage
-      0,                                             // Flags
-      0, nullptr,                                    // Memory barriers
-      0, nullptr,                                    // Buffer memory barriers
-      1, &barrier                                    // Image memory barrier
+  if (to == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+    barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  } else {
+    barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  }
+
+  VkPipelineStageFlagBits srcstage, dststage;
+  if (to == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+    srcstage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dststage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  } else {
+    srcstage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    dststage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  }
+
+  vkCmdPipelineBarrier(commandBuffer,
+                       srcstage,   // Source stage
+                       dststage,   // Destination stage
+                       0,          // Flags
+                       0, nullptr, // Memory barriers
+                       0, nullptr, // Buffer memory barriers
+                       1, &barrier // Image memory barrier
   );
 }
 
-void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
-  VkCommandBuffer commandBuffer =
-      commandPool.commandBuffers[context.currentImage];
-  // Draw calls here
-  Flim::Mesh &mesh = renderer.mesh;
+void CommandPoolManager::recordCommandBuffer(const Computer &computer) {
+  VkCommandBuffer computeBuffer =
+      commandPool.computeBuffers[context.currentImage];
+  vkCmdBindPipeline(computeBuffer, VK_PIPELINE_BIND_POINT_COMPUTE,
+                    computer.pipeline);
+  vkCmdBindDescriptorSets(computeBuffer, VK_PIPELINE_BIND_POINT_COMPUTE,
+                          computer.pipelineLayout, 0, 1,
+                          &computer.descriptorSets[context.currentImage], 0, 0);
+  vkCmdDispatch(computeBuffer, computer.dispatchAmount.x(),
+                computer.dispatchAmount.y(), computer.dispatchAmount.z());
+}
 
-  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
+  VkCommandBuffer graphicBuffer =
+      commandPool.graphicBuffers[context.currentImage];
+  // Draw calls here
+  const Flim::Mesh &mesh = renderer.mesh;
+
+  vkCmdBindPipeline(graphicBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     renderer.pipeline.pipeline);
 
-  VkBuffer vertexBuffers[] = {renderer.vertexBuffer.buffer, renderer.instancesMatrixBuffer.buffer};
-  VkDeviceSize offsets[] = {0, 0};
-  vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
-  vkCmdBindIndexBuffer(commandBuffer, renderer.indexBuffer.buffer, 0,
+  std::vector<VkBuffer> vertexBuffers;
+  for (auto &attr : renderer.params.getAttributeDescriptors()) {
+    /* std::vector<VkDeviceSize> offsets = attr.second->getOffsets(); */
+    const VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(graphicBuffer, attr.first, 1,
+                           &attr.second->getBuffer()->getVkBuffer(), &offset);
+  }
+
+  vkCmdBindIndexBuffer(graphicBuffer, renderer.indexBuffer.getVkBuffer(), 0,
                        VK_INDEX_TYPE_UINT16);
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  vkCmdBindDescriptorSets(graphicBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           renderer.pipeline.pipelineLayout, 0, 1,
                           &renderer.descriptorSets[context.currentImage], 0,
                           nullptr);
   uint32_t nbIndices = static_cast<uint32_t>(mesh.indices.size());
-  vkCmdDrawIndexed(commandBuffer, nbIndices, renderer.mesh.instances.size(), 0, 0, 0);
+  vkCmdDrawIndexed(graphicBuffer, nbIndices, renderer.mesh.instances.size(), 0,
+                   0, 0);
 }
 
-void CommandPoolManager::createCommandBuffers() {
-  commandPool.commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-
+void CommandPoolManager::createCommandBuffer(
+    std::vector<VkCommandBuffer> &buffers) {
+  buffers.resize(MAX_FRAMES_IN_FLIGHT);
   VkCommandBufferAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.commandPool = commandPool.pool;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandBufferCount = (uint32_t)commandPool.commandBuffers.size();
-
-  if (vkAllocateCommandBuffers(context.device, &allocInfo,
-                               commandPool.commandBuffers.data()) !=
+  allocInfo.commandBufferCount = (uint32_t)commandPool.graphicBuffers.size();
+  if (vkAllocateCommandBuffers(context.device, &allocInfo, buffers.data()) !=
       VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate command buffers!");
+    throw std::runtime_error("failed to allocate graphic buffers!");
   }
+}
+
+void CommandPoolManager::createCommandBuffers() {
+  createCommandBuffer(commandPool.graphicBuffers);
+  createCommandBuffer(commandPool.computeBuffers);
 }
 
 void CommandPoolManager::createSyncObjects() {
@@ -100,9 +155,15 @@ void CommandPoolManager::createSyncObjects() {
   auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
   auto &inFlightFences = commandPool.inFlightFences;
 
+  auto &computeFinishedSemaphores = commandPool.computeFinishedSemaphores;
+  auto &computeInFlightFences = commandPool.computeInFlightFences;
+
   imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
   renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
   inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
+  computeInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+  computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 
   VkSemaphoreCreateInfo semaphoreInfo{};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -119,6 +180,10 @@ void CommandPoolManager::createSyncObjects() {
         vkCreateSemaphore(device, &semaphoreInfo, nullptr,
                           &renderFinishedSemaphores[i]) != VK_SUCCESS ||
         vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) !=
+            VK_SUCCESS ||
+        vkCreateSemaphore(device, &semaphoreInfo, nullptr,
+                          &computeFinishedSemaphores[i]) != VK_SUCCESS ||
+        vkCreateFence(device, &fenceInfo, nullptr, &computeInFlightFences[i]) !=
             VK_SUCCESS) {
 
       throw std::runtime_error(
@@ -128,6 +193,23 @@ void CommandPoolManager::createSyncObjects() {
 }
 
 static uint32_t imageIndex;
+
+static void beginCmdBuffer(VkCommandBuffer &cmdBuffer) {
+  vkResetCommandBuffer(cmdBuffer, 0);
+
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = 0;                  // Optional
+  beginInfo.pInheritanceInfo = nullptr; // Optional
+
+  if (vkBeginCommandBuffer(cmdBuffer, &beginInfo) != VK_SUCCESS) {
+    throw std::runtime_error("failed to begin recording command buffer!");
+  }
+
+  createImageMemoryBarrier(cmdBuffer, VK_IMAGE_LAYOUT_UNDEFINED,
+                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                           context.swapChain.swapChainImages[imageIndex]);
+}
 
 bool CommandPoolManager::acquireFrame() {
   auto &device = context.device;
@@ -142,24 +224,20 @@ bool CommandPoolManager::acquireFrame() {
   if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
     throw std::runtime_error("failed to acquire swap chain image!");
   auto &inFlightFences = commandPool.inFlightFences;
+  auto &computeInFlightFences = commandPool.computeInFlightFences;
+
   // Only reset the fence if we are submitting work
-  VkCommandBuffer &commandBuffer =
-      commandPool.commandBuffers[context.currentImage];
   vkResetFences(context.device, 1, &inFlightFences[context.currentImage]);
-  vkResetCommandBuffer(commandBuffer, 0);
+  vkResetFences(context.device, 1,
+                &computeInFlightFences[context.currentImage]);
 
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = 0;                  // Optional
-  beginInfo.pInheritanceInfo = nullptr; // Optional
+  VkCommandBuffer &graphicBuffer =
+      commandPool.graphicBuffers[context.currentImage];
+  beginCmdBuffer(graphicBuffer);
 
-  if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-    throw std::runtime_error("failed to begin recording command buffer!");
-  }
-
-  createImageMemoryBarrier(commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED,
-                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                           context.swapChain.swapChainImages[imageIndex]);
+  VkCommandBuffer &computeBuffer =
+      commandPool.computeBuffers[context.currentImage];
+  beginCmdBuffer(computeBuffer);
 
   VkRenderingAttachmentInfo depthInfo{};
   depthInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
@@ -191,7 +269,7 @@ bool CommandPoolManager::acquireFrame() {
   auto vkCmdBeginRenderingKHR =
       (PFN_vkCmdBeginRenderingKHR)vkGetInstanceProcAddr(
           context.instance, "vkCmdBeginRenderingKHR");
-  vkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
+  vkCmdBeginRenderingKHR(graphicBuffer, &renderInfo);
 
   // viewport and scissor state for this pipeline are dynamic
   VkViewport viewport{};
@@ -202,62 +280,91 @@ bool CommandPoolManager::acquireFrame() {
       static_cast<float>(context.swapChain.swapChainExtent.height);
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
-  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+  vkCmdSetViewport(graphicBuffer, 0, 1, &viewport);
 
   VkRect2D scissor{};
   scissor.offset = {0, 0};
   scissor.extent = context.swapChain.swapChainExtent;
-  vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+  vkCmdSetScissor(graphicBuffer, 0, 1, &scissor);
   return false;
 }
 
-bool CommandPoolManager::submitFrame(bool framebufferResized) {
-
-  auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
-  auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
-  auto &inFlightFences = commandPool.inFlightFences;
-  auto &commandBuffers = commandPool.commandBuffers;
-
-  auto &commandBuffer = commandBuffers[context.currentImage];
-  auto vkCmdEndRenderingKHR = (PFN_vkCmdEndRenderingKHR)vkGetInstanceProcAddr(
-      context.instance, "vkCmdEndRenderingKHR");
-  vkCmdEndRenderingKHR(commandBuffer);
-
-  createImageMemoryBarrier(commandBuffer,
-                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                           VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                           context.swapChain.swapChainImages[imageIndex]);
-
-  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+static void endCmdBuffer(
+    VkCommandBuffer &cmdBuffer, VkQueue &queue,
+    std::optional<std::vector<VkSemaphore>> waitSemaphore = std::nullopt,
+    std::optional<VkSemaphore> signalSemaphore = std::nullopt,
+    std::optional<VkFence> fence = std::nullopt) {
+  if (vkEndCommandBuffer(cmdBuffer) != VK_SUCCESS) {
     throw std::runtime_error("failed to record command buffer!");
   }
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-  VkSemaphore waitSemaphores[] = {
-      imageAvailableSemaphores[context.currentImage]};
+  // TODO handle that in parameters
   VkPipelineStageFlags waitStages[] = {
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = waitSemaphores;
-  submitInfo.pWaitDstStageMask = waitStages;
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      VK_PIPELINE_STAGE_VERTEX_INPUT_BIT};
+  if (waitSemaphore.has_value()) {
+    auto &wsems = waitSemaphore.value();
+    submitInfo.waitSemaphoreCount = wsems.size();
+    submitInfo.pWaitSemaphores = wsems.data();
+    submitInfo.pWaitDstStageMask = waitStages;
+  }
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffers[context.currentImage];
+  submitInfo.pCommandBuffers = &cmdBuffer;
 
-  VkSemaphore signalSemaphores[] = {
-      renderFinishedSemaphores[context.currentImage]};
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = signalSemaphores;
-  if (vkQueueSubmit(context.queues.graphicsQueue, 1, &submitInfo,
-                    inFlightFences[context.currentImage]) != VK_SUCCESS) {
+  if (signalSemaphore.has_value()) {
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &signalSemaphore.value();
+  }
+
+  if (vkQueueSubmit(queue, 1, &submitInfo, fence.value_or(nullptr)) !=
+      VK_SUCCESS) {
     throw std::runtime_error("failed to submit draw command buffer!");
   }
+}
+
+bool CommandPoolManager::submitFrame(bool framebufferResized) {
+  auto &imageAvailableSemaphores = commandPool.imageAvailableSemaphores;
+  auto &renderFinishedSemaphores = commandPool.renderFinishedSemaphores;
+  auto &inFlightFences = commandPool.inFlightFences;
+  auto &graphicsBuffer = commandPool.graphicBuffers[context.currentImage];
+
+  auto &computeFinishedSemaphores = commandPool.computeFinishedSemaphores;
+  auto &computeInFlightFences = commandPool.computeInFlightFences;
+  auto &computeBuffer = commandPool.computeBuffers[context.currentImage];
+
+  // COMPUTE QUEUE
+  endCmdBuffer(computeBuffer, context.queues.computeQueue, std::nullopt,
+               computeFinishedSemaphores[context.currentImage],
+               computeInFlightFences[context.currentImage]);
+
+  // GRAPHIC QUEUE
+  auto vkCmdEndRenderingKHR = (PFN_vkCmdEndRenderingKHR)vkGetInstanceProcAddr(
+      context.instance, "vkCmdEndRenderingKHR");
+  vkCmdEndRenderingKHR(graphicsBuffer);
+
+  createImageMemoryBarrier(graphicsBuffer,
+                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                           VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                           context.swapChain.swapChainImages[imageIndex]);
+  std::vector<VkSemaphore> waitSemaphores = {
+      imageAvailableSemaphores[context.currentImage],
+      computeFinishedSemaphores[context.currentImage],
+  };
+  endCmdBuffer(graphicsBuffer, context.queues.graphicsQueue, waitSemaphores,
+               renderFinishedSemaphores[context.currentImage],
+               inFlightFences[context.currentImage]);
+
+  // PRESENT
+
+  vkDeviceWaitIdle(context.device);
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   // specify which semaphores to wait on before presentation can hcontext
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = signalSemaphores;
+  presentInfo.pWaitSemaphores = &renderFinishedSemaphores[context.currentImage];
 
   VkSwapchainKHR swapChains[] = {context.swapChain.swapChain};
   presentInfo.swapchainCount = 1;
@@ -272,17 +379,24 @@ bool CommandPoolManager::submitFrame(bool framebufferResized) {
   if (result != VK_SUCCESS)
     throw std::runtime_error("failed to acquire swap chain image!");
   context.currentImage = (context.currentImage + 1) % MAX_FRAMES_IN_FLIGHT;
+  context.currentUpdate = (context.currentImage + 1) % MAX_FRAMES_IN_FLIGHT;
   return false;
 }
 
 void CommandPoolManager::cleanup() {
   auto device = context.device;
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    // Graphic
     vkDestroySemaphore(device, commandPool.renderFinishedSemaphores[i],
                        nullptr);
     vkDestroySemaphore(device, commandPool.imageAvailableSemaphores[i],
                        nullptr);
     vkDestroyFence(device, commandPool.inFlightFences[i], nullptr);
+
+    // Compute
+    vkDestroySemaphore(device, commandPool.computeFinishedSemaphores[i],
+                       nullptr);
+    vkDestroyFence(device, commandPool.computeInFlightFences[i], nullptr);
   }
   vkDestroyCommandPool(context.device, commandPool.pool, nullptr);
 }

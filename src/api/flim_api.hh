@@ -1,6 +1,5 @@
 #pragma once
 
-#include "api/parameters.hh"
 #include "api/scene.hh"
 #include "vulkan/app.hh"
 #include <GLFW/glfw3.h>
@@ -11,14 +10,13 @@ namespace Flim {
 class FlimAPI {
 
 public:
-  static FlimAPI init(FlimParameters parameters = {});
+  static FlimAPI init();
   int run(const std::function<void(float)> &renderMethod);
   int run();
-  void cleanup();
   Scene &getScene();
 
   GLFWwindow *getWindow();
-
+  void cleanup();
 private:
   Scene scene;
   VulkanApplication app;

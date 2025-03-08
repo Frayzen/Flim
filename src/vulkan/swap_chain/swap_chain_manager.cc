@@ -113,7 +113,7 @@ void SwapChainManager::createSwapChain() {
 
   QueueFamilyIndices indices =
       findQueueFamilies(context, context.physicalDevice);
-  uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(),
+  uint32_t queueFamilyIndices[] = {indices.graphicsAndComputeFamily.value(),
                                    indices.presentFamily.value()};
 
   // We need to specify how to handle swap chain images that will be used across
@@ -121,7 +121,7 @@ void SwapChainManager::createSwapChain() {
   // graphics queue family is different from the presentation queue. We'll be
   // drawing on the images in the swap chain from the graphics queue and then
   // submitting them on the presentation queue.
-  if (indices.graphicsFamily !=
+  if (indices.graphicsAndComputeFamily !=
       indices.presentFamily) { // If we have 2 different queues
     // An image is owned by one queue family at a time and ownership must be
     // explicitly transferred before using it in another queue family. This

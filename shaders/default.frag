@@ -14,6 +14,7 @@ layout(binding = 1) uniform UniformMaterialObject {
 
 layout(binding = 2) uniform PointDesc {
   float size;
+  float edgeSize;
   bool applyDiffuse;
 } pointDesc;
 
@@ -43,8 +44,14 @@ void main() {
       vec2 pointCoord = gl_PointCoord - vec2(0.5);
       float distance = length(pointCoord);
 
+      if (distance < 0.5 && distance > 0.5 - pointDesc.edgeSize)
+      {
+        outColor = vec4(1,0,0,1);
+        return;
+      }
+
       // Discard fragments outside the circle
-      if (distance > 0.5) {
+      if (distance > 0.5 - pointDesc.edgeSize) {
           discard;
       }
 

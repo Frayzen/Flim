@@ -11,6 +11,7 @@ class RenderParams;
 class VulkanContext {
 public:
   uint32_t currentImage;
+  uint32_t currentUpdate;
   VkInstance instance;
   GLFWwindow *window;
   VkPhysicalDevice physicalDevice;
