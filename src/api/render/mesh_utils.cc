@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
+#include <string>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
@@ -158,21 +159,20 @@ static Transform getMeshTransformFromScene(const aiScene *scene) {
   return t;
 }
 
-Mesh MeshUtils::loadFromFile(std::string path) {
+Mesh MeshUtils::loadFromFile(const char *path) {
   std::cout << "Importing " << path << "..." << '\n';
   static Assimp::Importer importer;
   const aiScene *scene = importer.ReadFile(
-      path.c_str(),
-      aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
-          aiProcess_GenUVCoords | aiProcess_FlipUVs |
-          aiProcess_RemoveRedundantMaterials |
-          aiProcess_GenNormals /* or aiProcess_GenSmoothNormals */);
+      path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
+                aiProcess_GenUVCoords | aiProcess_FlipUVs |
+                aiProcess_RemoveRedundantMaterials |
+                aiProcess_GenNormals /* or aiProcess_GenSmoothNormals */);
 
   mat4 rot = *((mat4 *)&scene->mRootNode->mTransformation);
 
   if (scene == NULL || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       scene->mRootNode == NULL)
-    std::runtime_error("Could not load " + path);
+    std::runtime_error("Could not load path" + std::string(path));
 
   for (uint i = 0; i < scene->mNumMeshes; i++) {
     Mesh m;
