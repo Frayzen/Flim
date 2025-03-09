@@ -1,20 +1,19 @@
 #include "device_manager.hh"
 
 #include "vulkan/device/device_utils.hh"
-#include <iostream>
 #include <set>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
-// SWAP CHAIN
-
 // LOGICAL DEVICE CREATION
 
 static void setupQueues(VulkanContext &context, QueueFamilyIndices &indices) {
-  vkGetDeviceQueue(context.device, indices.graphicsFamily.value(), 0,
+  vkGetDeviceQueue(context.device, indices.graphicsAndComputeFamily.value(), 0,
                    &context.queues.graphicsQueue);
   vkGetDeviceQueue(context.device, indices.presentFamily.value(), 0,
                    &context.queues.presentQueue);
+  vkGetDeviceQueue(context.device, indices.presentFamily.value(), 0,
+      &context.queues.computeQueue);
 }
 
 void DeviceManager::createLogicalDevice() {
@@ -22,8 +21,8 @@ void DeviceManager::createLogicalDevice() {
   QueueFamilyIndices indices = findQueueFamilies(context, physicalDevice);
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(),
-                                            indices.presentFamily.value()};
+  std::set<uint32_t> uniqueQueueFamilies = {
+      indices.graphicsAndComputeFamily.value(), indices.presentFamily.value()};
 
   float queuePriority = 1.0f;
   for (uint32_t queueFamily : uniqueQueueFamilies) {

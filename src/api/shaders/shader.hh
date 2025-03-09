@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace Flim {
 
@@ -11,6 +12,8 @@ public:
   Shader(std::string path, std::string entry = "main");
   std::string entry;
   std::vector<char> code;
+
+  VkShaderModule createShaderModule();
 };
 
 }; // namespace Flim

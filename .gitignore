@@ -8,6 +8,8 @@
 
 !examples/
 !examples/**/
+!simulations/
+!simulations/**/
 
 !*.cc
 !*.hh
@@ -15,6 +17,7 @@
 
 !*.vert
 !*.frag
+!*.comp
 
 !*.cmake
 

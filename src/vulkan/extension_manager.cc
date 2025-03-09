@@ -4,8 +4,10 @@
 #include "vulkan/context.hh"
 #include <GLFW/glfw3.h>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
 #include <sys/types.h>
 #include <vulkan/vulkan_core.h>
 
@@ -29,7 +31,8 @@ void ExtensionManager::populateRequiredExtensions() {
   }
   if (enableValidationLayers) {
     requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    requiredExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    requiredExtensions.push_back(
+        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
   }
 }
 
@@ -120,6 +123,8 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     // Message is important enough to show
     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
   }
+  if (messageSeverity >= VK_CRASH_LEVEL)
+    abort();
 
   return VK_FALSE;
 }

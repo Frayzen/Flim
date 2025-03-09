@@ -1,0 +1,35 @@
+#version 450
+
+layout(std140, binding = 0) buffer Velocities {
+   vec3 velocities[ ];
+};
+
+layout(std140, binding = 1) buffer Positions {
+   mat4 positions[ ];
+};
+
+layout(std140, binding = 2) readonly buffer PrevPositions {
+   mat4 prevPositions[ ];
+};
+
+layout (binding = 3) uniform ParameterUBO {
+    float deltaTime;
+    float bounds;
+} ubo;
+
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+
+void main() 
+{
+  uvec3 globalID = gl_GlobalInvocationID;
+  uint index = globalID.z * gl_NumWorkGroups.x * gl_NumWorkGroups.y + globalID.y * gl_NumWorkGroups.x + globalID.x;
+
+  vec3 lastpos = vec3(prevPositions[index][3]);
+  lastpos += velocities[index] * ubo.deltaTime;
+  for (int i = 0; i < 3; i++)
+    if (abs(lastpos[i]) > ubo.bounds)
+      velocities[index][i] *= -1;
+  lastpos = clamp(lastpos, vec3(-ubo.bounds), vec3(ubo.bounds));
+  positions[index][3] = vec4(lastpos,1);
+}

@@ -9,8 +9,9 @@ VulkanContext context{};
 VulkanApplication::VulkanApplication()
     : window_manager(), extension_manager(), swap_chain_manager(),
       device_manager(), surface_manager(), command_pool_manager(),
-      buffer_manager(), gui_manager() {
+      gui_manager() {
   context.currentImage = 0;
+  context.currentUpdate = 1;
 }
 
 void VulkanApplication::init() {
@@ -65,13 +66,16 @@ void VulkanApplication::initVulkan() {
   command_pool_manager.createSyncObjects();
 
   // Frame and depth buffer
-  buffer_manager.createDepthResources();
+  surface_manager.createDepthResources();
   gui_manager.setup();
 }
 
 void VulkanApplication::setupGraphics(Flim::Scene &scene) {
-  for (auto &r : scene.renderers)
+  for (auto &r : scene.renderers) {
     r.second->setup();
+  }
+  for (auto &c : scene.computers)
+    c->setup();
 }
 
 void VulkanApplication::recreateSwapChain() {
@@ -86,12 +90,12 @@ void VulkanApplication::recreateSwapChain() {
   swap_chain_manager.createSwapChain();
   surface_manager.setupSwapChainImages();
   surface_manager.createImageViews();
-  buffer_manager.createDepthResources();
+  surface_manager.createDepthResources();
   context.currentImage = 0;
 }
 
 static std::chrono::high_resolution_clock timer;
-static auto last = timer.now();
+static auto previous = timer.now();
 
 bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
                                  Flim::Scene &scene) {
@@ -104,17 +108,24 @@ bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
   }
 
   for (auto &r : scene.renderers)
-    r.second->update(camera);
+    r.second->update();
+
+  for (auto &r : scene.computers)
+    r->update();
+
+  for (auto computer : scene.computers) {
+    command_pool_manager.recordCommandBuffer(*computer);
+  }
 
   for (auto renderer : scene.renderers) {
     command_pool_manager.recordCommandBuffer(*renderer.second);
   }
 
-  // Assuming timer and last are already defined.
+  // Assuming timer and previous are already defined.
   auto now = timer.now();
-  std::chrono::duration<float> deltaTime =
-      now - last; // Automatically in seconds as float
-  last = now;
+  // Automatically in seconds as float
+  std::chrono::duration<float> deltaTime = now - previous;
+  previous = now;
 
   float deltaSeconds = deltaTime.count(); // Convert to float for easier use
 
@@ -137,8 +148,10 @@ void VulkanApplication::cleanup(Flim::Scene &scene) {
   for (auto &r : scene.renderers) {
     r.second->cleanup();
   }
+  for (auto &c : scene.computers) {
+    c->cleanup();
+  }
 
-  /* pipeline_manager.cleanup(); */
   command_pool_manager.cleanup();
   vkDestroyDevice(context.device, nullptr);
   extension_manager.cleanUp();

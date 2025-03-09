@@ -89,7 +89,7 @@ void GUIManager::endFrame() {
 
   // Submit the ImGui draw data to Vulkan
   auto &commandBuffer =
-      context.commandPool.commandBuffers[context.currentImage];
+      context.commandPool.graphicBuffers[context.currentImage];
   ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }
 

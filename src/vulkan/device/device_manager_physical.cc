@@ -55,17 +55,17 @@ bool DeviceManager::isDeviceSuitable(VkPhysicalDevice device) {
       findQueueFamilies(context, device); // Check the queues capabilities
   bool extensionsSupported =
       checkDeviceExtensionSupport(device); // Check the extension support
-  bool swapChainAdequate = false;          // Check the swap chain support
+  bool swapChainAdeQuaternionfernionfe = false;          // Check the swap chain support
   if (extensionsSupported) { // Only if swapChain extension is found
     SwapChainSupportDetails swapChainSupport =
         querySwapChainSupport(context, device);
-    swapChainAdequate = !swapChainSupport.formats.empty() &&
+    swapChainAdeQuaternionfernionfe = !swapChainSupport.formats.empty() &&
                         !swapChainSupport.presentModes.empty();
   }
 
   VkPhysicalDeviceFeatures supportedFeatures;
   vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
-  return indices.isComplete() && extensionsSupported && swapChainAdequate &&
+  return indices.isComplete() && extensionsSupported && swapChainAdeQuaternionfernionfe &&
          supportedFeatures.samplerAnisotropy && supportedFeatures.wideLines &&
          supportedFeatures.fillModeNonSolid;
 }

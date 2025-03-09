@@ -5,8 +5,7 @@
 
 namespace Flim {
 
-FlimAPI FlimAPI::init(FlimParameters parameters) {
-  (void)parameters;
+FlimAPI FlimAPI::init() {
   FlimAPI flim;
   flim.app.init();
   return flim;
@@ -24,7 +23,7 @@ int FlimAPI::run(const std::function<void(float)> &renderMethod) {
       if (app.mainLoop(renderMethod, scene))
         break;
       double curTime = glfwGetTime();
-      double deltaTime = lastTime - curTime;
+      double deltaTime = curTime - lastTime;
       scene.camera.handleInputs(deltaTime);
       lastTime = curTime;
     }
