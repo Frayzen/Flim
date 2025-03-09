@@ -166,11 +166,12 @@ Mesh MeshUtils::loadFromFile(const char *path) {
                 aiProcess_RemoveRedundantMaterials |
                 aiProcess_GenNormals /* or aiProcess_GenSmoothNormals */);
 
+  if (scene == nullptr || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
+      scene->mRootNode == nullptr)
+    throw std::runtime_error("Could not load path: " + std::string(path));
+
   Matrix4f rot = *((Matrix4f *)&scene->mRootNode->mTransformation);
 
-  if (scene == NULL || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
-      scene->mRootNode == NULL)
-    std::runtime_error("Could not load path" + std::string(path));
 
   for (uint i = 0; i < scene->mNumMeshes; i++) {
     Mesh m;

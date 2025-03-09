@@ -58,6 +58,7 @@ public:
   int newBufferId() const;
   Flim::Mesh *getAttachedMesh() const;
 
+  int bufferId; // tmp, to put back in protected
 protected:
   BufferHolder(const BufferHolder &);
   BufferHolder();
@@ -67,7 +68,6 @@ protected:
                     VkMemoryPropertyFlags properties, bool computeFriendly);
   void cleanupBuffers();
 
-  int bufferId;
   int redundancy;
 
   friend class Flim::RenderParams;

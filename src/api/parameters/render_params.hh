@@ -1,6 +1,7 @@
 #pragma once
 
 #include "api/shaders/shader.hh"
+#include "api/tree/camera.hh"
 #include "base_params.hh"
 #include <string>
 
@@ -26,6 +27,8 @@ public:
   // Validators
   bool usable() const override;
   void invalidate();
+
+  static RenderParams DefaultParams(const Mesh &m, const Camera &cam);
 
 private:
   RenderParams clone();

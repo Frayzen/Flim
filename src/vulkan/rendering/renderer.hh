@@ -7,6 +7,7 @@
 #include "vulkan/buffers/buffer_manager.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include "vulkan/rendering/pipeline.hh"
+#include <iostream>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
@@ -34,15 +35,15 @@ public:
   Pipeline pipeline;
 
   Renderer(Flim::Mesh &mesh, Flim::RenderParams &params)
-      : DescriptorHolder(params, false), params(params), version(0),
-        mesh(mesh), indexBuffer(mesh.indices.data(),
-                                mesh.indices.size() * sizeof(mesh.indices[0]),
-                                VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
+      : DescriptorHolder(params, false), params(params), version(0), mesh(mesh),
+        indexBuffer(mesh.indices.data(),
+                    mesh.indices.size() * sizeof(mesh.indices[0]),
+                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
         pipeline(*this) {
     for (auto &attr : this->params.getAttributeDescriptors()) {
-      CHECK(attr.second->getAttachedMesh() == nullptr,
-            "You cannot reuse a render param for a mesh, please make a copy "
-            "first");
+      CHECK(
+          attr.second->getAttachedMesh() == nullptr,
+          "You cannot reuse a render param for a mesh, please clone it first");
       bufferManager.attachMesh(attr.second->bufferId, &mesh);
     }
   };

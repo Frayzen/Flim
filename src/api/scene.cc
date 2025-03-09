@@ -21,6 +21,10 @@ void Scene::registerMesh(Mesh &mesh, RenderParams &params) {
   renderers.insert(
       std::pair(mesh.id, std::make_shared<Renderer>(mesh, params)));
 }
+void Scene::registerMesh(Mesh &mesh) {
+  RenderParams defaultRenderParams = RenderParams::DefaultParams(mesh, camera);
+  registerMesh(mesh, defaultRenderParams);
+}
 
 void Scene::registerComputer(ComputeParams &cparams, int dispatchX,
                              int dispatchY, int dispatchZ) {

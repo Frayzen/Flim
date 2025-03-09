@@ -36,8 +36,6 @@ public:
   std::vector<Vertex> vertices;
   std::vector<uint16_t> indices;
 
-  std::span<Matrix4f> modelViews;
-
 protected:
   Mesh();
 
