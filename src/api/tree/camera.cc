@@ -12,13 +12,13 @@ void Camera::handleInputs2D(double deltaTime) {
   auto curSpeed = deltaTime * speed;
   auto win = scene.api.getWindow();
   if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS)
-    transform.position += curSpeed * world.right();
+    transform.position += curSpeed * world_right;
   if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS)
-    transform.position += curSpeed * -world.right();
+    transform.position += curSpeed * -world_right;
   if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS)
-    transform.position += curSpeed * world.up();
+    transform.position += curSpeed * world_up;
   if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
-    transform.position += curSpeed * -world.up();
+    transform.position += curSpeed * -world_up;
   if (glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
     orthoScale += curSpeed;
   if (glfwGetKey(win, GLFW_KEY_SPACE) == GLFW_PRESS)
@@ -38,9 +38,9 @@ void Camera::handleInputs3D(double deltaTime) {
   if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
     transform.position += curSpeed * -transform.front();
   if (glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-    transform.position += curSpeed * -world.up();
+    transform.position += curSpeed * -world_up;
   if (glfwGetKey(win, GLFW_KEY_SPACE) == GLFW_PRESS)
-    transform.position += curSpeed * world.up();
+    transform.position += curSpeed * world_up;
 
   float curSensivity = sensivity;
   if (glfwGetKey(win, GLFW_KEY_L) == GLFW_PRESS)
@@ -72,7 +72,7 @@ Matrix4f Camera::getViewMat() const {
   // Create a scale matrix
   auto scaleMatrix = Eigen::Scaling(transform.scale);
 
-  // Apply transformations in the same order as glm (translate, rotate, scale)
+  // Apply transformations in the same order as (translate, rotate, scale)
   return (scaleMatrix * rotationMatrix * translation).matrix();
 }
 

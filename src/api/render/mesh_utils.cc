@@ -5,12 +5,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <cstddef>
-#include <glm/fwd.hpp>
-#include <glm/geometric.hpp>
 #include <string>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/string_cast.hpp>
 #include <iostream>
 #include <stdexcept>
 

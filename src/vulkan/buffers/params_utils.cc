@@ -11,8 +11,7 @@ namespace Flim {
 AttributeDescriptor &
 ParamsUtils::createInstanceMatrixAttribute(RenderParams &params, int binding) {
   auto &attr = params.setAttribute(binding, AttributeRate::INSTANCE);
-  attr.onlySetup(true)
-      .attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) {
+  attr.attach<Matrix4f>([](const Mesh &m, Matrix4f *mats) {
         for (size_t i = 0; i < m.instances.size(); i++) {
           mats[i] = m.instances[i].transform.getViewMatrix();
         }

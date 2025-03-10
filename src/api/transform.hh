@@ -19,34 +19,14 @@ public:
   Vector3f scale;
 
   // Right hand rule applies
-  Vector3f front() const {
-    // The forward vector in world space (-Z)
-    return (rotation * world_front).normalized();
-  }
-  Vector3f up() const {
-    // The forward vector in world space (+Y)
-    return (rotation * world_up).normalized();
-  }
-  Vector3f right() const {
-    // The forward vector in world space (+X)
-    return (rotation * world_right).normalized();
-  }
+  Vector3f front() const;
+  Vector3f up() const;
+  Vector3f right() const;
+  void translate(Vector3f v);
 
-  void translate(Vector3f v) { position = position + v; }
+  void lookAt(Vector3f target);
 
-  Matrix4f getViewMatrix() const {
-    // Create a translation matrix
-    auto translation = Eigen::Translation3f(position);
-    // Create a rotation matrix
-    auto rotationMatrix = Eigen::Affine3f(rotation);
-    // Create a scale matrix
-    auto scaleMatrix = Eigen::Scaling(scale);
-
-    // Apply transformations in the same order as glm (translate, rotate, scale)
-    return (scaleMatrix * rotationMatrix * translation).matrix();
-  };
+  Matrix4f getViewMatrix() const;
 };
-
-const Transform world = Flim::Transform();
 
 } // namespace Flim

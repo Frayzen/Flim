@@ -24,7 +24,8 @@ int FlimAPI::run(const std::function<void(float)> &renderMethod) {
         break;
       double curTime = glfwGetTime();
       double deltaTime = curTime - lastTime;
-      scene.camera.handleInputs(deltaTime);
+      if (scene.camera.controls)
+        scene.camera.handleInputs(deltaTime);
       lastTime = curTime;
     }
     app.finish();
