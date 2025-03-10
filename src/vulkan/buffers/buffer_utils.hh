@@ -7,7 +7,7 @@
 class Buffer {
 public:
   Buffer(void *ptr, int size, VkBufferUsageFlags usage = 0,
-         VkMemoryPropertyFlags properties = 0, bool external = false)
+         VkMemoryPropertyFlags properties = 0, bool external = true)
       : Buffer(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                properties | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -17,7 +17,7 @@ public:
 
   Buffer(int size,
          VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-         VkMemoryPropertyFlags properties = 0, bool external = false)
+         VkMemoryPropertyFlags properties = 0, bool external = true)
       : size(size), created(false), mappedPtr(nullptr), buffer(0),
         external(external), externalPtr(nullptr) {
     create(usage, properties);
@@ -28,7 +28,7 @@ public:
   void *getPtr() const { return mappedPtr; };
   int getSize() const { return size; };
   template <typename Type>
-  Kokkos::View<Type *, Kokkos::DefaultExecutionSpace> getView() {
+  Kokkos::View<Type *, Kokkos::DefaultExecutionSpace> getView() const {
     // Check if the DefaultExecutionSpace can access a device memory space
     using HostMemSpace = typename Kokkos::HostSpace::memory_space;
     static_assert(!Kokkos::SpaceAccessibility<Kokkos::DefaultExecutionSpace,

@@ -5,9 +5,9 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <string>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 namespace Flim {
 
@@ -152,21 +152,24 @@ static Transform getMeshTransformFromScene(const aiScene *scene) {
   return t;
 }
 
-Mesh MeshUtils::loadFromFile(const char *path) {
+Mesh MeshUtils::loadFromFile(const char *path, bool smoothNormals) {
   std::cout << "Importing " << path << "..." << '\n';
+  auto postProcessEffects = aiProcess_Triangulate |
+                            aiProcess_JoinIdenticalVertices |
+                            aiProcess_GenUVCoords | aiProcess_FlipUVs |
+                            aiProcess_RemoveRedundantMaterials;
+  if (smoothNormals)
+    postProcessEffects |= aiProcess_GenSmoothNormals;
+  else
+    postProcessEffects |= aiProcess_GenNormals;
   static Assimp::Importer importer;
-  const aiScene *scene = importer.ReadFile(
-      path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
-                aiProcess_GenUVCoords | aiProcess_FlipUVs |
-                aiProcess_RemoveRedundantMaterials |
-                aiProcess_GenNormals /* or aiProcess_GenSmoothNormals */);
+  const aiScene *scene = importer.ReadFile(path, postProcessEffects);
 
   if (scene == nullptr || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       scene->mRootNode == nullptr)
     throw std::runtime_error("Could not load path: " + std::string(path));
 
   Matrix4f rot = *((Matrix4f *)&scene->mRootNode->mTransformation);
-
 
   for (uint i = 0; i < scene->mNumMeshes; i++) {
     Mesh m;

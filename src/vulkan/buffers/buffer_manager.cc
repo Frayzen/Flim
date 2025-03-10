@@ -59,7 +59,7 @@ std::shared_ptr<Buffer> BufferHolder::getBuffer(int i) const {
   if (i == -1)
     cur = context.currentImage;
   cur %= redundancy;
-  return bufferManager.buffers[bufferId][cur];
+  return getBuffers()[cur];
 }
 
 int BufferHolder::getBufferId() const { return bufferId; }

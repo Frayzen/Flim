@@ -65,7 +65,8 @@ void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 void Buffer::populate(void *data) const {
   Buffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                       false);
   stagingBuffer.map();
   memcpy(stagingBuffer.mappedPtr, data, (size_t)size);
   stagingBuffer.unmap();
@@ -145,6 +146,7 @@ void Buffer::create(VkBufferUsageFlags usage,
   bufferInfo.size = size;
   bufferInfo.usage = usage;
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  bufferInfo.pNext = pNextBuf;
 
   if (vkCreateBuffer(context.device, &bufferInfo, nullptr, &buffer) !=
       VK_SUCCESS) {
@@ -159,6 +161,7 @@ void Buffer::create(VkBufferUsageFlags usage,
   allocInfo.allocationSize = memRequirements.size;
   allocInfo.memoryTypeIndex =
       findMemoryType(memRequirements.memoryTypeBits, properties);
+  allocInfo.pNext = pNextMem;
 
   if (vkAllocateMemory(context.device, &allocInfo, nullptr, &bufferMemory) !=
       VK_SUCCESS) {

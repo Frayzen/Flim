@@ -35,6 +35,7 @@ AttributeDescriptor &ParamsUtils::createVerticesAttribute(RenderParams &params,
                    m.vertices.size() * sizeof(Flim::Vertex));
           })
           .onlySetup(true)
+          .computeFriendly(true)
           .singleBuffered(true);
 
   if (usesPos)

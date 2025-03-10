@@ -15,6 +15,15 @@ Scene &FlimAPI::getScene() { return scene; }
 
 void FlimAPI::cleanup() { app.cleanup(scene); }
 
+void FlimAPI::setupGraphics() {
+  if (isGraphicsSetup)
+    return;
+  isGraphicsSetup = true;
+  app.setupGraphics(scene);
+}
+
+bool FlimAPI::graphicsLoaded() const { return isGraphicsSetup; }
+
 int FlimAPI::run(const std::function<void(float)> &renderMethod) {
   app.setupGraphics(scene);
   try {
