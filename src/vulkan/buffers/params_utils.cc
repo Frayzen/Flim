@@ -69,10 +69,11 @@ UniformDescriptor &ParamsUtils::createViewMatrixUniform(RenderParams &params,
 UniformDescriptor &ParamsUtils::createMaterialUniform(RenderParams &params,
                                                       int binding,
                                                       const Mesh &m) {
+#pragma pack()
   struct MaterialUniform {
-    Vector3f ambient;
-    Vector3f diffuse;
-    Vector3f specular;
+    alignas(16) Vector3f ambient;
+    alignas(16) Vector3f diffuse;
+    alignas(16) Vector3f specular;
     int mask;
   };
   return params.setUniform(binding, FRAGMENT_SHADER_STAGE)

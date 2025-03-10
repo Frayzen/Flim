@@ -16,10 +16,11 @@ layout(location = 0) out vec3 fragNormal;
 layout(location = 1) out vec2 fragTexCoord;
 
 void main() {
-    gl_Position = ulo.proj * ulo.view * ulo.model * inInstanceMat * vec4(inPosition, 1.0);
+    mat4 transform = ulo.model * inInstanceMat;
+    gl_Position = ulo.proj * ulo.view * transform * vec4(inPosition, 1.0);
     vec4 pos = gl_Position;
     if (pos.w != 0)
       pos /= pos.w;
-    fragNormal = inNormal;
+    fragNormal = mat3(transform) * inNormal;
     fragTexCoord = inTexCoord;
 }

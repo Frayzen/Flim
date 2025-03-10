@@ -40,7 +40,7 @@ public:
 
 private:
   Material(const char *name)
-      : diffuse(0, 0, 0), ambient(0.5, 0.5, 0.5), specular(0, 0, 0), name(name),
+      : diffuse(0.5, 0.5, 0.5), ambient(0.3, 0.3, 0.3), specular(0, 0, 0), name(name),
         mask(0) {};
   friend class MeshUtils;
 };

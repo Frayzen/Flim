@@ -36,12 +36,12 @@ RenderParams RenderParams::DefaultParams(const Mesh& m, const Camera& cam) {
   RenderParams params("Default");
 
   // Uniforms
-  ParamsUtils::createViewMatrixUniform(params, 0, m, cam);
-  ParamsUtils::createMaterialUniform(params, 1, m);
+  ParamsUtils::createViewMatrixUniform(params, BINDING_DEFAULT_VIEWS_UNIFORM, m, cam);
+  ParamsUtils::createMaterialUniform(params, BINDING_DEFAULT_MATERIALS_UNIFORM, m);
 
   // Attributes
-  ParamsUtils::createVerticesAttribute(params, 0);
-  ParamsUtils::createInstanceMatrixAttribute(params, 3);
+  ParamsUtils::createVerticesAttribute(params, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+  ParamsUtils::createInstanceMatrixAttribute(params, BINDING_DEFAULT_INSTANCES_ATTRIBUTE);
 
   params.vertexShader = Shader("shaders/default.vert.spv");
   params.fragmentShader = Shader("shaders/default.frag.spv");

@@ -55,13 +55,18 @@ int main() {
     scene.registerMesh(mesh, params);
     scene.registerMesh(cube, params2);
 
+    std::cout << "Cube has ambient " << cube.getMaterial().ambient << '\n';
+    std::cout << "Cube has diffuse " << cube.getMaterial().diffuse << '\n';
+    std::cout << "Cube has specular " << cube.getMaterial().specular << '\n';
+
     Instance &instance = scene.instantiate(mesh);
     instance.transform.scale = Vector3f(0.05, 0.05, 0.05);
 
     Instance &c = scene.instantiate(cube);
 
     scene.camera.controls = true;
-    scene.camera.speed = 30;
+    scene.camera.speed = 20;
+    scene.camera.sensivity = 5;
     // main loop
     static float speed = 0.5;
     static float radius = 5;

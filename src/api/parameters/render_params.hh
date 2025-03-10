@@ -7,6 +7,11 @@
 
 namespace Flim {
 
+#define BINDING_DEFAULT_VIEWS_UNIFORM 0
+#define BINDING_DEFAULT_MATERIALS_UNIFORM 1
+#define BINDING_DEFAULT_VERTICES_ATTRIBUTES 0
+#define BINDING_DEFAULT_INSTANCES_ATTRIBUTE 3
+
 class RenderParams : public BaseParams {
 public:
   RenderParams(std::string name) : BaseParams(name) {};
