@@ -208,22 +208,22 @@ Mesh MeshUtils::loadFromFile(const char *path, bool smoothNormals) {
   return Mesh();
 }
 
-Mesh MeshUtils::createGrid(float length, int amount_width, int amount_height) {
+Mesh MeshUtils::createGrid(float length, int nbpts_width, int nbpts_height) {
   Mesh model;
   Vertex v{};
   v.normal = Vector3f(0, 0, 1);
-  for (int i = 0; i < amount_height + 1; i++) {
-    for (int j = 0; j < amount_width + 1; j++) {
+  for (int i = 0; i < nbpts_height; i++) {
+    for (int j = 0; j < nbpts_width; j++) {
       v.pos = Vector3f(j * length, i * length, 0);
       model.vertices.push_back(v);
     }
   }
 
-  for (int i = 0; i < amount_width; i++) {
-    for (int j = 0; j < amount_height; j++) {
-      int bot_left = i + j * (amount_width + 1);
+  for (int i = 0; i < nbpts_width - 1; i++) {
+    for (int j = 0; j < nbpts_height - 1; j++) {
+      int bot_left = i + j * (nbpts_width);
       int bot_right = bot_left + 1;
-      int top_left = i + (j + 1) * (amount_width + 1);
+      int top_left = i + (j + 1) * (nbpts_width);
       int top_right = top_left + 1;
 
       model.indices.push_back(top_left);

@@ -11,6 +11,7 @@
 #include <Kokkos_Macros.hpp>
 #include <Kokkos_Pair.hpp>
 #include <decl/Kokkos_Declare_OPENMP.hpp>
+#include <imgui.h>
 #include <impl/Kokkos_Profiling.hpp>
 #include <setup/Kokkos_Setup_HIP.hpp>
 
@@ -40,7 +41,7 @@ int main() {
     static int nb_x = 25;
     static int nb_y = 15;
 
-    Mesh mesh = MeshUtils::createGrid(0.2, nb_x, nb_y);
+    Mesh mesh = MeshUtils::createGrid(1, nb_x, nb_y);
     auto &scene = api.getScene();
     RenderParams params = RenderParams::DefaultParams(mesh, scene.camera);
     params.useBackfaceCulling = false;
@@ -51,16 +52,23 @@ int main() {
     api.setupGraphics();
     Kokkos::View<Vertex *> vertices =
         rd.getAttributeBufferView<Vertex>(BINDING_DEFAULT_VERTICES_ATTRIBUTES);
-    Kokkos::View<Vertex **> pts(vertices.data(), nb_y, nb_x);
-    Kokkos::View<Vertex **> oldPos("Old points", nb_y, nb_x);
-    Kokkos::View<Vector3f **> vels("Velocities", nb_y, nb_x);
-    Kokkos::DualView<float **> weights("Weights", nb_y,
-                                       nb_x); // inverse of the mass
+    Kokkos::View<Vertex **> pts(vertices.data(), nb_x, nb_y);
+    Kokkos::View<Vertex **> initPos("Init points", nb_x, nb_y);
+    Kokkos::deep_copy(initPos, pts);
+    Kokkos::View<Vertex **> oldPos("Old points", nb_x, nb_y);
+    Kokkos::View<Vector3f **> vels("Velocities", nb_x, nb_y);
 
+    // inverse of the mass
+    Kokkos::DualView<float **> weights("Weights", nb_x, nb_y);
+
+    weights.modify_host();
+    for (int i = 0; i < nb_x; i++) {
+      for (int j = 0; j < nb_y; j++)
+        weights.h_view(i, j) = 1;
+    }
     // Pin the top corners
     weights.h_view(0, 0) = 0;
-    weights.h_view(0, nb_x - 1) = 0;
-    weights.modify_host();
+    weights.h_view(nb_x - 1, 0) = 0;
     weights.sync_device();
 
     scene.camera.controls = true;
@@ -69,70 +77,88 @@ int main() {
 
     // PARAMETERS
 
-    float side = 10;
     float g = 9;
     float damping = 0.9999;
-    float k = 1000; // stiffness
+    float k = 100; // stiffness
     int substep = 4;
 
-    static float maxDistMove = 0.5;
+    bool running;
     api.run([&](float deltaTime) {
-      (void)deltaTime;
+      ImGui::SliderFloat("K", &k, 1, 5000);
+      ImGui::SliderInt("Amount substep", &substep, 1, 10);
+      ImGui::SliderFloat("Damping", &damping, 0.9, 0.9999999);
+      ImGui::SliderFloat("G", &g, 0, 20);
 
-      Kokkos::deep_copy(oldPos, pts);
-
-      Kokkos::parallel_for(
-          "Apply gravity", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
-          KOKKOS_LAMBDA(const int i, const int j) {
-            vels(j, i).y() += deltaTime * g * weights.d_view(j, i);
-          });
-      Kokkos::fence("Wait gravity");
-
-      float dt = deltaTime / substep;
-      for (int _ = 0; _ < substep; _++) {
-        // UPDATE POS
+      if (ImGui::Button("Reset")) {
+        Kokkos::deep_copy(pts, initPos);
         Kokkos::parallel_for(
-            "Update position", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+            "Apply gravity", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
             KOKKOS_LAMBDA(const int i, const int j) {
-              pts(j, i).pos += dt * vels(j, i);
+              vels(i, j) = Vector3f(0, 0, 0);
             });
-        Kokkos::fence("Wait update pos");
-
-        // APPLY CONSTRAINT
-        float alpha = 1 / k;
-        float inv_dt_sq = alpha / (dt * dt);
-        Kokkos::parallel_for(
-            "Update horizontal constraints",
-            Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y - 1}),
-            KOKKOS_LAMBDA(const int i, const int j) {
-              auto deltas = apply_constraint(
-                  pts(j, i).pos, pts(j + 1, i).pos, weights.d_view(j, i),
-                  weights.d_view(j + 1, i), inv_dt_sq);
-              pts(j, i).pos += deltas.first;
-              pts(j + 1, i).pos += deltas.second;
-            });
-        Kokkos::fence("Wait horizontal constraints");
-
-        Kokkos::parallel_for(
-            "Update vertical constraints",
-            Kokkos::MDRangePolicy({0, 0}, {nb_x - 1, nb_y}),
-            KOKKOS_LAMBDA(const int i, const int j) {
-              auto deltas = apply_constraint(
-                  pts(j, i).pos, pts(j, i + 1).pos, weights.d_view(j, i),
-                  weights.d_view(j, i + 1), inv_dt_sq);
-              pts(j, i).pos += deltas.first;
-              pts(j, i + 1).pos += deltas.second;
-            });
-        Kokkos::fence("Wait vertical constraints");
+        Kokkos::fence("Wait reset");
       }
 
-      // Apply damping
-      Kokkos::parallel_for(
-          "Apply damping", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
-          KOKKOS_LAMBDA(const int i, const int j) {
-            vels(j, i) = damping * pts(j, i).pos - oldPos(j, i).pos / deltaTime;
-          });
-      Kokkos::fence("Wait damping");
+      ImGui::Checkbox("Running", &running);
+      if (ImGui::Button("Step") || running) {
+        // SAVE INITAL POINTS
+        Kokkos::deep_copy(oldPos, pts);
+
+        // APPLY GRAVITY
+        Kokkos::parallel_for(
+            "Apply gravity", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+            KOKKOS_LAMBDA(const int i, const int j) {
+              vels(i, j).y() -= deltaTime * g * weights.d_view(i, j);
+            });
+        Kokkos::fence("Wait gravity");
+
+        float dt = deltaTime / substep;
+        for (int _ = 0; _ < substep; _++) {
+          // UPDATE POS
+          Kokkos::parallel_for(
+              "Update position", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+              KOKKOS_LAMBDA(const int i, const int j) {
+                pts(i, j).pos += dt * vels(i, j);
+              });
+          Kokkos::fence("Wait update pos");
+
+          // APPLY CONSTRAINT
+          float alpha = 1 / k;
+          float inv_dt_sq = alpha / (dt * dt);
+          Kokkos::parallel_for(
+              "Update horizontal constraints",
+              Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y - 1}),
+              KOKKOS_LAMBDA(const int i, const int j) {
+                auto deltas = apply_constraint(
+                    pts(i, j).pos, pts(i, j + 1).pos, weights.d_view(i, j),
+                    weights.d_view(i, j + 1), inv_dt_sq);
+                pts(i, j).pos += deltas.first;
+                pts(i, j + 1).pos += deltas.second;
+              });
+          Kokkos::fence("Wait horizontal constraints");
+
+          Kokkos::parallel_for(
+              "Update vertical constraints",
+              Kokkos::MDRangePolicy({0, 0}, {nb_x - 1, nb_y}),
+              KOKKOS_LAMBDA(const int i, const int j) {
+                auto deltas = apply_constraint(
+                    pts(i, j).pos, pts(i + 1, j).pos, weights.d_view(i, j),
+                    weights.d_view(i + 1, j), inv_dt_sq);
+                pts(i, j).pos += deltas.first;
+                pts(i + 1, j).pos += deltas.second;
+              });
+          Kokkos::fence("Wait vertical constraints");
+        }
+
+        // Apply damping
+        Kokkos::parallel_for(
+            "Apply damping", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+            KOKKOS_LAMBDA(const int i, const int j) {
+              vels(i, j) =
+                  damping * (pts(i, j).pos - oldPos(i, j).pos) / deltaTime;
+            });
+        Kokkos::fence("Wait damping");
+      }
     });
   }
   Kokkos::finalize();
