@@ -18,19 +18,17 @@
 using namespace Flim;
 
 KOKKOS_FUNCTION
-static Kokkos::pair<Vector3f, Vector3f> apply_constraint(Vector3f p0,
-                                                         Vector3f p1, float w0,
-                                                         float w1,
-                                                         float inv_dt_sq) {
+static Vector3f apply_constraint(Vector3f p0, Vector3f p1, float w0, float w1,
+                                 float inv_dt_sq) {
   Vector3f e(p0 - p1);
   auto curlen = e.norm();
   if (curlen == 0) {
-    return Kokkos::make_pair(p0, p1);
+    return Vector3f(0, 0, 0);
   }
   auto ne = e / curlen;
   auto dlen = curlen - 1;
   auto lambda = -dlen / (w0 + w1 + inv_dt_sq);
-  return Kokkos::make_pair(lambda * w0 * ne, -lambda * w1 * ne);
+  return lambda * w0 * ne;
 }
 
 int main() {
@@ -38,8 +36,8 @@ int main() {
   FlimAPI api = FlimAPI::init();
   {
 
-    static int nb_x = 25;
-    static int nb_y = 15;
+    int nb_x = 25;
+    int nb_y = 15;
 
     Mesh mesh = MeshUtils::createGrid(1, nb_x, nb_y);
     auto &scene = api.getScene();
@@ -67,8 +65,8 @@ int main() {
         weights.h_view(i, j) = 1;
     }
     // Pin the top corners
-    weights.h_view(0, 0) = 0;
-    weights.h_view(nb_x - 1, 0) = 0;
+    weights.h_view(0, nb_y - 1) = 0;
+    weights.h_view(nb_x - 1, nb_y - 1) = 0;
     weights.sync_device();
 
     scene.camera.controls = true;
@@ -126,38 +124,32 @@ int main() {
           float alpha = 1 / k;
           float inv_dt_sq = alpha / (dt * dt);
           Kokkos::parallel_for(
-              "Update horizontal constraints",
-              Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y - 1}),
+              "Update constraints", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
               KOKKOS_LAMBDA(const int i, const int j) {
-                auto deltas = apply_constraint(
-                    pts(i, j).pos, pts(i, j + 1).pos, weights.d_view(i, j),
-                    weights.d_view(i, j + 1), inv_dt_sq);
-                pts(i, j).pos += deltas.first;
-                pts(i, j + 1).pos += deltas.second;
+                Vector3f delta;
+#define UPDATE_CONSTRAINT_NEIGHBOUR(X, Y)                                      \
+  if (X > 0 && X < nb_x && Y > 0 && Y < nb_y) {                                \
+    delta =                                                                    \
+        apply_constraint(pts(i, j).pos, pts(X, Y).pos, weights.d_view(i, j),   \
+                         weights.d_view(X, Y), inv_dt_sq);                     \
+    pts(i, j).pos += delta;                                                    \
+  }
+                UPDATE_CONSTRAINT_NEIGHBOUR(i - 1, j + 1)
+                UPDATE_CONSTRAINT_NEIGHBOUR(i + 1, j + 1)
+                UPDATE_CONSTRAINT_NEIGHBOUR(i - 1, j - 1)
+                UPDATE_CONSTRAINT_NEIGHBOUR(i + 1, j - 1)
               });
-          Kokkos::fence("Wait horizontal constraints");
+          Kokkos::fence("Wait constraints");
 
+          // Apply damping
           Kokkos::parallel_for(
-              "Update vertical constraints",
-              Kokkos::MDRangePolicy({0, 0}, {nb_x - 1, nb_y}),
+              "Apply damping", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
               KOKKOS_LAMBDA(const int i, const int j) {
-                auto deltas = apply_constraint(
-                    pts(i, j).pos, pts(i + 1, j).pos, weights.d_view(i, j),
-                    weights.d_view(i + 1, j), inv_dt_sq);
-                pts(i, j).pos += deltas.first;
-                pts(i + 1, j).pos += deltas.second;
+                vels(i, j) =
+                    damping * (pts(i, j).pos - oldPos(i, j).pos) / deltaTime;
               });
-          Kokkos::fence("Wait vertical constraints");
+          Kokkos::fence("Wait damping");
         }
-
-        // Apply damping
-        Kokkos::parallel_for(
-            "Apply damping", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
-            KOKKOS_LAMBDA(const int i, const int j) {
-              vels(i, j) =
-                  damping * (pts(i, j).pos - oldPos(i, j).pos) / deltaTime;
-            });
-        Kokkos::fence("Wait damping");
       }
     });
   }
