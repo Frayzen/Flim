@@ -5,17 +5,22 @@ find_program(
   HINTS Vulkan::glslc)
 
 function(add_shaders TARGET_NAME SHADER_SOURCE)
-  set(SHADER_COMMAND)
-  list(APPEND SHADER_COMMAND "glslc")
-  list(APPEND SHADER_COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER_SOURCE}")
-  list(APPEND SHADER_COMMAND "-o")
-  list(APPEND SHADER_COMMAND "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_SOURCE}.spv")
-
+  # Set input and output paths
+  set(INPUT_SHADER "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER_SOURCE}")
+  set(OUTPUT_SPV "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_SOURCE}.spv")
+  
+  add_custom_command(
+    OUTPUT ${OUTPUT_SPV}
+    COMMAND ${glslc_executable} ${INPUT_SHADER} -o ${OUTPUT_SPV}
+    DEPENDS ${INPUT_SHADER}
+    COMMENT "Compiling Shader [${SHADER_SOURCE}]"
+    VERBATIM
+  )
+  
   add_custom_target(
     ${TARGET_NAME} ALL
-    ${SHADER_COMMAND}
-    COMMENT "Compiling Shader [${SHADER_SOURCE}]"
-    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER_SOURCE})
+    DEPENDS ${OUTPUT_SPV}
+  )
 endfunction()
 
 add_shaders("VertexShader" default.vert)
