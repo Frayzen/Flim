@@ -82,7 +82,7 @@ int main() {
 
     bool running;
     api.run([&](float deltaTime) {
-      ImGui::SliderFloat("K", &k, 1, 5000);
+      ImGui::SliderFloat("K", &k, 5000, 100000);
       ImGui::SliderInt("Amount substep", &substep, 1, 10);
       ImGui::SliderFloat("Damping", &damping, 0.9, 0.9999999);
       ImGui::SliderFloat("G", &g, 0, 20);
@@ -110,6 +110,8 @@ int main() {
             });
         Kokkos::fence("Wait gravity");
 
+        float alpha = 1 / k;
+        float inv_dt_sq = alpha / (deltaTime * deltaTime);
         float dt = deltaTime / substep;
         for (int _ = 0; _ < substep; _++) {
           // UPDATE POS
@@ -121,35 +123,32 @@ int main() {
           Kokkos::fence("Wait update pos");
 
           // APPLY CONSTRAINT
-          float alpha = 1 / k;
-          float inv_dt_sq = alpha / (dt * dt);
           Kokkos::parallel_for(
               "Update constraints", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
               KOKKOS_LAMBDA(const int i, const int j) {
                 Vector3f delta;
 #define UPDATE_CONSTRAINT_NEIGHBOUR(X, Y)                                      \
-  if (X > 0 && X < nb_x && Y > 0 && Y < nb_y) {                                \
+  if (X >= 0 && X < nb_x && Y >= 0 && Y < nb_y) {                              \
     delta =                                                                    \
         apply_constraint(pts(i, j).pos, pts(X, Y).pos, weights.d_view(i, j),   \
                          weights.d_view(X, Y), inv_dt_sq);                     \
     pts(i, j).pos += delta;                                                    \
   }
-                UPDATE_CONSTRAINT_NEIGHBOUR(i - 1, j + 1)
-                UPDATE_CONSTRAINT_NEIGHBOUR(i + 1, j + 1)
-                UPDATE_CONSTRAINT_NEIGHBOUR(i - 1, j - 1)
-                UPDATE_CONSTRAINT_NEIGHBOUR(i + 1, j - 1)
+                UPDATE_CONSTRAINT_NEIGHBOUR(i, j + 1)
+                UPDATE_CONSTRAINT_NEIGHBOUR(i, j - 1)
+                UPDATE_CONSTRAINT_NEIGHBOUR(i - 1, j)
+                UPDATE_CONSTRAINT_NEIGHBOUR(i + 1, j)
               });
           Kokkos::fence("Wait constraints");
-
-          // Apply damping
-          Kokkos::parallel_for(
-              "Apply damping", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
-              KOKKOS_LAMBDA(const int i, const int j) {
-                vels(i, j) =
-                    damping * (pts(i, j).pos - oldPos(i, j).pos) / deltaTime;
-              });
-          Kokkos::fence("Wait damping");
         }
+        // Apply damping
+        Kokkos::parallel_for(
+            "Apply damping", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+            KOKKOS_LAMBDA(const int i, const int j) {
+              vels(i, j) =
+                  damping * (pts(i, j).pos - oldPos(i, j).pos) / deltaTime;
+            });
+        Kokkos::fence("Wait damping");
       }
     });
   }
