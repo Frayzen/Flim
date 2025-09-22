@@ -30,9 +30,12 @@ void GUIManager::setup() {
   init_info.Device = context.device;
   init_info.Queue = context.queues.graphicsQueue;
   init_info.PipelineRenderingCreateInfo = {};
-  init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-  init_info.PipelineRenderingCreateInfo.depthAttachmentFormat = context.depthImage.format;
-  init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &context.swapChain.swapChainImageFormat;
+  init_info.PipelineRenderingCreateInfo.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+  init_info.PipelineRenderingCreateInfo.depthAttachmentFormat =
+      context.depthImage.format;
+  init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats =
+      &context.swapChain.swapChainImageFormat;
   init_info.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
   init_info.DescriptorPoolSize = 10;
   init_info.MinImageCount = 3;
@@ -59,7 +62,7 @@ void GUIManager::setup() {
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
   vkBeginCommandBuffer(cb, &beginInfo);
-  ImGui_ImplVulkan_CreateFontsTexture();
+  // ImGui_ImplVulkan_CreateFontsTexture();
   vkEndCommandBuffer(cb);
 
   // Submit the command buffer
@@ -71,8 +74,8 @@ void GUIManager::setup() {
   vkQueueSubmit(context.queues.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
   vkQueueWaitIdle(context.queues.graphicsQueue);
 
-  ImGui_ImplVulkan_CreateFontsTexture();
-  ImGui_ImplVulkan_DestroyFontsTexture();
+  // ImGui_ImplVulkan_CreateFontsTexture();
+  // ImGui_ImplVulkan_DestroyFontsTexture();
 }
 
 void GUIManager::beginFrame() {
