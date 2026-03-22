@@ -1,6 +1,6 @@
 # Flim
 
-Flim is a simulation and rendering project with a structured CMake-based build system. It includes support for shaders, textures, and various simulations.
+Flim is a simulation and rendering project with a structured CMake-based build system. It includes support for shaders, textures, and various simulations. It seamlessly integrates Vulkan and Kokkos, bridging their APIs so that both frameworks can share the same buffers on the device.
 
 ## Setup and Development
 
@@ -39,7 +39,6 @@ $ make -j$(nproc)
 
 ## Contributing
 Feel free to open issues or submit pull requests to improve Flim!
-
 
 ## Notes
 
