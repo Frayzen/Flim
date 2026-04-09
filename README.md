@@ -1,13 +1,13 @@
 # Flim
 
-Flim is a simulation and rendering project with a structured CMake-based build system. It includes support for shaders, textures, and various simulations. It seamlessly integrates Vulkan and Kokkos, bridging their APIs so that both frameworks can share the same buffers on the device.
+Flim is a simulation and rendering project with a structured CMake-based build system. It includes support for shaders, textures, and various simulations.
 
 ## Setup and Development
 
 ### Prerequisites
 To compile Flim, you need:
 - [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) or [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
-- [Kokkos](https://github.com/kokkos/kokkos) compiled for your target architecture 
+- [Kokkos V3.7.01](https://github.com/kokkos/kokkos/releases/tag/3.7.01) compiled for your target architecture 
 
 ### Environment Setup
 To set up the development environment, use the `setup-dev.sh` script. This script will install required dependencies using Mamba or Conda and setup the cmake `build/` folder.
@@ -39,6 +39,7 @@ $ make -j$(nproc)
 
 ## Contributing
 Feel free to open issues or submit pull requests to improve Flim!
+
 
 ## Notes
 
