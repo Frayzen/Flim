@@ -6,7 +6,7 @@ namespace Flim {
 
 const std::vector<Vertex> &Mesh::getVertices() const { return vertices; };
 const Material &Mesh::getMaterial() const { return material; };
-const std::vector<uint16_t> &Mesh::getTriangles() const { return indices; }
+const std::vector<uint32_t> &Mesh::getTriangles() const { return indices; }
 
 Mesh::Mesh() : id(meshid++), material(), vertices(), indices() {};
 void Mesh::attachMaterial(Material m) { material = m; }

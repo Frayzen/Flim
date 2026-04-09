@@ -65,11 +65,11 @@ int main() {
     weights.modify_host();
     for (int i = 0; i < nb_x; i++) {
       for (int j = 0; j < nb_y; j++)
-        weights.h_view(i, j) = 1;
+        weights.view_host()(i, j) = 1;
     }
     // Pin the top corners
-    weights.h_view(0, nb_y - 1) = 0;
-    weights.h_view(nb_x - 1, nb_y - 1) = 0;
+    weights.view_host()(0, nb_y - 1) = 0;
+    weights.view_host()(nb_x - 1, nb_y - 1) = 0;
     weights.sync_device();
 
     scene.camera.controls = true;
@@ -99,7 +99,8 @@ int main() {
       if (ImGui::Button("Reset")) {
         Kokkos::deep_copy(pts, initPos);
         Kokkos::parallel_for(
-            "Apply gravity", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+            "Apply gravity",
+            Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {nb_x, nb_y}),
             KOKKOS_LAMBDA(const int i, const int j) {
               vels(i, j) = Vector3f(0, 0, 0);
             });
@@ -113,9 +114,10 @@ int main() {
 
         // APPLY GRAVITY
         Kokkos::parallel_for(
-            "Apply gravity", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+            "Apply gravity",
+            Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {nb_x, nb_y}),
             KOKKOS_LAMBDA(const int i, const int j) {
-              vels(i, j).y() -= deltaTime * g * weights.d_view(i, j);
+              vels(i, j).y() -= deltaTime * g * weights.view_device()(i, j);
             });
         Kokkos::fence("Wait gravity");
 
@@ -125,7 +127,8 @@ int main() {
         for (int _ = 0; _ < substep; _++) {
           // UPDATE POS
           Kokkos::parallel_for(
-              "Update position", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+              "Update position",
+              Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {nb_x, nb_y}),
               KOKKOS_LAMBDA(const int i, const int j) {
                 pts(i, j).pos += dt * vels(i, j);
               });
@@ -133,14 +136,15 @@ int main() {
 
           // APPLY CONSTRAINT
           Kokkos::parallel_for(
-              "Update constraints", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+              "Update constraints",
+              Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {nb_x, nb_y}),
               KOKKOS_LAMBDA(const int i, const int j) {
                 Vector3f delta;
 #define UPDATE_CONSTRAINT_NEIGHBOUR(X, Y, Length)                              \
   if (X >= 0 && X < nb_x && Y >= 0 && Y < nb_y) {                              \
-    delta =                                                                    \
-        apply_constraint(pts(i, j).pos, pts(X, Y).pos, weights.d_view(i, j),   \
-                         weights.d_view(X, Y), inv_dt_sq, Length);             \
+    delta = apply_constraint(pts(i, j).pos, pts(X, Y).pos,                     \
+                             weights.view_device()(i, j),                      \
+                             weights.view_device()(X, Y), inv_dt_sq, Length);  \
     pts(i, j).pos += delta;                                                    \
   }
                 UPDATE_CONSTRAINT_NEIGHBOUR(i, j + 1, side_length)
@@ -157,7 +161,8 @@ int main() {
         }
         // Apply damping
         Kokkos::parallel_for(
-            "Apply damping", Kokkos::MDRangePolicy({0, 0}, {nb_x, nb_y}),
+            "Apply damping",
+            Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {nb_x, nb_y}),
             KOKKOS_LAMBDA(const int i, const int j) {
               vels(i, j) =
                   damping * (pts(i, j).pos - oldPos(i, j).pos) / deltaTime;

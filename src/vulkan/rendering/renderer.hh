@@ -63,9 +63,9 @@ public:
     throw std::runtime_error("Invalid binding");
   };
 
-  Kokkos::View<Vector3i *, Kokkos::DefaultExecutionSpace>
+  Kokkos::View<Vector3<uint32_t> *, Kokkos::DefaultExecutionSpace>
   getIndexBufferView() const {
-    return indexBuffer.getView<Vector3i>();
+    return indexBuffer.getView<Vector3<uint32_t>>();
   }
 
 private:

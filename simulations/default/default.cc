@@ -85,6 +85,7 @@ int main() {
                   .normalized();
           vertices(i).pos =
               vertices(i).pos + (dir(i) * generator.drand(-0.3, 0.3));
+          random_pool.free_state(generator);
         });
     Kokkos::fence("Wait for init");
 
@@ -98,8 +99,10 @@ int main() {
       Kokkos::parallel_for(
           "Move vertices", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
             vertices(i).pos += dir(i) * deltaTime;
-            if ((vertices(i).pos - originals(i)).norm() > curMaxDist)
+            if ((vertices(i).pos - originals(i)).norm() > curMaxDist) {
+              vertices(i).pos = originals(i) + curMaxDist * dir(i);
               dir(i) *= -1;
+            }
           });
       ImGui::SliderFloat("Speed", &speed, 0, 1);
       ImGui::SliderFloat("Radius", &radius, 0.5, 10);

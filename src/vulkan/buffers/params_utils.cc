@@ -31,7 +31,7 @@ AttributeDescriptor &ParamsUtils::createVerticesAttribute(RenderParams &params,
   AttributeDescriptor &attr =
       params.setAttribute(binding)
           .attach<Flim::Vertex>([](const Mesh &m, Flim::Vertex *vertices) {
-            memcpy(vertices, m.vertices.data(),
+            memcpy((void *)vertices, m.vertices.data(),
                    m.vertices.size() * sizeof(Flim::Vertex));
           })
           .onlySetup(true)
