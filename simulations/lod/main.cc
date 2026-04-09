@@ -61,7 +61,7 @@ int main() {
     scene.registerMesh(cube, params2);
 
     Instance &instance = scene.instantiate(mesh);
-    // instance.transform.scale = Vector3f(2, 2, 2);
+    instance.transform.scale = Vector3f(3, 3, 3);
 
     Instance &c = scene.instantiate(cube);
 
@@ -70,49 +70,52 @@ int main() {
     scene.camera.sensivity = 5;
 
     api.setupGraphics();
-    // Kokkos::View<Vertex *> vertices =
-    //     rd.getAttributeBufferView<Vertex>(BINDING_DEFAULT_VERTICES_ATTRIBUTES);
-    // Kokkos::View<Vector3f *> originals("Original vertices",
-    // vertices.extent(0)); Kokkos::View<Vector3f *> dir("Directions",
-    // vertices.extent(0)); Kokkos::Random_XorShift64_Pool<>
-    // random_pool(42424242); Kokkos::parallel_for(
-    //     "Init", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
-    //       originals(i) = vertices(i).pos;
-    //       auto generator = random_pool.get_state();
-    //       dir(i) =
-    //           Vector3f(generator.drand(-1.0, 1.0),
-    //           generator.drand(-1.0, 1.0),
-    //                    generator.drand(-1.0, 1.0))
-    //               .normalized();
-    //       vertices(i).pos =
-    //           vertices(i).pos + (dir(i) * generator.drand(-0.3, 0.3));
-    //     });
-    // Kokkos::fence("Wait for init");
+    Kokkos::View<Vertex *> vertices =
+        rd.getAttributeBufferView<Vertex>(BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+    Kokkos::View<Vector3f *> originals("Original vertices", vertices.extent(0));
+    Kokkos::View<Vector3f *> dir("Directions", vertices.extent(0));
+    Kokkos::Random_XorShift64_Pool<> random_pool(42);
+    Kokkos::parallel_for(
+        "Init", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
+          originals(i) = vertices(i).pos;
+          auto generator = random_pool.get_state();
+          dir(i) =
+              Vector3f(generator.drand(-1.0, 1.0), generator.drand(-1.0, 1.0),
+                       generator.drand(-1.0, 1.0))
+                  .normalized();
+          random_pool.free_state(generator);
+        });
+    Kokkos::fence("Wait for init");
 
     // main loop
     static float speed = 0.0;
     static float radius = 5;
     static Vector3f pointing(0, 0, 0);
-    static float maxDistMove = 0.5;
+    static float maxDistMove = 0.02;
+    static float wigglingSpeed = 0.0;
     api.run([&](float deltaTime) {
       float curMaxDist = maxDistMove;
-      // Kokkos::parallel_for(
-      //     "Move vertices", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
-      //       vertices(i).pos += dir(i) * deltaTime;
-      //       if ((vertices(i).pos - originals(i)).norm() > curMaxDist)
-      //         dir(i) *= -1;
-      //     });
+      float ws = wigglingSpeed;
+      Kokkos::parallel_for(
+          "Move vertices", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
+            vertices(i).pos += dir(i) * deltaTime * deltaTime * ws;
+            if ((vertices(i).pos - originals(i)).norm() > curMaxDist) {
+              vertices(i).pos = originals(i) + curMaxDist * dir(i);
+              dir(i) *= -1;
+            }
+          });
       ImGui::SliderFloat("Speed", &speed, 0, 1);
+      ImGui::SliderFloat("Deformation speed", &wigglingSpeed, 0, 10);
       ImGui::SliderFloat("Radius", &radius, 0.5, 10);
       ImGui::InputFloat3("Coord pointing", &pointing.x());
-      ImGui::SliderFloat("Max Dist Move", &maxDistMove, 0.3, 1);
+      ImGui::SliderFloat("Max Dist Move", &maxDistMove, 0.001, 0.05);
       static float time = 0;
       time += deltaTime * speed;
-      instance.transform.position = radius * Vector3f(cos(time), 0, sin(time));
-      // instance.transform.lookAt(pointing);
+      // instance.transform.position = radius * Vector3f(cos(time), 0,
+      // sin(time)); instance.transform.lookAt(pointing);
       auto p = instance.transform.position;
       ImGui::Text("COORD IS %f %f %f", p.x(), p.y(), p.z());
-      // Kokkos::fence("Wait for move");
+      Kokkos::fence("Wait for move");
     });
   }
   Kokkos::finalize();
