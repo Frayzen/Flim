@@ -33,7 +33,7 @@ Mesh MeshUtils::createCube(float side_length) {
   }
 
   // Define the 12 triangles (2 per face)
-  const std::vector<uint16_t> indices = {1, 2, 3, 7, 6, 5, 4, 5, 1, 5, 6, 2,
+  const std::vector<uint32_t> indices = {1, 2, 3, 7, 6, 5, 4, 5, 1, 5, 6, 2,
                                          2, 6, 7, 0, 3, 7, 0, 1, 3, 4, 7, 5,
                                          0, 4, 1, 1, 5, 2, 3, 2, 7, 4, 0, 7};
   // Add indices to the mesh
@@ -51,7 +51,7 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
 
   // add top vertex
   vertex.pos = radius * Vector3f(0, 1, 0);
-  int v0 = model.vertices.size();
+  uint32_t v0 = model.vertices.size();
   model.vertices.push_back(vertex);
 
   // generate vertices per stack / slice
@@ -152,6 +152,14 @@ static Transform getMeshTransformFromScene(const aiScene *scene) {
   return t;
 }
 
+static Matrix4f convertAssimpMatrix(const aiMatrix4x4 &from) {
+  static Matrix4f to;
+  for (size_t i = 0; i < 4; i++)
+    for (size_t j = 0; j < 4; j++)
+      to(i, j) = from[i][j];
+  return to;
+}
+
 Mesh MeshUtils::loadFromFile(const char *path, bool smoothNormals) {
   std::cout << "Importing " << path << "..." << '\n';
   auto postProcessEffects = aiProcess_Triangulate |
@@ -169,40 +177,43 @@ Mesh MeshUtils::loadFromFile(const char *path, bool smoothNormals) {
       scene->mRootNode == nullptr)
     throw std::runtime_error("Could not load path: " + std::string(path));
 
-  Matrix4f rot = *((Matrix4f *)&scene->mRootNode->mTransformation);
+  Matrix4f rot = convertAssimpMatrix(scene->mRootNode->mTransformation);
 
-  for (uint i = 0; i < scene->mNumMeshes; i++) {
+  for (uint meshId = 0; meshId < scene->mNumMeshes; meshId++) {
     Mesh m;
-    std::cout << " = [MESH " << i << "] Creating mesh" << std::endl;
-    std::cout << " | Retrieving vertices" << std::endl;
-    auto mesh = scene->mMeshes[i];
+    std::cout << " = [MESH " << meshId << "] Creating mesh" << std::endl;
+    auto mesh = scene->mMeshes[meshId];
     Vertex vtx{};
-    for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
-      aiVector3D v = mesh->mVertices[i];
-      aiVector3D n = mesh->mNormals[i];
+    std::cout << " | Retrieving vertices (" << mesh->mNumVertices << ")"
+              << std::endl;
+    for (unsigned int vertexId = 0; vertexId < mesh->mNumVertices; ++vertexId) {
+      aiVector3D v = mesh->mVertices[vertexId];
+      aiVector3D n = mesh->mNormals[vertexId];
       vtx.pos = Vector3f(v.x, v.y, v.z);
       vtx.normal = Vector3f(n.x, n.y, n.z);
       vtx.uv = Vector2f(0, 0);
       m.vertices.push_back(vtx);
     }
 
-    std::cout << " | Retrieving indices" << std::endl;
+    std::cout << " | Retrieving indices (" << mesh->mNumFaces << ")"
+              << std::endl;
     // Retrieve indices (assuming triangles)
-    for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
-      aiFace face = mesh->mFaces[i];
-      if (face.mNumIndices == 3) // Assuming triangles
-      {
-        m.indices.push_back(face.mIndices[0]);
-        m.indices.push_back(face.mIndices[1]);
-        m.indices.push_back(face.mIndices[2]);
-      }
+
+    for (unsigned int faceId = 0; faceId < mesh->mNumFaces; ++faceId) {
+      aiFace face = mesh->mFaces[faceId];
+      assert(face.mNumIndices == 3);
+
+      m.indices.push_back(face.mIndices[0]);
+      m.indices.push_back(face.mIndices[1]);
+      m.indices.push_back(face.mIndices[2]);
     }
-    std::cout << " | Attaching material" << std::endl;
+    std::cout << " | Attaching material (ID " << mesh->mMaterialIndex << ")"
+              << std::endl;
     m.attachMaterial(
         Material::createFrom(scene->mMaterials[mesh->mMaterialIndex]));
     /* m.transform = getMeshTransformFromScene(scene); */
 
-    std::cout << " = [MESH " << i << "] Finished creating" << std::endl;
+    std::cout << " = [MESH " << meshId << "] Finished creating" << std::endl;
     return m;
   }
   return Mesh();

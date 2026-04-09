@@ -121,7 +121,7 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   }
 
   vkCmdBindIndexBuffer(graphicBuffer, renderer.indexBuffer.getVkBuffer(), 0,
-                       VK_INDEX_TYPE_UINT16);
+                       VK_INDEX_TYPE_UINT32);
   vkCmdBindDescriptorSets(graphicBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           renderer.pipeline.pipelineLayout, 0, 1,
                           &renderer.descriptorSets[context.currentImage], 0,

@@ -30,11 +30,11 @@ public:
   std::vector<Instance> instances;
   const Material &getMaterial() const;
   const std::vector<Vertex> &getVertices() const;
-  const std::vector<uint16_t> &getTriangles() const;
+  const std::vector<uint32_t> &getTriangles() const;
   void attachMaterial(Material m);
 
   std::vector<Vertex> vertices;
-  std::vector<uint16_t> indices;
+  std::vector<uint32_t> indices;
 
 protected:
   Mesh();
