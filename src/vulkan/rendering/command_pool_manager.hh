@@ -8,6 +8,7 @@
 class CommandPoolManager {
 public:
   CommandPoolManager() : commandPool(context.commandPool) {}
+  ~CommandPoolManager();
   void createCommandPool();
   void createCommandBuffers();
   void createSyncObjects();
@@ -17,8 +18,6 @@ public:
   void recordCommandBuffer(const Computer &computer);
   bool submitFrame(bool framebufferResized); // return if the swap chain is no
                                              // longer adeQuaternionfernionfe
-  void cleanup();
-
 private:
   void createCommandBuffer(std::vector<VkCommandBuffer> &buffers);
   CommandPool &commandPool;

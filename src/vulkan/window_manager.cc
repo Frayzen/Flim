@@ -32,3 +32,7 @@ void WindowManager::initWindow() {
     throw std::runtime_error(desc);
   }
 }
+WindowManager::~WindowManager() {
+  glfwDestroyWindow(context.window);
+  glfwTerminate();
+}

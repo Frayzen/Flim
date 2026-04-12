@@ -79,7 +79,8 @@ void AttributeDescriptor::setup() {
   size_t bufSize = getAmount(*getAttachedMesh(), rate) * size;
   static auto memProp = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-  setupBuffers(bufSize, usage, memProp, isComputeFriendly);
+  setupBuffers("attribute descriptor", bufSize, usage, memProp,
+               isComputeFriendly);
 
   for (auto b : getBuffers()) {
     if (isOnlySetup) {
@@ -132,7 +133,5 @@ void AttributeDescriptor::update() {
     return;
   updateFunction(*getAttachedMesh(), getBuffer()->getPtr());
 }
-
-void AttributeDescriptor::cleanup() { cleanupBuffers(); }
 
 } // namespace Flim

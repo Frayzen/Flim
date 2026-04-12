@@ -24,8 +24,8 @@ int main() {
   Flim::FlimAPI api = Flim::FlimAPI::init();
   {
     auto bufferSize = 10 * sizeof(float);
-    Buffer buffer(bufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, 0, true);
-
+    Buffer buffer("Example buffer", bufferSize,
+                  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, 0, true);
 
     // Now `hipBuffer` can be used in HIP kernels
 
@@ -42,8 +42,6 @@ int main() {
     for (int i = 0; i < 10; i++) {
       std::cout << "VAL " << i << " is " << host(i) << '\n';
     }
-
-
   }
   Kokkos::finalize();
   return 0;

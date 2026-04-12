@@ -5,7 +5,6 @@
 class Renderer;
 class Pipeline {
 public:
-  void cleanup();
   void create();
 
   Renderer &renderer;
@@ -13,8 +12,6 @@ public:
   VkShaderModule fragShaderModule;
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;
-
-private:
   Pipeline(Renderer &renderer) : renderer(renderer) {};
-  friend Renderer;
+  ~Pipeline();
 };

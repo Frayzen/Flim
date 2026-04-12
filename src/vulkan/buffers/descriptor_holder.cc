@@ -3,14 +3,7 @@
 #include "vulkan/context.hh"
 #include <iostream>
 
-void DescriptorHolder::cleanupDescriptors() {
-  for (auto &desc : params.getUniformDescriptors()) {
-    desc.second->cleanup();
-  }
-
-  for (auto desc : params.getAttributeDescriptors()) {
-    desc.second->cleanup();
-  }
+DescriptorHolder::~DescriptorHolder() {
   vkDestroyDescriptorPool(context.device, descriptorPool, nullptr);
   vkDestroyDescriptorSetLayout(context.device, descriptorSetLayout, nullptr);
 }

@@ -63,7 +63,8 @@ void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 // Buffer class related -----
 
 void Buffer::populate(void *data) const {
-  Buffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+  Buffer stagingBuffer("Populate staging buffer of " + name, size,
+                       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                        false);
@@ -71,7 +72,7 @@ void Buffer::populate(void *data) const {
   memcpy(stagingBuffer.mappedPtr, data, (size_t)size);
   stagingBuffer.unmap();
   copy(stagingBuffer);
-  stagingBuffer.destroy();
+  // stagingBuffer.destroy();
 }
 
 void Buffer::copy(const Buffer &from) const {
@@ -101,7 +102,7 @@ void Buffer::unmap() {
   mappedPtr = nullptr;
 }
 
-void Buffer::destroy() {
+Buffer::~Buffer() {
   if (external) {
 #ifdef HIP
     // Clean up
@@ -110,8 +111,6 @@ void Buffer::destroy() {
     close(externalFd);
 #endif
   }
-  if (!created)
-    return;
   if (mappedPtr)
     unmap();
   vkDestroyBuffer(context.device, buffer, nullptr);
@@ -120,9 +119,6 @@ void Buffer::destroy() {
 
 void Buffer::create(VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags properties) {
-  if (created)
-    return;
-
   void *pNextMem = nullptr;
   void *pNextBuf = nullptr;
 
@@ -153,6 +149,19 @@ void Buffer::create(VkBufferUsageFlags usage,
     throw std::runtime_error("failed to create buffer!");
   }
 
+  VkDebugUtilsObjectNameInfoEXT debugInfo{
+      .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+      .pNext = NULL,
+      .objectType = VK_OBJECT_TYPE_BUFFER,
+      .objectHandle = (uint64_t)buffer,
+      .pObjectName = name.c_str(),
+  };
+
+  auto vkSetDebugUtilsObjectNameEXT =
+      (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(
+          context.instance, "vkSetDebugUtilsObjectNameEXT");
+  vkSetDebugUtilsObjectNameEXT(context.device, &debugInfo);
+
   VkMemoryRequirements memRequirements;
   vkGetBufferMemoryRequirements(context.device, buffer, &memRequirements);
 
@@ -169,7 +178,6 @@ void Buffer::create(VkBufferUsageFlags usage,
   }
 
   vkBindBufferMemory(context.device, buffer, bufferMemory, 0);
-  created = true;
 
   if (external) {
 

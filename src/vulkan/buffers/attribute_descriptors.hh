@@ -31,6 +31,10 @@ inline VkVertexInputRate attributeRateToInputRate(AttributeRate rate) {
   return VK_VERTEX_INPUT_RATE_VERTEX;
 }
 
+/**
+ * Handles a uniform value (mapped to a binding).
+ * It inherits the BufferHolder which contains the underlying values.
+ */
 class AttributeDescriptor : public BufferHolder {
 
 public:
@@ -44,7 +48,6 @@ public:
 
   void setup();
   void update();
-  void cleanup();
 
   VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i);
 
@@ -91,6 +94,9 @@ protected:
   friend class BaseParams;
   DescriptorHolder *holder;
   AttributeRate rate;
+
+  // Describes the offset and the size (format) of each of the components of the
+  // attribute (e.g 4 Vec4 for a Mat4)
   std::vector<std::pair<VkDeviceSize, VkFormat>> offsets;
   int size;
 

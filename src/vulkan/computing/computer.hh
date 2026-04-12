@@ -14,14 +14,14 @@ public:
   Computer(Vector3i dispatchAmount, Flim::ComputeParams &params)
       : DescriptorHolder(params, true), params(params),
         dispatchAmount(dispatchAmount) {};
+  ~Computer();
 
   void setup();
   void update();
-  void cleanup();
 
   Vector3i dispatchAmount;
 
-  Flim::ComputeParams& params;
+  Flim::ComputeParams &params;
 
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;

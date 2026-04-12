@@ -8,11 +8,15 @@ class BaseParams;
 class Mesh;
 }; // namespace Flim
 
+// The holder of the descriptors of a Renderable object (uniform and attribute)
+// The layout is handled in params. This takes the BaseParams which generates
+// the descriptorss for the attributes and uniform and outputs a DescriptorPool
 class DescriptorHolder {
 public:
   DescriptorHolder(Flim::BaseParams &params, bool computeHolder)
       : params(params), descriptorPool(0), descriptorSetLayout(0),
         isComputeHolder(computeHolder) {};
+  ~DescriptorHolder();
 
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorPool descriptorPool;
@@ -22,7 +26,6 @@ public:
 
 protected:
   void setupDescriptors();
-  void cleanupDescriptors();
   Flim::BaseParams &params;
 
 private:

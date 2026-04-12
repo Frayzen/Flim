@@ -46,8 +46,7 @@ void Computer::update() {
   }
 }
 
-void Computer::cleanup() {
+Computer::~Computer() {
   vkDestroyPipeline(context.device, pipeline, nullptr);
   vkDestroyPipelineLayout(context.device, pipelineLayout, nullptr);
-  cleanupDescriptors();
 }

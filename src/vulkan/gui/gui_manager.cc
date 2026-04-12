@@ -11,6 +11,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
+#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -98,7 +99,7 @@ void GUIManager::endFrame() {
   ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }
 
-void GUIManager::cleanup() {
+GUIManager::~GUIManager() {
   ImGui_ImplVulkan_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext(imGuiContext);

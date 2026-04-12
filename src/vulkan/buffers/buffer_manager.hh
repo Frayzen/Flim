@@ -48,11 +48,15 @@ private:
 extern BufferManager &bufferManager;
 
 /*
- * Usefull for buffer per frame
- * redudancy is the total amount of duplicate buffer of the same content
+ * A generic holder of underlying data aimed to be extended by other classes.
+ * It generates the Buffer objects (with possible duplication in case of
+ * per-frame-buffer)
+ * Usefull for buffer per frame Redundancy is the total amount
+ * of duplicate buffer of the same content
  */
 class BufferHolder {
 public:
+  BufferHolder(const BufferHolder &);
   std::shared_ptr<Buffer> getBuffer(int i = -1) const;
   int getBufferId() const;
   int newBufferId() const;
@@ -60,13 +64,12 @@ public:
 
   int bufferId; // tmp, to put back in protected
 protected:
-  BufferHolder(const BufferHolder &);
   BufferHolder();
   BufferHolder(int id);
   std::vector<std::shared_ptr<Buffer>> &getBuffers() const;
-  void setupBuffers(int bufferSize, VkBufferUsageFlags usage,
+  void setupBuffers(std::string name, int bufferSize, VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags properties, bool computeFriendly);
-  void cleanupBuffers();
+  ~BufferHolder();
 
   int redundancy;
 

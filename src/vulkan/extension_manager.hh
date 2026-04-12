@@ -7,7 +7,7 @@
 class ExtensionManager {
 public:
   ExtensionManager() = default;
-  void cleanUp();
+  ~ExtensionManager();
   void listExtensions(); // For debug purposes only
   bool checkValidationLayerSupport();
   void activateDebugExtensions(VkInstanceCreateInfo &info);

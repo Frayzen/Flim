@@ -8,9 +8,9 @@ class SwapChainManager {
 
 public:
   SwapChainManager() : swapChain(context.swapChain) {};
+  ~SwapChainManager();
 
   void createSwapChain();
-  void cleanup();
 
 private:
   SwapChain &swapChain;

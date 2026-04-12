@@ -2,6 +2,7 @@
 #include "api/parameters/render_params.hh"
 #include "api/render/mesh.hh"
 #include "consts.hh"
+#include "vulkan/buffers/buffer_utils.hh"
 #include "vulkan/context.hh"
 #include "vulkan/device/device_utils.hh"
 #include "vulkan/rendering/renderer.hh"
@@ -110,11 +111,11 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   const Flim::Mesh &mesh = renderer.mesh;
 
   vkCmdBindPipeline(graphicBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    renderer.pipeline.pipeline);
+                    renderer.pipeline->pipeline);
 
   std::vector<VkBuffer> vertexBuffers;
   for (auto &attr : renderer.params.getAttributeDescriptors()) {
-    /* std::vector<VkDeviceSize> offsets = attr.second->getOffsets(); */
+    std::vector<VkDeviceSize> offsets = attr.second->getOffsets();
     const VkDeviceSize offset = 0;
     vkCmdBindVertexBuffers(graphicBuffer, attr.first, 1,
                            &attr.second->getBuffer()->getVkBuffer(), &offset);
@@ -123,12 +124,12 @@ void CommandPoolManager::recordCommandBuffer(const Renderer &renderer) {
   vkCmdBindIndexBuffer(graphicBuffer, renderer.indexBuffer.getVkBuffer(), 0,
                        VK_INDEX_TYPE_UINT32);
   vkCmdBindDescriptorSets(graphicBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          renderer.pipeline.pipelineLayout, 0, 1,
+                          renderer.pipeline->pipelineLayout, 0, 1,
                           &renderer.descriptorSets[context.currentImage], 0,
                           nullptr);
-  uint32_t nbIndices = static_cast<uint32_t>(mesh.indices.size());
-  vkCmdDrawIndexed(graphicBuffer, nbIndices, renderer.mesh.instances.size(), 0,
-                   0, 0);
+  vkCmdDrawIndexedIndirect(graphicBuffer,
+                           renderer.getDrawCommandBuffer().getVkBuffer(), 0, 1,
+                           sizeof(VkDrawIndirectCommand));
 }
 
 void CommandPoolManager::createCommandBuffer(
@@ -383,7 +384,7 @@ bool CommandPoolManager::submitFrame(bool framebufferResized) {
   return false;
 }
 
-void CommandPoolManager::cleanup() {
+CommandPoolManager::~CommandPoolManager() {
   auto device = context.device;
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     // Graphic

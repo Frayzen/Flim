@@ -25,6 +25,8 @@ typedef struct Queues {
   VkQueue computeQueue;
 } Queues;
 
+// The pool of the commands to be sent to the device along with the
+// synchronization objects
 typedef struct CommandPool {
   VkCommandPool pool = {};
   std::vector<VkCommandBuffer> graphicBuffers;

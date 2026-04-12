@@ -82,8 +82,11 @@ int main() {
       });
   particlesParams.setUniform(2).attachObj<PointUniform>(pointDesc);
 
-  ParamsUtils::createVerticesAttribute(particlesParams, 0).computeFriendly(true);
-  auto& positions = ParamsUtils::createInstanceMatrixAttribute(particlesParams, 3).computeFriendly(true);
+  ParamsUtils::createVerticesAttribute(particlesParams, 0)
+      .computeFriendly(true);
+  auto &positions =
+      ParamsUtils::createInstanceMatrixAttribute(particlesParams, 3)
+          .computeFriendly(true);
 
   auto &velocities = particlesParams.setAttribute(8, AttributeRate::INSTANCE)
                          .attach<Vector4f>([](const Mesh &m, Vector4f *vels) {
@@ -175,6 +178,5 @@ int main() {
     cubeIstc.transform.scale =
         2.0f * Vector3f(cmpParam.bounds, cmpParam.bounds, cmpParam.bounds);
   });
-  api.cleanup();
   return ret;
 }

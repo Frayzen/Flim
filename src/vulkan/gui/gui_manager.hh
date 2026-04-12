@@ -7,8 +7,8 @@
 class GUIManager {
 public:
   GUIManager() = default;
+  ~GUIManager();
   void setup();
-  void cleanup();
   void beginFrame();
   void endFrame();
 

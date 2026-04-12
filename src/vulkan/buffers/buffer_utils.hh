@@ -6,20 +6,20 @@
 
 class Buffer {
 public:
-  Buffer(void *ptr, int size, VkBufferUsageFlags usage = 0,
+  Buffer(std::string name, void *ptr, int size, VkBufferUsageFlags usage = 0,
          VkMemoryPropertyFlags properties = 0, bool external = true)
-      : Buffer(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      : Buffer(name, size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                properties | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                external) {
     populate(ptr);
   };
 
-  Buffer(int size,
+  Buffer(std::string name, int size,
          VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
          VkMemoryPropertyFlags properties = 0, bool external = true)
-      : size(size), created(false), mappedPtr(nullptr), buffer(0),
-        external(external), externalPtr(nullptr) {
+      : size(size), mappedPtr(nullptr), buffer(0), external(external),
+        externalPtr(nullptr), name(name) {
     create(usage, properties);
   };
 
@@ -44,11 +44,12 @@ public:
   void copy(const Buffer &from) const;
   void populate(void *value) const;
 
-  void destroy();
+  ~Buffer();
+
+  const std::string name;
 
 private:
   void create(VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
-  bool created;
   int size; // in bytes
   VkDeviceMemory bufferMemory;
   VkBuffer buffer;

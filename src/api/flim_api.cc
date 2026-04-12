@@ -13,8 +13,6 @@ FlimAPI FlimAPI::init() {
 
 Scene &FlimAPI::getScene() { return scene; }
 
-void FlimAPI::cleanup() { app.cleanup(scene); }
-
 void FlimAPI::setupGraphics() {
   if (isGraphicsSetup)
     return;
@@ -25,7 +23,7 @@ void FlimAPI::setupGraphics() {
 bool FlimAPI::graphicsLoaded() const { return isGraphicsSetup; }
 
 int FlimAPI::run(const std::function<void(float)> &renderMethod) {
-  app.setupGraphics(scene);
+  setupGraphics();
   try {
     double lastTime = glfwGetTime();
     while (true) {

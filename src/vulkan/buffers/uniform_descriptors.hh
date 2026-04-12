@@ -28,7 +28,6 @@ public:
                                              int i) = 0;
   virtual void setup() = 0;
   virtual void update() = 0;
-  virtual void cleanup() {};
   virtual ~UniformDescriptor() {};
 
   virtual std::shared_ptr<UniformDescriptor> clone() const = 0;
@@ -46,10 +45,10 @@ protected:
 class ImageUniDesc : public UniformDescriptor {
 public:
   ImageUniDesc(int binding, std::string path, int shaderStage);
+  ~ImageUniDesc();
 
   void setup() override;
   void update() override {};
-  void cleanup() override;
 
   ImageUniDesc &setType(VkDescriptorType type);
 
@@ -87,16 +86,14 @@ public:
   };
 
   template <typename T> GeneralUniDesc &attachObj(const T &ref) {
-    return attach<T>([&ref](T *ptr) {
-      memcpy(static_cast<T *>(ptr), &ref, sizeof(T));
-    });
+    return attach<T>(
+        [&ref](T *ptr) { memcpy(static_cast<T *>(ptr), &ref, sizeof(T)); });
   };
 
   VkWriteDescriptorSet getDescriptor(DescriptorHolder &holder, int i) override;
 
   void setup() override;
   virtual void update() override;
-  void cleanup() override;
 
   virtual std::shared_ptr<UniformDescriptor> clone() const override {
     return std::make_shared<GeneralUniDesc>(*this);

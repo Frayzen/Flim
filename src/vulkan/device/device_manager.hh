@@ -5,6 +5,7 @@
 class DeviceManager {
 public:
   DeviceManager() = default;
+  ~DeviceManager();
 
   void pickPhysicalDevice();
   void createLogicalDevice();

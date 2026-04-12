@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vulkan/vulkan_core.h>
 
-void Pipeline::cleanup() {
+Pipeline::~Pipeline() {
   vkDestroyPipeline(context.device, pipeline, nullptr);
   vkDestroyPipelineLayout(context.device, pipelineLayout, nullptr);
 }

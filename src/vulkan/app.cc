@@ -86,7 +86,6 @@ void VulkanApplication::recreateSwapChain() {
     glfwWaitEvents();
   }
   vkDeviceWaitIdle(context.device);
-  swap_chain_manager.cleanup();
   swap_chain_manager.createSwapChain();
   surface_manager.setupSwapChainImages();
   surface_manager.createImageViews();
@@ -142,21 +141,23 @@ bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
 
 void VulkanApplication::finish() { vkDeviceWaitIdle(context.device); }
 
-void VulkanApplication::cleanup(Flim::Scene &scene) {
-  gui_manager.cleanup();
-  swap_chain_manager.cleanup();
-  for (auto &r : scene.renderers) {
-    r.second->cleanup();
-  }
-  for (auto &c : scene.computers) {
-    c->cleanup();
-  }
+// VulkanApplication::~VulkanApplication() {
+// void VulkanApplication::cleanup(Flim::Scene &scene) {
+//   gui_manager.cleanup();
+//   swap_chain_manager.cleanup();
+//   for (auto &r : scene.renderers) {
+//     r.second->cleanup();
+//   }
+//   for (auto &c : scene.computers) {
+//     c->cleanup();
+//   }
 
-  command_pool_manager.cleanup();
-  vkDestroyDevice(context.device, nullptr);
-  extension_manager.cleanUp();
-  vkDestroySurfaceKHR(context.instance, context.surface, nullptr);
-  vkDestroyInstance(context.instance, nullptr);
-  glfwDestroyWindow(context.window);
-  glfwTerminate();
-}
+//   command_pool_manager.cleanup();
+//   vkDestroyDevice(context.device, nullptr);
+//   extension_manager.cleanUp();
+//   vkDestroySurfaceKHR(context.instance, context.surface, nullptr);
+//   vkDestroyInstance(context.instance, nullptr);
+//   glfwDestroyWindow(context.window);
+//   glfwTerminate();
+// }
+// }

@@ -36,7 +36,7 @@ void ExtensionManager::populateRequiredExtensions() {
   }
 }
 
-void ExtensionManager::cleanUp() {
+ExtensionManager::~ExtensionManager() {
   if (enableValidationLayers) {
     DestroyDebugUtilsMessengerEXT(context.instance, debugMessenger, nullptr);
   }
@@ -117,8 +117,8 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
               VkDebugUtilsMessageTypeFlagsEXT messageType,
               const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
               void *pUserData) {
-  (void) pUserData;
-  (void) messageType;
+  (void)pUserData;
+  (void)messageType;
   if (messageSeverity >= VK_DEBUG_LEVEL) {
     // Message is important enough to show
     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;

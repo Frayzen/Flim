@@ -54,18 +54,19 @@ bool DeviceManager::isDeviceSuitable(VkPhysicalDevice device) {
   QueueFamilyIndices indices =
       findQueueFamilies(context, device); // Check the queues capabilities
   bool extensionsSupported =
-      checkDeviceExtensionSupport(device); // Check the extension support
-  bool swapChainAdeQuaternionfernionfe = false;          // Check the swap chain support
+      checkDeviceExtensionSupport(device);      // Check the extension support
+  bool swapChainAdeQuaternionfernionfe = false; // Check the swap chain support
   if (extensionsSupported) { // Only if swapChain extension is found
     SwapChainSupportDetails swapChainSupport =
         querySwapChainSupport(context, device);
     swapChainAdeQuaternionfernionfe = !swapChainSupport.formats.empty() &&
-                        !swapChainSupport.presentModes.empty();
+                                      !swapChainSupport.presentModes.empty();
   }
 
   VkPhysicalDeviceFeatures supportedFeatures;
   vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
-  return indices.isComplete() && extensionsSupported && swapChainAdeQuaternionfernionfe &&
+  return indices.isComplete() && extensionsSupported &&
+         swapChainAdeQuaternionfernionfe &&
          supportedFeatures.samplerAnisotropy && supportedFeatures.wideLines &&
          supportedFeatures.fillModeNonSolid;
 }
@@ -96,4 +97,10 @@ void DeviceManager::pickPhysicalDevice() {
     throw std::runtime_error("failed to find a suitable GPU!");
   }
   context.physicalDevice = physicalDevice;
+}
+
+DeviceManager::~DeviceManager() {
+  vkDestroyDevice(context.device, nullptr);
+  vkDestroySurfaceKHR(context.instance, context.surface, nullptr);
+  vkDestroyInstance(context.instance, nullptr);
 }

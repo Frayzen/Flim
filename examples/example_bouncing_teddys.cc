@@ -50,7 +50,8 @@ int main() {
   Flim::FlimAPI api = FlimAPI::init();
 
   Mesh teddy = MeshUtils::loadFromFile("resources/single_file/teddy.obj");
-  /* Mesh room = MeshUtils::loadFromFile("resources/viking_room/viking_room.obj"); */
+  /* Mesh room =
+   * MeshUtils::loadFromFile("resources/viking_room/viking_room.obj"); */
 
   RenderParams renderParams = {
       Shader("shaders/default.vert.spv"),
@@ -123,6 +124,5 @@ int main() {
 
     teddy.updateModelViews();
   });
-  api.cleanup();
   return ret;
 }

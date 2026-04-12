@@ -34,7 +34,7 @@ static Vector3f apply_constraint(Vector3f p0, Vector3f p1, float w0, float w1,
 
 int main() {
   Kokkos::initialize();
-  FlimAPI api = FlimAPI::init();
+  FlimAPI &api = FlimAPI::init();
   {
 
     float side_length = 1;

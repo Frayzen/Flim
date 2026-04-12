@@ -19,10 +19,11 @@ public:
   bool graphicsLoaded() const;
   GLFWwindow *getWindow();
   void cleanup();
+
 private:
   bool isGraphicsSetup;
-  Scene scene;
   VulkanApplication app;
+  Scene scene;
   FlimAPI() : scene(*this), isGraphicsSetup(false) {};
 };
 

@@ -29,6 +29,7 @@ inline VkPolygonMode renderModeToPolygonMode(RenderMode mode) {
   }
 }
 
+// The parameters handled by the user to describe the layout of a shader
 class BaseParams {
 
 public:

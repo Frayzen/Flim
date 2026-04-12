@@ -29,7 +29,8 @@ BufferHolder::BufferHolder(int id)
 
 BufferHolder::BufferHolder() : BufferHolder(bufferManager.createId()) {}
 
-void BufferHolder::setupBuffers(int bufferSize, VkBufferUsageFlags usage,
+void BufferHolder::setupBuffers(std::string name, int bufferSize,
+                                VkBufferUsageFlags usage,
                                 VkMemoryPropertyFlags properties,
                                 bool computeFriendly) {
   if (bufferManager.buffers.contains(bufferId))
@@ -40,13 +41,12 @@ void BufferHolder::setupBuffers(int bufferSize, VkBufferUsageFlags usage,
     bufferManager.attachedMesh[bufferId] = nullptr;
   for (int i = 0; i < redundancy; i++)
     bufferManager.buffers[bufferId][i] = std::make_shared<Buffer>(
-        bufferSize, usage, properties, computeFriendly);
+        name + "[i]", bufferSize, usage, properties, computeFriendly);
 }
-void BufferHolder::cleanupBuffers() {
+
+BufferHolder::~BufferHolder() {
   if (!bufferManager.buffers.contains(bufferId))
     return;
-  for (auto &b : bufferManager.buffers[bufferId])
-    b->destroy();
   bufferManager.buffers[bufferId].clear();
 }
 
