@@ -6,6 +6,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include "utils/backend.hh"
+#include "vulkan/rendering/utils.hh"
 
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
   VkPhysicalDeviceMemoryProperties memProperties;
@@ -156,18 +157,7 @@ void Buffer::create(VkBufferUsageFlags usage,
     throw std::runtime_error("failed to create buffer!");
   }
 
-  VkDebugUtilsObjectNameInfoEXT debugInfo{
-      .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
-      .pNext = NULL,
-      .objectType = VK_OBJECT_TYPE_BUFFER,
-      .objectHandle = (uint64_t)buffer,
-      .pObjectName = name.c_str(),
-  };
-
-  auto vkSetDebugUtilsObjectNameEXT =
-      (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(
-          context.instance, "vkSetDebugUtilsObjectNameEXT");
-  vkSetDebugUtilsObjectNameEXT(context.device, &debugInfo);
+  setDebugObjectName(VK_OBJECT_TYPE_BUFFER, (uint64_t)buffer, name);
 
   VkMemoryRequirements memRequirements;
   vkGetBufferMemoryRequirements(context.device, buffer, &memRequirements);

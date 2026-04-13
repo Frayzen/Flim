@@ -63,6 +63,9 @@ void SurfaceManager::createImageViews() {
                           &swapChainImageViews[i]) != VK_SUCCESS) {
       throw std::runtime_error("failed to create image views!");
     }
+    auto name = "Swap chain image view " + std::to_string(i);
+    setDebugObjectName(VK_OBJECT_TYPE_IMAGE_VIEW,
+                       (uint64_t)swapChainImageViews[i], name);
   }
 }
 

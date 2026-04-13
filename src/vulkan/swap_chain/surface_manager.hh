@@ -4,7 +4,7 @@
 
 class SurfaceManager {
 public:
-  SurfaceManager() {};
+  SurfaceManager() = default;
 
   void createSurface();
 

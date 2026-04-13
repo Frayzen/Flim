@@ -38,7 +38,22 @@ static VkFormat findSupportedFormat(VulkanContext &context,
 inline VkFormat findDepthFormat(VulkanContext &context) {
   return findSupportedFormat(
       context,
-      { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+      {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
        VK_FORMAT_D24_UNORM_S8_UINT},
       VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
+inline void setDebugObjectName(VkObjectType objectType, uint64_t obj,
+                               std::string name) {
+  VkDebugUtilsObjectNameInfoEXT debugInfo{
+      .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+      .pNext = NULL,
+      .objectType = objectType,
+      .objectHandle = (uint64_t)obj,
+      .pObjectName = name.c_str(),
+  };
+  auto vkSetDebugUtilsObjectNameEXT =
+      (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(
+          context.instance, "vkSetDebugUtilsObjectNameEXT");
+  vkSetDebugUtilsObjectNameEXT(context.device, &debugInfo);
 }
