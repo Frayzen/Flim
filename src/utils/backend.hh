@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(__HIP_PLATFORM_AMD__) or defined(__HIP_PLATFORM_NVIDIA__)
-#define HIP
+#define FLIM_HIP
 
 #include <stdio.h>
 #if defined(__HIP_PLATFORM_AMD__)
@@ -10,8 +10,8 @@
 #include <hip/nvidia_detail/amd_nvidia_runtime.h>
 #endif
 
-#include <iostream>
 #include <hip/hip_ext.h>
+#include <iostream>
 
 #define HIP_CHECK(expression)                                                  \
   {                                                                            \
@@ -21,4 +21,20 @@
                 << " at " << __FILE__ << ":" << __LINE__ << std::endl;         \
     }                                                                          \
   }
+#elif defined(__CUDACC__) // NVCC compiler macro[citation:6]
+#define FLIM_CUDA
+
+#include <cuda_runtime.h>
+#include <iostream>
+
+#define CUDA_CHECK(expression)                                                 \
+  {                                                                            \
+    const cudaError_t status = expression;                                     \
+    if (status != cudaSuccess) {                                               \
+      std::cerr << "CUDA error " << status << ": "                             \
+                << cudaGetErrorString(status) << " at " << __FILE__ << ":"     \
+                << __LINE__ << std::endl;                                      \
+    }                                                                          \
+  }
+
 #endif

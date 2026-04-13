@@ -4,6 +4,8 @@
 #include <fwd.hh>
 #include <vulkan/vulkan_core.h>
 
+#include "utils/backend.hh"
+
 class Buffer {
 public:
   Buffer(std::string name, void *ptr, int size, VkBufferUsageFlags usage = 0,
@@ -58,6 +60,12 @@ private:
   bool external;
   void *externalPtr;
   int externalFd;
+
+#ifdef FLIM_HIP
+  hipExternalMemory_t extMem = nullptr;
+#elif defined(FLIM_CUDA)
+  cudaExternalMemory_t extMem = nullptr;
+#endif
 };
 
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);

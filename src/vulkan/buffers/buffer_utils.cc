@@ -104,11 +104,17 @@ void Buffer::unmap() {
 
 Buffer::~Buffer() {
   if (external) {
-#ifdef HIP
-    // Clean up
-    HIP_CHECK(hipFree(externalPtr));
-    /* HIP_CHECK(hipDestroyExternalMemory(extMem)); */
-    close(externalFd);
+#ifdef FLIM_HIP
+    // Note: hipFree(externalPtr) would CRASH - externalPtr wasn't allocated
+    // with hipMalloc The pointer is managed by the external memory object
+    HIP_CHECK(hipDestroyExternalMemory(extMem)); // This invalidates externalPtr
+    // File descriptor ownership transferred to HIP, don't close it here
+    // close(externalFd);  // REMOVE THIS - HIP owns the FD now
+#elif defined(FLIM_CUDA)
+    CUDA_CHECK(
+        cudaDestroyExternalMemory(extMem)); // This invalidates externalPtr
+    // Don't close externalFd - CUDA driver owns it
+    // close(externalFd);  // REMOVE THIS
 #endif
   }
   if (mappedPtr)
@@ -126,6 +132,7 @@ void Buffer::create(VkBufferUsageFlags usage,
     static VkExportMemoryAllocateInfo exportInfo{};
     exportInfo.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
     exportInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+
     pNextMem = &exportInfo;
 
     static VkExternalMemoryBufferCreateInfo externalBufferInfo{};
@@ -192,7 +199,7 @@ void Buffer::create(VkBufferUsageFlags usage,
 
     assert(vkGetMemoryFdKHR(context.device, &getFdInfo, &externalFd) ==
            VK_SUCCESS);
-#ifdef HIP
+#ifdef FLIM_HIP
     HIP_CHECK(hipSetDevice(0));
 
     // Import the memory handle into HIP
@@ -201,11 +208,9 @@ void Buffer::create(VkBufferUsageFlags usage,
     extMemHandleDesc.handle.fd = externalFd;
     extMemHandleDesc.size = size;
 
-    hipExternalMemory_t extMem = nullptr;
-
     HIP_CHECK(hipImportExternalMemory(&extMem, &extMemHandleDesc));
 
-    // Step 3: Map the external memory to a HIP buffer
+    // Map the external memory to a HIP buffer
     hipExternalMemoryBufferDesc bufferDesc = {};
     bufferDesc.offset = 0;
     bufferDesc.size = size;
@@ -214,6 +219,26 @@ void Buffer::create(VkBufferUsageFlags usage,
     HIP_CHECK(
         hipExternalMemoryGetMappedBuffer(&externalPtr, extMem, &bufferDesc));
 
+#elif defined(FLIM_CUDA)
+    // Set CUDA device
+    CUDA_CHECK(cudaSetDevice(0));
+
+    // Import the memory handle into CUDA
+    cudaExternalMemoryHandleDesc extMemHandleDesc = {};
+    extMemHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueFd;
+    extMemHandleDesc.handle.fd = externalFd;
+    extMemHandleDesc.size = size;
+
+    CUDA_CHECK(cudaImportExternalMemory(&extMem, &extMemHandleDesc));
+
+    // Map the external memory to a CUDA buffer
+    cudaExternalMemoryBufferDesc bufferDesc = {};
+    bufferDesc.offset = 0;
+    bufferDesc.size = size;
+    bufferDesc.flags = 0; // Must be 0 for now (reserved for future use)
+
+    CUDA_CHECK(
+        cudaExternalMemoryGetMappedBuffer(&externalPtr, extMem, &bufferDesc));
 #endif
   }
 }

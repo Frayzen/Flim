@@ -13,7 +13,7 @@ static void setupQueues(VulkanContext &context, QueueFamilyIndices &indices) {
   vkGetDeviceQueue(context.device, indices.presentFamily.value(), 0,
                    &context.queues.presentQueue);
   vkGetDeviceQueue(context.device, indices.presentFamily.value(), 0,
-      &context.queues.computeQueue);
+                   &context.queues.computeQueue);
 }
 
 void DeviceManager::createLogicalDevice() {
@@ -42,7 +42,8 @@ void DeviceManager::createLogicalDevice() {
 
   // specify device address feature
   VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeat = {};
-  bufferDeviceAddressFeat.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+  bufferDeviceAddressFeat.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
   bufferDeviceAddressFeat.bufferDeviceAddress = VK_TRUE;
   bufferDeviceAddressFeat.pNext = &dynamicRenderingFeature;
 
