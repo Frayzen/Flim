@@ -4,6 +4,7 @@
 #include "api/render/mesh.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/tree/instance.hh"
+#include "kokkos/renderer_accesser.hh"
 #include "vulkan/rendering/renderer.hh"
 #include <Eigen/src/Core/Matrix.h>
 #include <Kokkos_Core.hpp>
@@ -34,7 +35,7 @@ static Vector3f apply_constraint(Vector3f p0, Vector3f p1, float w0, float w1,
 
 int main() {
   Kokkos::initialize();
-  FlimAPI &api = FlimAPI::init();
+  FlimAPI api = FlimAPI::init();
   {
 
     float side_length = 1;
@@ -52,7 +53,7 @@ int main() {
 
     api.setupGraphics();
     Kokkos::View<Vertex *> vertices =
-        rd.getAttributeBufferView<Vertex>(BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+        getAttributeBufferView<Vertex>(rd, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
     Kokkos::View<Vertex **> pts(vertices.data(), nb_x, nb_y);
     Kokkos::View<Vertex **> initPos("Init points", nb_x, nb_y);
     Kokkos::deep_copy(initPos, pts);

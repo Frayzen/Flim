@@ -15,20 +15,13 @@ if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
 endif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
 
 # Kokkos related
-find_package(Kokkos REQUIRED)
+find_package(Kokkos OPTIONAL)
 
 file(GLOB_RECURSE sources src/*.cc)
 file(GLOB_RECURSE headers src/*.hh)
 add_library(flim ${sources})
 
-target_link_libraries(
-  flim
-  ${Vulkan_LIBRARY}
-  glfw
-  Eigen3::Eigen
-  assimp
-  imgui
-  Kokkos::kokkos)
+target_link_libraries(flim ${Vulkan_LIBRARY} glfw Eigen3::Eigen assimp imgui)
 target_include_directories(flim PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 # find_package(HIP QUIET) if(HIP_FOUND) message(STATUS "Found HIP: "

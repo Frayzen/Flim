@@ -4,6 +4,7 @@
 #include "api/render/mesh_utils.hh"
 #include "api/transform.hh"
 #include "api/tree/instance.hh"
+#include "kokkos/renderer_accesser.hh"
 #include <Eigen/src/Core/Matrix.h>
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Random.hpp>
@@ -50,13 +51,15 @@ int main() {
   static int ecol = 1;
   api.setupGraphics();
   Kokkos::View<Vertex *> vertices =
-      rd.getAttributeBufferView<Vertex>(BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+      getAttributeBufferView<Vertex>(rd, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+  Kokkos::View<Vector3<uint32_t> *> indices = getIndexBufferView(rd);
 
   api.run([&](float deltaTime) {
     ImGui::InputInt("Amount of ecol", &ecol);
     if (ImGui::Button("Apply ecol")) {
       std::cout << "OK " + std::to_string(deltaTime) << std::endl;
     }
+
     Kokkos::fence("Wait for move");
   });
   Kokkos::finalize();

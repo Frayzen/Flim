@@ -232,3 +232,5 @@ void Buffer::create(VkBufferUsageFlags usage,
 #endif
   }
 }
+
+const void *Buffer::getExternalPtr() const { return externalPtr; }

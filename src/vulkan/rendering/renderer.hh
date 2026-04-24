@@ -9,7 +9,6 @@
 #include "vulkan/context.hh"
 #include "vulkan/rendering/pipeline.hh"
 #include <Eigen/src/Core/Matrix.h>
-#include <iostream>
 #include <stdexcept>
 #include <sys/types.h>
 #include <vector>
@@ -53,22 +52,6 @@ public:
       bufferManager.attachMesh(attr.second->bufferId, &mesh);
     }
   };
-
-#define CUR_FRAME -1
-  template <typename Type>
-  Kokkos::View<Type *, Kokkos::DefaultExecutionSpace>
-  getAttributeBufferView(int binding, ssize_t frame = CUR_FRAME) const {
-    for (auto &attr : params.attributes) {
-      if (attr.second->binding == binding)
-        return attr.second->getBuffer(frame)->getView<Type>();
-    }
-    throw std::runtime_error("Invalid binding");
-  };
-
-  Kokkos::View<Vector3<uint32_t> *, Kokkos::DefaultExecutionSpace>
-  getIndexBufferView() const {
-    return indexBuffer.getView<Vector3<uint32_t>>();
-  }
 
 private:
   int version;

@@ -267,10 +267,7 @@ bool CommandPoolManager::acquireFrame() {
   renderInfo.colorAttachmentCount = 1;
   renderInfo.pColorAttachments = &attachmentInfoKHR;
   renderInfo.pDepthAttachment = &depthInfo;
-  auto vkCmdBeginRenderingKHR =
-      (PFN_vkCmdBeginRenderingKHR)vkGetInstanceProcAddr(
-          context.instance, "vkCmdBeginRenderingKHR");
-  vkCmdBeginRenderingKHR(graphicBuffer, &renderInfo);
+  vkCmdBeginRendering(graphicBuffer, &renderInfo);
 
   // viewport and scissor state for this pipeline are dynamic
   VkViewport viewport{};
