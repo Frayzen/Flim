@@ -23,5 +23,4 @@ void main() {
       pos /= pos.w;
     fragNormal = mat3(transform) * inNormal;
     fragTexCoord = inTexCoord;
-    gl_PointSize = 1.0;
 }

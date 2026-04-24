@@ -62,8 +62,8 @@ int main() {
   auto &cam = scene.camera;
 
   RenderParams particlesParams("Particles");
-  particlesParams.vertexShader = Shader("shaders/default.vert.spv"),
-  particlesParams.fragmentShader = Shader("shaders/default.frag.spv");
+  particlesParams.vertexShader = Shader("shaders/point.vert.spv"),
+  particlesParams.fragmentShader = Shader("shaders/point.frag.spv");
 
   particlesParams.mode = RenderMode::RENDERER_MODE_POINTS;
   particlesParams.setUniform(0, VERTEX_SHADER_STAGE)
@@ -139,6 +139,7 @@ int main() {
   Instance &cubeIstc = scene.instantiate(cube);
 
   /* scene.camera.is2D = true; */
+  scene.camera.controls = true;
   scene.camera.speed = 100;
   scene.camera.transform.position = Vector3f(0, 0, 0);
   scene.camera.sensivity = 5;

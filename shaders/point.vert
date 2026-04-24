@@ -19,6 +19,8 @@ layout(location = 2) in vec2 inTexCoord;
 
 layout(location = 3) in mat4 inInstanceMat;
 
+layout(location = 8) in float ignored;
+
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNormal;
 layout(location = 2) out vec2 fragTexCoord;

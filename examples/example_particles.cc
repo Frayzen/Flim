@@ -137,6 +137,7 @@ int main() {
   Instance &cubeIstc = scene.instantiate(cube);
 
   /* scene.camera.is2D = true; */
+  scene.camera.controls = true;
   scene.camera.speed = 100;
   scene.camera.transform.position = Vector3f(0, 0, 0);
   scene.camera.sensivity = 5;
