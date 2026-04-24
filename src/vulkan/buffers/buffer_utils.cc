@@ -2,6 +2,7 @@
 #include "vulkan/context.hh"
 #include <cstring>
 #include <fwd.hh>
+#include <iostream>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -73,7 +74,6 @@ void Buffer::populate(void *data) const {
   memcpy(stagingBuffer.mappedPtr, data, (size_t)size);
   stagingBuffer.unmap();
   copy(stagingBuffer);
-  // stagingBuffer.destroy();
 }
 
 void Buffer::copy(const Buffer &from) const {
@@ -122,6 +122,7 @@ Buffer::~Buffer() {
     unmap();
   vkDestroyBuffer(context.device, buffer, nullptr);
   vkFreeMemory(context.device, bufferMemory, nullptr);
+  // std::cout << "DESTROY BUF " << name << std::endl;
 }
 
 void Buffer::create(VkBufferUsageFlags usage,
@@ -129,6 +130,7 @@ void Buffer::create(VkBufferUsageFlags usage,
   void *pNextMem = nullptr;
   void *pNextBuf = nullptr;
 
+  // std::cout << "CREATE BUF " << name << std::endl;
   if (external) {
     static VkExportMemoryAllocateInfo exportInfo{};
     exportInfo.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
@@ -233,4 +235,7 @@ void Buffer::create(VkBufferUsageFlags usage,
   }
 }
 
-const void *Buffer::getExternalPtr() const { return externalPtr; }
+const void *Buffer::getExternalPtr() const {
+  assert(external);
+  return externalPtr;
+}

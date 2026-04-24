@@ -43,7 +43,7 @@ public:
       : DescriptorHolder(params, false), params(params), version(0), mesh(mesh),
         indexBuffer("Index buffer", mesh.indices.data(),
                     mesh.indices.size() * sizeof(mesh.indices[0]),
-                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
+                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 0, true),
         pipeline(std::make_unique<Pipeline>(*this)) {
     for (auto &attr : this->params.getAttributeDescriptors()) {
       CHECK(
