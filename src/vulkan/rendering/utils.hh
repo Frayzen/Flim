@@ -7,6 +7,7 @@
 #include <vulkan/vulkan_core.h>
 
 #define TO_RAD(X) ((X) * 0.5f * M_PI / 180.0f)
+namespace Flim {
 
 // angles in radian
 inline Quaternionf toQuaternion(float roll, float pitch, float yaw) {
@@ -57,3 +58,4 @@ inline void setDebugObjectName(VkObjectType objectType, uint64_t obj,
           context.instance, "vkSetDebugUtilsObjectNameEXT");
   vkSetDebugUtilsObjectNameEXT(context.device, &debugInfo);
 }
+}; // namespace Flim

@@ -2,6 +2,8 @@
 
 #include <fwd.hh>
 
+namespace Flim {
+
 class SurfaceManager {
 public:
   SurfaceManager() = default;
@@ -15,3 +17,4 @@ public:
 
 private:
 };
+} // namespace Flim

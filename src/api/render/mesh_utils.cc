@@ -33,12 +33,15 @@ Mesh MeshUtils::createCube(float side_length) {
   }
 
   // Define the 12 triangles (2 per face)
-  const std::vector<uint32_t> indices = {1, 2, 3, 7, 6, 5, 4, 5, 1, 5, 6, 2,
-                                         2, 6, 7, 0, 3, 7, 0, 1, 3, 4, 7, 5,
-                                         0, 4, 1, 1, 5, 2, 3, 2, 7, 4, 0, 7};
+  const std::vector<Triangle> indices = {
+      Triangle(1, 2, 3), Triangle(7, 6, 5), Triangle(4, 5, 1),
+      Triangle(5, 6, 2), Triangle(2, 6, 7), Triangle(0, 3, 7),
+      Triangle(0, 1, 3), Triangle(4, 7, 5), Triangle(0, 4, 1),
+      Triangle(1, 5, 2), Triangle(3, 2, 7), Triangle(4, 0, 7),
+  };
   // Add indices to the mesh
   for (const auto &tri : indices) {
-    model.indices.push_back(tri);
+    model.triangles.push_back(tri);
   }
 
   return model;
@@ -76,14 +79,10 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
   for (int i = 0; i < n_slices; ++i) {
     auto i0 = i + 1;
     auto i1 = (i + 1) % n_slices + 1;
-    model.indices.push_back(v0);
-    model.indices.push_back(i1);
-    model.indices.push_back(i0);
+    model.triangles.push_back(Triangle(v0, i1, i0));
     i0 = i + n_slices * (n_stacks - 2) + 1;
     i1 = (i + 1) % n_slices + n_slices * (n_stacks - 2) + 1;
-    model.indices.push_back(v1);
-    model.indices.push_back(i0);
-    model.indices.push_back(i1);
+    model.triangles.push_back(Triangle(v1, i0, i1));
   }
 
   // add quads per stack / slice
@@ -96,12 +95,8 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
       auto i2 = j1 + (i + 1) % n_slices;
       auto i3 = j1 + i;
 
-      model.indices.push_back(i0);
-      model.indices.push_back(i1);
-      model.indices.push_back(i2);
-      model.indices.push_back(i0);
-      model.indices.push_back(i2);
-      model.indices.push_back(i3);
+      model.triangles.push_back(Triangle(i0, i1, i2));
+      model.triangles.push_back(Triangle(i0, i1, i3));
     }
   }
   return model;
@@ -110,9 +105,7 @@ Mesh MeshUtils::createSphere(float radius, int n_slices, int n_stacks) {
 Mesh MeshUtils::createNodalMesh() {
   Mesh model;
   model.vertices.push_back({});
-  model.indices.push_back(0);
-  model.indices.push_back(0);
-  model.indices.push_back(0);
+  model.triangles.push_back(Triangle(0, 0, 0));
   return model;
 }
 
@@ -203,9 +196,8 @@ Mesh MeshUtils::loadFromFile(const char *path, bool smoothNormals) {
       aiFace face = mesh->mFaces[faceId];
       assert(face.mNumIndices == 3);
 
-      m.indices.push_back(face.mIndices[0]);
-      m.indices.push_back(face.mIndices[1]);
-      m.indices.push_back(face.mIndices[2]);
+      m.triangles.push_back(
+          Triangle(face.mIndices[0], face.mIndices[1], face.mIndices[2]));
     }
     std::cout << " | Attaching material (ID " << mesh->mMaterialIndex << ")"
               << std::endl;
@@ -237,13 +229,8 @@ Mesh MeshUtils::createGrid(float length, int nbpts_width, int nbpts_height) {
       int top_left = i + (j + 1) * (nbpts_width);
       int top_right = top_left + 1;
 
-      model.indices.push_back(top_left);
-      model.indices.push_back(top_right);
-      model.indices.push_back(bot_left);
-
-      model.indices.push_back(top_right);
-      model.indices.push_back(bot_right);
-      model.indices.push_back(bot_left);
+      model.triangles.push_back(Triangle(top_left, top_right, bot_left));
+      model.triangles.push_back(Triangle(top_right, bot_right, bot_left));
     }
   }
   return model;

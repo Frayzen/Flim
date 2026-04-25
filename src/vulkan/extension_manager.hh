@@ -4,6 +4,8 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 class ExtensionManager {
 public:
   ExtensionManager() = default;
@@ -31,3 +33,4 @@ private:
   VkDebugUtilsMessengerEXT debugMessenger;
   std::vector<const char *> requiredExtensions;
 };
+} // namespace Flim

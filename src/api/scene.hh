@@ -8,9 +8,8 @@
 #include "vulkan/computing/computer.hh"
 #include "vulkan/rendering/renderer.hh"
 
-class VulkanApplication;
-
 namespace Flim {
+class VulkanApplication;
 
 class Instance;
 
@@ -31,7 +30,7 @@ public:
 private:
   Scene(FlimAPI &api) : api(api), camera(*this) {};
   friend class FlimAPI;
-  friend class ::VulkanApplication;
+  friend class VulkanApplication;
 };
 
 } // namespace Flim

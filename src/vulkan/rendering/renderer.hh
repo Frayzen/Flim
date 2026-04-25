@@ -9,7 +9,6 @@
 #include "vulkan/context.hh"
 #include "vulkan/rendering/pipeline.hh"
 #include <Eigen/src/Core/Matrix.h>
-#include <stdexcept>
 #include <sys/types.h>
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -18,7 +17,6 @@ class Scene;
 class RenderParams;
 class Instance;
 class Mesh;
-}; // namespace Flim
 
 // An abstract renderable object (a mesh)
 class Renderer : public DescriptorHolder {
@@ -31,18 +29,18 @@ public:
   const Buffer &getDrawCommandBuffer() const;
 
   void setupUniforms();
-  void updateUniforms(const Flim::Instance &obj, const Flim::Camera &cam);
+  void updateUniforms(const Instance &obj, const Camera &cam);
 
-  const std::vector<Flim::Instance> &getInstances();
-  Flim::Mesh &mesh;
-  Flim::RenderParams &params;
+  const std::vector<Instance> &getInstances();
+  Mesh &mesh;
+  RenderParams &params;
   Buffer indexBuffer;
   std::unique_ptr<Pipeline> pipeline;
 
-  Renderer(Flim::Mesh &mesh, Flim::RenderParams &params)
+  Renderer(Mesh &mesh, RenderParams &params)
       : DescriptorHolder(params, false), params(params), version(0), mesh(mesh),
-        indexBuffer("Index buffer", mesh.indices.data(),
-                    mesh.indices.size() * sizeof(mesh.indices[0]),
+        indexBuffer("Index buffer", mesh.triangles.data(),
+                    mesh.triangles.size() * sizeof(Triangle),
                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 0, true),
         pipeline(std::make_unique<Pipeline>(*this)) {
     for (auto &attr : this->params.getAttributeDescriptors()) {
@@ -57,3 +55,4 @@ private:
   int version;
   std::unique_ptr<Buffer> drawCmdBuffer;
 };
+}; // namespace Flim

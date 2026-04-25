@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <vulkan/vulkan_core.h>
+namespace Flim {
 
 class GUIManager {
 public:
@@ -17,3 +18,4 @@ private:
   ImGuiContext *imGuiContext;
   VkDescriptorPool imguiPool;
 };
+} // namespace Flim

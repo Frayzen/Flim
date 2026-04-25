@@ -14,6 +14,8 @@
 #include <sys/types.h>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 void CommandPoolManager::createCommandPool() {
   QueueFamilyIndices queueFamilyIndices =
       findQueueFamilies(context, context.physicalDevice);
@@ -398,3 +400,4 @@ CommandPoolManager::~CommandPoolManager() {
   }
   vkDestroyCommandPool(context.device, commandPool.pool, nullptr);
 }
+}; // namespace Flim

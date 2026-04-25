@@ -4,6 +4,8 @@
 #include <cstring>
 #include <fwd.hh>
 
+namespace Flim {
+
 static bool hasStencilComponent(VkFormat format);
 
 void createImage(Image &image, VkFormat format, VkImageTiling tiling,
@@ -15,3 +17,4 @@ void transitionImageLayout(Image &image, VkImageLayout newLayout);
 
 void createImageView(Image &image, VkImageAspectFlags aspectFlags);
 
+} // namespace Flim

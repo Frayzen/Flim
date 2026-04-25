@@ -4,6 +4,8 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace Flim {
+
 VulkanContext context{};
 
 VulkanApplication::VulkanApplication()
@@ -141,23 +143,4 @@ bool VulkanApplication::mainLoop(const std::function<void(float)> &renderMethod,
 
 void VulkanApplication::finish() { vkDeviceWaitIdle(context.device); }
 
-// VulkanApplication::~VulkanApplication() {
-// void VulkanApplication::cleanup(Flim::Scene &scene) {
-//   gui_manager.cleanup();
-//   swap_chain_manager.cleanup();
-//   for (auto &r : scene.renderers) {
-//     r.second->cleanup();
-//   }
-//   for (auto &c : scene.computers) {
-//     c->cleanup();
-//   }
-
-//   command_pool_manager.cleanup();
-//   vkDestroyDevice(context.device, nullptr);
-//   extension_manager.cleanUp();
-//   vkDestroySurfaceKHR(context.instance, context.surface, nullptr);
-//   vkDestroyInstance(context.instance, nullptr);
-//   glfwDestroyWindow(context.window);
-//   glfwTerminate();
-// }
-// }
+}; // namespace Flim

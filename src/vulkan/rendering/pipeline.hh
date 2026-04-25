@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
 class Renderer;
 class Pipeline {
 public:
@@ -15,3 +16,4 @@ public:
   Pipeline(Renderer &renderer) : renderer(renderer) {};
   ~Pipeline();
 };
+}; // namespace Flim

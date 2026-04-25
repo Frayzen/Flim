@@ -10,6 +10,8 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 static bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
   uint32_t extensionCount;
   vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount,
@@ -104,3 +106,4 @@ DeviceManager::~DeviceManager() {
   vkDestroySurfaceKHR(context.instance, context.surface, nullptr);
   vkDestroyInstance(context.instance, nullptr);
 }
+} // namespace Flim

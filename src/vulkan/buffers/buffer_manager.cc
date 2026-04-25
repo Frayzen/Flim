@@ -2,6 +2,7 @@
 #include "consts.hh"
 #include "vulkan/context.hh"
 #include <memory>
+namespace Flim {
 
 BufferManager &bufferManager = BufferManager::get();
 
@@ -67,3 +68,4 @@ int BufferHolder::getBufferId() const { return bufferId; }
 Flim::Mesh *BufferHolder::getAttachedMesh() const {
   return bufferManager.attachedMesh[bufferId];
 }
+}; // namespace Flim

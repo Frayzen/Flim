@@ -1,5 +1,6 @@
 #pragma once
 
+namespace Flim {
 class WindowManager {
 public:
   WindowManager() = default;
@@ -7,3 +8,4 @@ public:
   void initWindow();
   bool framebufferResized = false;
 };
+}; // namespace Flim

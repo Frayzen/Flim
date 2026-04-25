@@ -3,6 +3,7 @@
 #include "api/shaders/shader.hh"
 #include "api/tree/camera.hh"
 #include "base_params.hh"
+#include "vulkan/context.hh"
 #include <string>
 
 namespace Flim {
@@ -38,7 +39,7 @@ public:
 private:
   RenderParams clone();
   RenderParams(const RenderParams &) = default;
-  friend class ::Renderer;
+  friend class Renderer;
 };
 
 } // namespace Flim

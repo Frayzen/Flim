@@ -3,6 +3,8 @@
 #include "vulkan/context.hh"
 #include <iostream>
 
+namespace Flim {
+
 DescriptorHolder::~DescriptorHolder() {
   vkDestroyDescriptorPool(context.device, descriptorPool, nullptr);
   vkDestroyDescriptorSetLayout(context.device, descriptorSetLayout, nullptr);
@@ -123,3 +125,4 @@ void DescriptorHolder::printBufferIds() const {
   for (auto &a : params.getAttributeDescriptors())
     std::cout << a.second->getBufferId() << '\n';
 }
+}; // namespace Flim

@@ -5,6 +5,8 @@
 #include "vulkan/rendering/renderer.hh"
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 class CommandPoolManager {
 public:
   CommandPoolManager() : commandPool(context.commandPool) {}
@@ -22,3 +24,4 @@ private:
   void createCommandBuffer(std::vector<VkCommandBuffer> &buffers);
   CommandPool &commandPool;
 };
+}; // namespace Flim

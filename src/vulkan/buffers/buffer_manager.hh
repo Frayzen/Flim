@@ -10,7 +10,6 @@
 namespace Flim {
 class RenderParams;
 class ComputeParams;
-}; // namespace Flim
 
 struct UniformLocationObject {
   Matrix4f model;
@@ -76,3 +75,5 @@ protected:
   friend class Flim::RenderParams;
   friend class Flim::ComputeParams;
 };
+
+}; // namespace Flim

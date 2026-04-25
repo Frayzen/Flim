@@ -9,11 +9,10 @@
 #include "vulkan/swap_chain/swap_chain_manager.hh"
 #include "vulkan/window_manager.hh"
 #include <GLFW/glfw3.h>
-#include <cstdlib>
-#include <cstring>
 #include <functional>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
 class VulkanApplication {
 public:
   VulkanApplication();
@@ -43,3 +42,4 @@ private:
 
   friend class Flim::FlimAPI;
 };
+}; // namespace Flim

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "api/transform.hh"
-class Renderer;
 namespace Flim {
+class Renderer;
 
 class Mesh;
 class Scene;

@@ -5,6 +5,8 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 struct QueueFamilyIndices {
   std::optional<uint32_t> graphicsAndComputeFamily;
   std::optional<uint32_t> presentFamily;
@@ -44,3 +46,4 @@ inline QueueFamilyIndices findQueueFamilies(VulkanContext &context,
 
   return indices;
 }
+} // namespace Flim

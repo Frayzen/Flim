@@ -2,6 +2,7 @@
 #include "vulkan/context.hh"
 #include <iostream>
 #include <vulkan/vulkan_core.h>
+namespace Flim {
 
 void Computer::createPipeline() {
   auto shaderModule = params.shader.createShaderModule();
@@ -50,3 +51,4 @@ Computer::~Computer() {
   vkDestroyPipeline(context.device, pipeline, nullptr);
   vkDestroyPipelineLayout(context.device, pipelineLayout, nullptr);
 }
+}; // namespace Flim

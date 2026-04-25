@@ -8,9 +8,9 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
 class DescriptorHolder;
 class Renderer;
-namespace Flim {
 
 class Mesh;
 
@@ -87,7 +87,7 @@ protected:
   bool usesPreviousFrame;
   int binding;
 
-  friend class ::Renderer;
+  friend class Renderer;
   friend class Computer;
   friend class ComputeParams;
   friend class RenderParams;

@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 // LOGICAL DEVICE CREATION
 
 static void setupQueues(VulkanContext &context, QueueFamilyIndices &indices) {
@@ -73,3 +75,4 @@ void DeviceManager::createLogicalDevice() {
 
   setupQueues(context, indices);
 }
+} // namespace Flim

@@ -9,8 +9,8 @@
 #include <utility>
 #include <vulkan/vulkan_core.h>
 
-class Pipeline;
 namespace Flim {
+class Pipeline;
 
 enum RenderMode {
   RENDERER_MODE_TRIS = 0,
@@ -92,7 +92,7 @@ protected:
           uni.second->clone(); // we update the id of the provided one
     }
   };
-  friend class ::Pipeline;
+  friend class Pipeline;
 };
 
 } // namespace Flim

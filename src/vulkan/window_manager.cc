@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <stdexcept>
 
+namespace Flim {
 static void framebufferResizeCallback(GLFWwindow *window, int width,
                                       int height) {
   (void)width;
@@ -36,3 +37,4 @@ WindowManager::~WindowManager() {
   glfwDestroyWindow(context.window);
   glfwTerminate();
 }
+}; // namespace Flim

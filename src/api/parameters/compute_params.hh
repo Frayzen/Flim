@@ -4,12 +4,13 @@
 #include "base_params.hh"
 #include <string>
 
+namespace Flim {
 class Computer;
 
-namespace Flim {
 class ComputeParams : public BaseParams {
 public:
-  ComputeParams(std::string name) : BaseParams(name + " compute"), mainFunction("main") {};
+  ComputeParams(std::string name)
+      : BaseParams(name + " compute"), mainFunction("main") {};
 
   Shader shader;
   std::string mainFunction;
@@ -26,9 +27,10 @@ public:
           attr.second->clone(true); // we keep the value here
     }
   }
+
 private:
   ComputeParams clone();
-  friend class ::Computer;
+  friend class Computer;
 };
 
 } // namespace Flim

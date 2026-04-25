@@ -4,6 +4,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include "utils/backend.hh"
+namespace Flim {
 
 class Buffer {
 public:
@@ -63,3 +64,4 @@ uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 VkCommandBuffer beginSingleTimeCommands();
 
 void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+} // namespace Flim

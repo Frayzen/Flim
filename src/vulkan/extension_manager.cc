@@ -11,6 +11,8 @@
 #include <sys/types.h>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 void ExtensionManager::populateRequiredExtensions() {
   uint32_t glfwExtensionCount = 0;
   const char **glfwExtensions;
@@ -176,3 +178,4 @@ void ExtensionManager::DestroyDebugUtilsMessengerEXT(
     func(instance, debugMessenger, pAllocator);
   }
 }
+} // namespace Flim

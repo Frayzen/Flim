@@ -8,10 +8,9 @@
 #include <span>
 #include <vector>
 
+namespace Flim {
 class CommandPoolManager;
 class Renderer;
-
-namespace Flim {
 
 class Instance;
 
@@ -20,6 +19,8 @@ struct Vertex {
   Vector3f normal;
   Vector2f uv;
 };
+
+typedef Vector3<uint32_t> Triangle;
 
 static int meshid = 0;
 class Mesh {
@@ -30,11 +31,11 @@ public:
   std::vector<Instance> instances;
   const Material &getMaterial() const;
   const std::vector<Vertex> &getVertices() const;
-  const std::vector<uint32_t> &getTriangles() const;
+  const std::vector<Triangle> &getTriangles() const;
   void attachMaterial(Material m);
 
   std::vector<Vertex> vertices;
-  std::vector<uint32_t> indices;
+  std::vector<Triangle> triangles;
 
 protected:
   Mesh();
@@ -43,8 +44,8 @@ protected:
 
   friend class Scene;
   friend class MeshUtils;
-  friend class ::CommandPoolManager;
-  friend class ::Renderer;
+  friend class CommandPoolManager;
+  friend class Renderer;
 };
 
 }; // namespace Flim

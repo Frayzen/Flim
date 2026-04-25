@@ -9,9 +9,10 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
 void Renderer::setup() {
   assert(mesh.vertices.size() > 0);
-  assert(mesh.indices.size() > 0);
+  assert(mesh.triangles.size() > 0);
   setupDescriptors();
   pipeline->create();
 }
@@ -35,7 +36,7 @@ void Renderer::update() {
     version = params.version;
   }
   VkDrawIndexedIndirectCommand cmd{
-      .indexCount = static_cast<uint32_t>(mesh.indices.size()),
+      .indexCount = static_cast<uint32_t>(mesh.triangles.size() * 3),
       .instanceCount = static_cast<uint32_t>(mesh.instances.size()),
       .firstIndex = 0,
       .vertexOffset = 0,
@@ -47,3 +48,4 @@ void Renderer::update() {
 }
 
 const Buffer &Renderer::getDrawCommandBuffer() const { return *drawCmdBuffer; }
+}; // namespace Flim

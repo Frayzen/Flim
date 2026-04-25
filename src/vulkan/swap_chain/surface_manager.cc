@@ -9,6 +9,8 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 void SurfaceManager::createSurface() {
   VkResult err = glfwCreateWindowSurface(context.instance, context.window,
                                          nullptr, &context.surface);
@@ -82,3 +84,4 @@ void SurfaceManager::createDepthResources() {
   transitionImageLayout(context.depthImage,
                         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
+}; // namespace Flim

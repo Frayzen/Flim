@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 class DeviceManager {
 public:
   DeviceManager() = default;
@@ -13,3 +15,4 @@ public:
 private:
   bool isDeviceSuitable(VkPhysicalDevice device);
 };
+} // namespace Flim

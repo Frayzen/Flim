@@ -17,7 +17,7 @@ public:
   Scene &getScene();
 
   bool graphicsLoaded() const;
-  GLFWwindow *getWindow();
+  GLFWwindow *getWindow() const;
   void cleanup();
 
 private:

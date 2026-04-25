@@ -3,6 +3,7 @@
 #include <fwd.hh>
 
 #include "vulkan/context.hh"
+namespace Flim {
 
 class SwapChainManager {
 
@@ -23,3 +24,4 @@ private:
 
   VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
 };
+} // namespace Flim

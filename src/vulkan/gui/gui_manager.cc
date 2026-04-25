@@ -15,6 +15,8 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 void GUIManager::setup() {
   // this initializes the core structures of imgui
   imGuiContext = ImGui::CreateContext();
@@ -104,3 +106,4 @@ GUIManager::~GUIManager() {
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext(imGuiContext);
 }
+}; // namespace Flim

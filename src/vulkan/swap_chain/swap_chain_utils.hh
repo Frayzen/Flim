@@ -2,6 +2,8 @@
 
 #include "vulkan/context.hh"
 
+namespace Flim {
+
 inline SwapChainSupportDetails querySwapChainSupport(VulkanContext &context,
                                                      VkPhysicalDevice &device) {
   SwapChainSupportDetails swapChainSupport;
@@ -30,3 +32,4 @@ inline SwapChainSupportDetails querySwapChainSupport(VulkanContext &context,
   }
   return swapChainSupport;
 }
+} // namespace Flim

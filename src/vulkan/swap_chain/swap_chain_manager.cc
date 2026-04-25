@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+namespace Flim {
 
 VkSurfaceFormatKHR SwapChainManager::chooseSwapSurfaceFormat(
     const std::vector<VkSurfaceFormatKHR> &availableFormats) {
@@ -171,3 +172,5 @@ SwapChainManager::~SwapChainManager() {
 
   vkDestroySwapchainKHR(context.device, swapChain.swapChain, nullptr);
 }
+
+} // namespace Flim

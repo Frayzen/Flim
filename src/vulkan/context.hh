@@ -7,7 +7,6 @@
 namespace Flim {
 
 class RenderParams;
-};
 class VulkanContext {
 public:
   uint32_t currentImage;
@@ -22,3 +21,5 @@ public:
   SwapChain swapChain;
   Image depthImage;
 } extern context;
+
+}; // namespace Flim

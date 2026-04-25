@@ -5,6 +5,8 @@
 
 #include <Kokkos_Core.hpp>
 
+namespace Flim {
+
 template <typename Type>
 Kokkos::View<Type *, Kokkos::DefaultExecutionSpace>
 getBufferView(const Buffer &buffer) {
@@ -32,3 +34,5 @@ Kokkos::View<Vector3<uint32_t> *, Kokkos::DefaultExecutionSpace>
 getIndexBufferView(const Renderer &r) {
   return getBufferView<Vector3<uint32_t>>(r.indexBuffer);
 }
+
+}; // namespace Flim

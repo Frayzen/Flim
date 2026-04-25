@@ -5,14 +5,15 @@
 #include <fwd.hh>
 #include <stdexcept>
 
+namespace Flim {
+
 static bool hasStencilComponent(VkFormat format) {
   return format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
          format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-void createImage(Image &image, VkFormat format,
-                                VkImageTiling tiling, VkImageUsageFlags usage,
-                                VkMemoryPropertyFlags properties) {
+void createImage(Image &image, VkFormat format, VkImageTiling tiling,
+                 VkImageUsageFlags usage, VkMemoryPropertyFlags properties) {
   VkImageCreateInfo imageInfo{};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   imageInfo.imageType = VK_IMAGE_TYPE_2D; // 1 2 or 3D
@@ -82,8 +83,7 @@ void copyBufferToImage(VkBuffer buffer, Image &image) {
   endSingleTimeCommands(commandBuffer);
 }
 
-void transitionImageLayout(Image &image,
-                                          VkImageLayout newLayout) {
+void transitionImageLayout(Image &image, VkImageLayout newLayout) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
   VkImageMemoryBarrier barrier{};
@@ -163,8 +163,7 @@ void transitionImageLayout(Image &image,
   endSingleTimeCommands(commandBuffer);
 }
 
-void createImageView(Image &image,
-                                    VkImageAspectFlags aspectFlags) {
+void createImageView(Image &image, VkImageAspectFlags aspectFlags) {
   VkImageViewCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   createInfo.image = image.textureImage;
@@ -189,3 +188,4 @@ void createImageView(Image &image,
   }
 }
 
+} // namespace Flim

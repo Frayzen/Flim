@@ -6,7 +6,6 @@
 namespace Flim {
 class BaseParams;
 class Mesh;
-}; // namespace Flim
 
 // The holder of the descriptors of a Renderable object (uniform and attribute)
 // The layout is handled in params. This takes the BaseParams which generates
@@ -37,3 +36,5 @@ private:
 
   int getDescriptorsSize() const;
 };
+
+}; // namespace Flim

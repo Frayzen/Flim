@@ -7,7 +7,6 @@
 
 namespace Flim {
 class Mesh;
-};
 
 class DescriptorHolder;
 
@@ -109,3 +108,5 @@ protected:
 private:
   VkDescriptorBufferInfo bufferInfo;
 };
+
+}; // namespace Flim

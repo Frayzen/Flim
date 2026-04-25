@@ -4,6 +4,8 @@ find_program(
   NAMES glslc
   HINTS Vulkan::glslc)
 
+add_custom_target(shaders)
+
 function(add_shaders TARGET_NAME SHADER_SOURCE)
   # Set input and output paths
   set(INPUT_SHADER "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER_SOURCE}")
@@ -17,6 +19,7 @@ function(add_shaders TARGET_NAME SHADER_SOURCE)
     VERBATIM)
 
   add_custom_target(${TARGET_NAME} ALL DEPENDS ${OUTPUT_SPV})
+  add_dependencies(shaders ${TARGET_NAME})
 endfunction()
 
 add_shaders("VertexShader" default.vert)

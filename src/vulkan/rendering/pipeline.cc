@@ -6,6 +6,8 @@
 #include <iostream>
 #include <vulkan/vulkan_core.h>
 
+namespace Flim {
+
 Pipeline::~Pipeline() {
   vkDestroyPipeline(context.device, pipeline, nullptr);
   vkDestroyPipelineLayout(context.device, pipelineLayout, nullptr);
@@ -200,3 +202,4 @@ void Pipeline::create() {
   vkDestroyShaderModule(context.device, fragShaderModule, nullptr);
   vkDestroyShaderModule(context.device, vertShaderModule, nullptr);
 }
+}; // namespace Flim

@@ -1,3 +1,4 @@
+#include "api/bvh/bvh.hh"
 #include "api/flim_api.hh"
 #include "api/parameters/render_params.hh"
 #include "api/render/mesh.hh"
@@ -6,14 +7,14 @@
 #include "api/tree/instance.hh"
 #include "kokkos/renderer_accesser.hh"
 #include <Eigen/src/Core/Matrix.h>
-#include <Kokkos_Core.hpp>
-#include <Kokkos_Random.hpp>
+// #include <Kokkos_Core.hpp>
+// #include <Kokkos_Random.hpp>
 #include <cstdio>
-#include <decl/Kokkos_Declare_OPENMP.hpp>
+// #include <decl/Kokkos_Declare_OPENMP.hpp>
 #include <imgui.h>
-#include <impl/Kokkos_Profiling.hpp>
+// #include <impl/Kokkos_Profiling.hpp>
 #include <iostream>
-#include <setup/Kokkos_Setup_HIP.hpp>
+// #include <setup/Kokkos_Setup_HIP.hpp>
 #include <unistd.h>
 
 using namespace Flim;
@@ -28,7 +29,7 @@ void check(Vector3f v) {
 }
 
 int main() {
-  Kokkos::initialize();
+  // Kokkos::initialize();
 
   check(Vector3f(0, 0, 1));
   check(Vector3f(0, 1, 0));
@@ -71,24 +72,28 @@ int main() {
     scene.camera.sensivity = 5;
 
     api.setupGraphics();
-    Kokkos::View<Vertex *> vertices =
-        getAttributeBufferView<Vertex>(rd, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
-    Kokkos::View<Vector3f *> originals("Original vertices", vertices.extent(0));
-    Kokkos::View<Vector3f *> dir("Directions", vertices.extent(0));
-    Kokkos::Random_XorShift64_Pool<> random_pool(42424242);
-    Kokkos::parallel_for(
-        "Init", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
-          originals(i) = vertices(i).pos;
-          auto generator = random_pool.get_state();
-          dir(i) =
-              Vector3f(generator.drand(-1.0, 1.0), generator.drand(-1.0, 1.0),
-                       generator.drand(-1.0, 1.0))
-                  .normalized();
-          vertices(i).pos =
-              vertices(i).pos + (dir(i) * generator.drand(-0.3, 0.3));
-          random_pool.free_state(generator);
-        });
-    Kokkos::fence("Wait for init");
+    // Kokkos::View<Vertex *> vertices =
+    //     getAttributeBufferView<Vertex>(rd,
+    //     BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+    // Kokkos::View<Vector3f *> originals("Original vertices",
+    // vertices.extent(0)); Kokkos::View<Vector3f *> dir("Directions",
+    // vertices.extent(0)); Kokkos::Random_XorShift64_Pool<>
+    // random_pool(42424242); Kokkos::parallel_for(
+    //     "Init", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
+    //       originals(i) = vertices(i).pos;
+    //       auto generator = random_pool.get_state();
+    //       dir(i) =
+    //           Vector3f(generator.drand(-1.0, 1.0),
+    //           generator.drand(-1.0, 1.0),
+    //                    generator.drand(-1.0, 1.0))
+    //               .normalized();
+    //       vertices(i).pos =
+    //           vertices(i).pos + (dir(i) * generator.drand(-0.3, 0.3));
+    //       random_pool.free_state(generator);
+    //     });
+    // Kokkos::fence("Wait for init");
+
+    BVH<5> bvh(mesh);
 
     // main loop
     static float speed = 0.5;
@@ -97,14 +102,14 @@ int main() {
     static float maxDistMove = 0.5;
     api.run([&](float deltaTime) {
       float curMaxDist = maxDistMove;
-      Kokkos::parallel_for(
-          "Move vertices", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
-            vertices(i).pos += dir(i) * deltaTime;
-            if ((vertices(i).pos - originals(i)).norm() > curMaxDist) {
-              vertices(i).pos = originals(i) + curMaxDist * dir(i);
-              dir(i) *= -1;
-            }
-          });
+      // Kokkos::parallel_for(
+      //     "Move vertices", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
+      //       vertices(i).pos += dir(i) * deltaTime;
+      //       if ((vertices(i).pos - originals(i)).norm() > curMaxDist) {
+      //         vertices(i).pos = originals(i) + curMaxDist * dir(i);
+      //         dir(i) *= -1;
+      //       }
+      //     });
       ImGui::SliderFloat("Speed", &speed, 0, 1);
       ImGui::SliderFloat("Radius", &radius, 0.5, 10);
       ImGui::InputFloat3("Coord pointing", &pointing.x());
@@ -115,9 +120,17 @@ int main() {
       instance.transform.lookAt(pointing);
       auto p = instance.transform.position;
       ImGui::Text("COORD IS %f %f %f", p.x(), p.y(), p.z());
-      Kokkos::fence("Wait for move");
+
+      int width, height;
+      glfwGetWindowSize(api.getWindow(), &width, &height);
+      if (width > 0 && height > 0) {
+        double x, y;
+        glfwGetCursorPos(api.getWindow(), &x, &y);
+      }
+
+      // Kokkos::fence("Wait for move");
     });
   }
-  Kokkos::finalize();
+  // Kokkos::finalize();
   return 0;
 }

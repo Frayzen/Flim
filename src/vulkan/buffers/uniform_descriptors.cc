@@ -12,6 +12,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <utils/stb_image.h>
 
+namespace Flim {
 ImageUniDesc::ImageUniDesc(int binding, std::string path, int shaderStage)
     : UniformDescriptor(binding, shaderStage,
                         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER),
@@ -151,3 +152,4 @@ VkWriteDescriptorSet GeneralUniDesc::getDescriptor(DescriptorHolder &holder,
 }
 
 void GeneralUniDesc::update() { updateFunction(getBuffer()->getPtr()); };
+}; // namespace Flim

@@ -9,6 +9,8 @@
 #include "utils/backend.hh"
 #include "vulkan/rendering/utils.hh"
 
+namespace Flim {
+
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
   VkPhysicalDeviceMemoryProperties memProperties;
   vkGetPhysicalDeviceMemoryProperties(context.physicalDevice, &memProperties);
@@ -239,3 +241,4 @@ const void *Buffer::getExternalPtr() const {
   assert(external);
   return externalPtr;
 }
+} // namespace Flim

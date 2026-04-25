@@ -5,7 +5,6 @@
 #include <Eigen/src/Core/Matrix.h>
 namespace Flim {
 class ComputeParams;
-} // namespace Flim
 
 class Computer : public DescriptorHolder {
 public:
@@ -29,3 +28,5 @@ public:
 private:
   void createPipeline();
 };
+
+} // namespace Flim
