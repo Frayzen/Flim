@@ -22,9 +22,12 @@ function(add_shaders TARGET_NAME SHADER_SOURCE)
   add_dependencies(shaders ${TARGET_NAME})
 endfunction()
 
-add_shaders("VertexShader" default.vert)
-add_shaders("FragmentShader" default.frag)
-add_shaders("ComputeShader" default.comp)
+# 1. Gather all relevant shader files in the current directory
+file(GLOB SHADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.vert"
+     "${CMAKE_CURRENT_SOURCE_DIR}/*.frag" "${CMAKE_CURRENT_SOURCE_DIR}/*.comp")
 
-add_shaders("ParticlesFrag" point.frag)
-add_shaders("ParticlesVert" point.vert)
+# 1. Iterate through the discovered files
+foreach(SHADER_PATH ${SHADER_FILES})
+  get_filename_component(SHADER_NAME "${SHADER_PATH}" NAME)
+  add_shaders("${SHADER_NAME}" "${SHADER_NAME}")
+endforeach()

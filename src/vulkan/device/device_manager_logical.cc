@@ -54,6 +54,7 @@ void DeviceManager::createLogicalDevice() {
   deviceFeatures.samplerAnisotropy = VK_TRUE;
   deviceFeatures.fillModeNonSolid = VK_TRUE;
   deviceFeatures.wideLines = VK_TRUE;
+  deviceFeatures.geometryShader = VK_TRUE;
 
   // Create the logical device
   VkDeviceCreateInfo createInfo{};

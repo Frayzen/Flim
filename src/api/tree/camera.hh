@@ -29,6 +29,8 @@ public:
 
   Matrix4f getProjMat(float screenRatio) const;
   Matrix4f getViewMat() const;
+  Vector3f computeDir(int x, int y, int width, int height) const;
+  Vector3f getMouseDir() const;
 
   void handleInputs(double deltaTime);
   static void keyCallback(GLFWwindow *window, int key, int scancode, int action,

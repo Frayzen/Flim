@@ -17,12 +17,11 @@ template <int nbElems> struct AABB {
   uint32_t elems[nbElems]; // indices of the element
 };
 
-class Ray {
+struct Ray {
   Vector3f origin;
   Vector3f direction;
   bool cull;
 
-public:
   bool intersects(const Vector3f &v0, const Vector3f &v1, const Vector3f &v2,
                   float &dist) const {
     const float EPSILON = 0.0000001f;
@@ -42,10 +41,13 @@ public:
     if (det < EPSILON)
       return false;
 
-    // Non-culling version:
-    if (cull && det > -EPSILON && det < EPSILON)
-      return false;
-
+    if (cull) {
+      if (det < EPSILON)
+        return false;
+    } else {
+      if (std::abs(det) < EPSILON)
+        return false;
+    }
     float invDet = 1.0f / det;
 
     // Calculate distance from v0 to ray origin
@@ -74,7 +76,7 @@ public:
 
     return false;
   }
-  template <int nbElems> bool intersects(const AABB<nbElems> box) const {
+  template <int nbElems> bool intersects(const AABB<nbElems> &box) const {
     Vector3f invDir = {1.0f / direction.x(), 1.0f / direction.y(),
                        1.0f / direction.z()};
 
@@ -145,8 +147,8 @@ public:
           max = max.cwiseMax(vertices[vid]);
         }
       }
-      auto left_i = boxi * 2;
-      auto right_i = boxi * 2 + 1;
+      auto left_i = boxi * 2 + 1;
+      auto right_i = boxi * 2 + 2;
       if (left_i < boxes.size()) {
         min = min.cwiseMin(boxes[left_i].min);
         max = max.cwiseMax(boxes[left_i].max);
@@ -183,8 +185,12 @@ public:
           if (ray.intersects(v1, v2, v3, dist))
             *result = elem;
         }
-        candidates.push(2 * cur);
-        candidates.push(2 * cur + 1);
+        uint32_t left = 2 * cur + 1;
+        uint32_t right = 2 * cur + 2;
+        if (left < boxes.size())
+          candidates.push(left);
+        if (right < boxes.size())
+          candidates.push(right);
       }
     }
     return dist != INFINITY;

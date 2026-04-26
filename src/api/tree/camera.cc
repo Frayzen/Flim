@@ -2,6 +2,7 @@
 #include "api/flim_api.hh"
 #include "api/scene.hh"
 #include "vulkan/rendering/utils.hh"
+#include <Eigen/Core>
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <fwd.hh>
@@ -108,6 +109,44 @@ Matrix4f Camera::getProjMat(float screenRatio) const {
 
     return proj;
   }
+}
+Vector3f Camera::computeDir(int x, int y, int width, int height) const {
+  // 1. Convert Pixel to NDC (Normalized Device Coordinates)
+  // Range: [-1, 1], where -1 is left/bottom and +1 is right/top
+  float ndcX = (2.0f * x) / width - 1.0f;
+  float ndcY = 1.0f - (2.0f * y) / height; // Flip Y because screen Y grows down
+
+  // 2. Create the point in Clip Space
+  // We use z = -1.0f (near plane) for the direction calculation
+  Eigen::Vector4f rayClip(ndcX, ndcY, -1.0f, 1.0f);
+
+  // 3. Clip Space -> View Space
+  Eigen::Matrix4f invProj = getProjMat(width / (float)height).inverse();
+  Eigen::Vector4f rayView = invProj * rayClip;
+
+  // For a direction, we only care about the X and Y movement relative to the
+  // forward Z
+  rayView.z() = -1.0f;
+  rayView.w() = 0.0f;
+
+  // 4. View Space -> World Space
+  Eigen::Matrix4f invView = getViewMat().inverse();
+  Eigen::Vector3f rayWorldDir = (invView * rayView).head<3>();
+
+  return rayWorldDir.normalized();
+}
+
+Vector3f Camera::getMouseDir() const {
+  int width, height;
+  glfwGetWindowSize(scene.api.getWindow(), &width, &height);
+  if (width > 0 && height > 0) {
+    double x, y;
+    glfwGetCursorPos(scene.api.getWindow(), &x, &y);
+    y = height - y; // because glfw is top 0 bot max but camera class is bot
+                    // 0 top max
+    return computeDir(x, y, width, height);
+  }
+  return Vector3f(0, 0, 0);
 }
 
 } // namespace Flim

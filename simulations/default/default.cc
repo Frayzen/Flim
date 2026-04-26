@@ -6,9 +6,11 @@
 #include "api/transform.hh"
 #include "api/tree/instance.hh"
 #include "kokkos/renderer_accesser.hh"
+#include "vulkan/buffers/uniform_descriptors.hh"
 #include <Eigen/src/Core/Matrix.h>
 // #include <Kokkos_Core.hpp>
 // #include <Kokkos_Random.hpp>
+#include <cstdint>
 #include <cstdio>
 // #include <decl/Kokkos_Declare_OPENMP.hpp>
 #include <imgui.h>
@@ -19,24 +21,8 @@
 
 using namespace Flim;
 
-void check(Vector3f v) {
-  Eigen::Quaternionf q = Quaternionf::FromTwoVectors(world_front, v);
-  static int x = 0;
-  std::cout << "POS " << x++ << " IS " << v << std::endl;
-  std::cout << "W:" << q.w() << " X:" << q.x() << " Y:" << q.y()
-            << " Z:" << q.z() << '\n';
-  std::cout << "AFTER APPLYING : " << q * world_front << '\n';
-}
-
 int main() {
   // Kokkos::initialize();
-
-  check(Vector3f(0, 0, 1));
-  check(Vector3f(0, 1, 0));
-  check(Vector3f(1, 0, 0));
-  check(Vector3f(0, 0, -1));
-  check(Vector3f(0, -1, 0));
-  check(Vector3f(-1, 0, 0));
 
   FlimAPI api = FlimAPI::init();
   {
@@ -58,7 +44,11 @@ int main() {
     // explanations
     RenderParams params = RenderParams::DefaultParams(mesh, scene.camera);
     params.useBackfaceCulling = false;
+
     RenderParams params2("Second", params);
+    params2.fragmentShader = Shader("shaders/outlined.frag.spv");
+    uint32_t outlined_obj = 0;
+    params2.setUniform(2, FRAGMENT_SHADER_STAGE).attachObj(outlined_obj);
     const Renderer &rd = scene.registerMesh(mesh, params);
     scene.registerMesh(cube, params2);
 
@@ -93,13 +83,14 @@ int main() {
     //     });
     // Kokkos::fence("Wait for init");
 
-    BVH<5> bvh(mesh);
+    BVH<5> bvh(cube);
 
     // main loop
     static float speed = 0.5;
     static float radius = 5;
     static Vector3f pointing(0, 0, 0);
     static float maxDistMove = 0.5;
+    static float dist = 100;
     api.run([&](float deltaTime) {
       float curMaxDist = maxDistMove;
       // Kokkos::parallel_for(
@@ -121,12 +112,14 @@ int main() {
       auto p = instance.transform.position;
       ImGui::Text("COORD IS %f %f %f", p.x(), p.y(), p.z());
 
-      int width, height;
-      glfwGetWindowSize(api.getWindow(), &width, &height);
-      if (width > 0 && height > 0) {
-        double x, y;
-        glfwGetCursorPos(api.getWindow(), &x, &y);
-      }
+      Ray ray = {
+          .origin = scene.camera.transform.position,
+          .direction = scene.camera.getMouseDir(),
+          .cull = false,
+      };
+      ImGui::SliderFloat("Dist", &dist, 0, 100);
+      if (!bvh.castRay(ray, &outlined_obj))
+        outlined_obj = UINT32_MAX;
 
       // Kokkos::fence("Wait for move");
     });
