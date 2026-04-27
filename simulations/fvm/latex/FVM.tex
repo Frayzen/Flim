@@ -1,0 +1,119 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage[T1]{fontenc}
+\usepackage{babel}
+
+\setlength{\parskip}{8pt} % space between paragraphs
+
+\usepackage{float}%H dans figure
+\usepackage{bm}% lettre math gras et italique -> remplace \v v
+\usepackage{tabularx}
+\usepackage[modulo,mathlines]{lineno}
+\usepackage{xfrac} %\sfrac
+\usepackage{tikz}
+\usepackage{textcomp}
+\usetikzlibrary{arrows,shapes}
+\usepackage{etoolbox}
+\usetikzlibrary{patterns}
+\usetikzlibrary{calc}
+\usetikzlibrary{arrows}
+\usepackage[hang,small]{caption}
+\usetikzlibrary{patterns}
+\usepackage{calc}
+
+\usetikzlibrary{calc}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{delarray}
+\usepackage{multicol}
+\usepackage{subcaption}
+
+\usepackage{ifthen}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[margin=0.25in]{geometry}
+
+\usepackage{pgfplots}
+\pgfplotsset{width=10cm,compat=1.9}
+\usetikzlibrary{arrows.meta,calc,decorations.pathreplacing,positioning}
+\newcommand{\bnabla}{\bm{\nabla}}
+\newcommand{\bsigma}{\bm{\sigma}}
+\newcommand{\bv}{\bm{v}}
+\newcommand{\manualindent}{\hspace{2em}}
+
+\newcommand{\ep}{\varepsilon}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\ba}{\begin{array}}
+\newcommand{\ea}{\end{array}}
+\newcommand{\bc}{\begin{cases}}
+\newcommand{\ec}{\end{cases}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+\newcommand{\bs}{\begin{split}}
+\newcommand{\es}{\end{split}}
+
+\newcommand{\bsc}{
+	\left\{
+	\begin{array}{l}
+}
+\newcommand{\esc}{
+	\end{array}\right.
+}
+\newcommand{\dis}{\displaystyle}
+
+%% definition des marges
+\topmargin = -10mm
+\oddsidemargin = 0mm
+\evensidemargin = 0mm
+\setlength{\textwidth}{16cm}
+\setlength{\textheight}{24cm}
+
+
+\colorlet{myblue}{green!30!blue}
+\colorlet{mygreen}{blue!30!green}
+\definecolor{alizarin}{rgb}{0.82, 0.1, 0.26}
+\definecolor{amber}{rgb}{1.0, 0.75, 0.0}
+\definecolor{amethyst}{rgb}{0.6, 0.4, 0.8}
+\definecolor{ballblue}{rgb}{0.13, 0.67, 0.8}
+\definecolor{cadetblue}{rgb}{0.37, 0.62, 0.63}
+\definecolor{cadmiumred}{rgb}{0.89, 0.0, 0.13}
+\definecolor{candyapplered}{rgb}{1.0, 0.03, 0.0}
+\definecolor{caribbeangreen}{rgb}{0.0, 0.8, 0.6}
+\definecolor{carminered}{rgb}{1.0, 0.0, 0.22}
+\definecolor{carnationpink}{rgb}{1.0, 0.65, 0.79}
+\definecolor{celadon}{rgb}{0.67, 0.88, 0.69}
+\definecolor{coral}{rgb}{1.0, 0.5, 0.31}
+\definecolor{lavender}{rgb}{0.71, 0.49, 0.86}
+\definecolor{lavenderrose}{rgb}{0.98, 0.63, 0.89}
+\definecolor{neoncarrot}{rgb}{1.0, 0.64, 0.26}
+\definecolor{unitednationsblue}{rgb}{0.36, 0.57, 0.9}
+\definecolor{greentest}{rgb}{0.2, 0.8, 0.4}
+
+\usepackage[colorlinks=true, linkcolor=myblue,citecolor=mygreen]{hyperref}
+% \usepackage[colorlinks=false, linkbordercolor=red,citebordercolor=green, pdfborder={0 0 1}]{hyperref}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1em}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{prop}[theorem]{Proposition}
+\newtheorem{Hyp}[theorem]{Assumption}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+
+\title{Finite Volume Method}
+\author{LAINE Florian}
+\date{May 2026}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\include{stokes_equation}
+\include{discretization}
+
+\end{document}
+

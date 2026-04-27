@@ -1,0 +1,19 @@
+\section{Navier Stokes Equation}
+
+Let $\bm{u}$ define the velocity vector and $\bm{p}$ define the pressure vector defined on $\Omega$.
+
+\be
+\bc
+\nabla \cdot \bm{u} = 0 \\
+\dis \frac{\partial \bm{u}}{\partial t} + (\bm{u} \cdot \nabla \bm{u}) \bm{u} + \frac{1}{\rho} \nabla \bm{p} - \nu \nabla^2 \bm{u} - \bm{g} = 0.
+\ec
+\label{navier_stokes}
+\ee
+
+We define the field $\bm{u}^\star$, so that
+
+\be
+\dis \frac{\partial \bm{u}^\star}{\partial t} + (\bm{u}^\star \cdot \nabla \bm{u}^\star) \bm{u}^\star - \nu \nabla^2 \bm{u}^\star - \bm{g} = 0.
+\ee
+which is, in essence, the same equation as \eqref{navier_stokes} but with the pressure field term omitted.
+

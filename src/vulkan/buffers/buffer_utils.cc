@@ -1,4 +1,5 @@
 #include "buffer_utils.hh"
+#include "utils/checks.hh"
 #include "vulkan/context.hh"
 #include <cstring>
 #include <fwd.hh>
@@ -238,7 +239,8 @@ void Buffer::create(VkBufferUsageFlags usage,
 }
 
 const void *Buffer::getExternalPtr() const {
-  assert(external);
+  CHECK(external,
+        "The buffer " + name + " has to be marked external to be retrieved");
   return externalPtr;
 }
 } // namespace Flim

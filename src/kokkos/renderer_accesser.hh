@@ -23,6 +23,8 @@ template <typename Type>
 Kokkos::View<Type *, Kokkos::DefaultExecutionSpace>
 getAttributeBufferView(const Renderer &r, int binding,
                        ssize_t frame = CUR_FRAME) {
+
+  CHECK(r.pipeline != nullptr, "Please setupGraphics frist");
   for (auto &attr : r.params.getAttributeDescriptors()) {
     if (attr.second->getBinding() == binding)
       return getBufferView<Type>(*(attr.second->getBuffer(frame)));
@@ -30,7 +32,7 @@ getAttributeBufferView(const Renderer &r, int binding,
   throw std::runtime_error("Invalid binding");
 };
 
-Kokkos::View<Vector3<uint32_t> *, Kokkos::DefaultExecutionSpace>
+inline Kokkos::View<Vector3<uint32_t> *, Kokkos::DefaultExecutionSpace>
 getIndexBufferView(const Renderer &r) {
   return getBufferView<Vector3<uint32_t>>(r.indexBuffer);
 }

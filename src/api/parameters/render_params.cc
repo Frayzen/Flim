@@ -15,6 +15,12 @@ AttributeDescriptor &RenderParams::setAttribute(int binding,
                                                 AttributeRate rate) {
   CHECK(!attributes.contains(binding),
         "Cannot 'set' an existing attribute, please use update instead");
+  for (auto attr : attributes) {
+    CHECK(binding < attr.first ||
+              (size_t)binding >= attr.first + attr.second->getOffsets().size(),
+          "This binding is already defined and used by binding " +
+              std::to_string(attr.first));
+  }
   std::shared_ptr<AttributeDescriptor> ptr =
       std::make_shared<AttributeDescriptor>(binding, rate);
   attributes[binding] = ptr;
@@ -32,16 +38,20 @@ RenderParams RenderParams::clone() {
   return cloned;
 }
 
-RenderParams RenderParams::DefaultParams(const Mesh& m, const Camera& cam) {
+RenderParams RenderParams::DefaultParams(const Mesh &m, const Camera &cam) {
   RenderParams params("Default");
 
   // Uniforms
-  ParamsUtils::createViewMatrixUniform(params, BINDING_DEFAULT_VIEWS_UNIFORM, m, cam);
-  ParamsUtils::createMaterialUniform(params, BINDING_DEFAULT_MATERIALS_UNIFORM, m);
+  ParamsUtils::createViewMatrixUniform(params, BINDING_DEFAULT_VIEWS_UNIFORM, m,
+                                       cam);
+  ParamsUtils::createMaterialUniform(params, BINDING_DEFAULT_MATERIALS_UNIFORM,
+                                     m);
 
   // Attributes
-  ParamsUtils::createVerticesAttribute(params, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
-  ParamsUtils::createInstanceMatrixAttribute(params, BINDING_DEFAULT_INSTANCES_ATTRIBUTE);
+  ParamsUtils::createVerticesAttribute(params,
+                                       BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+  ParamsUtils::createInstanceMatrixAttribute(
+      params, BINDING_DEFAULT_INSTANCES_ATTRIBUTE);
 
   params.vertexShader = Shader("shaders/default.vert.spv");
   params.fragmentShader = Shader("shaders/default.frag.spv");

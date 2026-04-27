@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <vulkan/vulkan_core.h>
 namespace Flim {
 
@@ -39,7 +40,7 @@ AttributeDescriptor::getAttributeDesc(int id) const {
 
 VkVertexInputBindingDescription
 AttributeDescriptor::getBindingDescription() const {
-  CHECK(size != 0, "Please populate the attribute descriptor");
+  CHECK(size != 0, "Please populate the attribute descriptor using attach");
   VkVertexInputBindingDescription desc{};
   desc.binding = binding;
   desc.stride = size;
@@ -60,7 +61,7 @@ inline int getAmount(const Mesh &m, AttributeRate &rate) {
 
 void AttributeDescriptor::setup() {
   CHECK(!offsets.empty(), "Please specify the offsets of the attribute");
-  CHECK(size != 0, "please populate the attribute descriptor");
+  CHECK(size != 0, "please populate the attribute descriptor using attach");
   assert(
       getAttachedMesh() != nullptr &&
       "You cannot use an attribute without registering it"); // should be set by
@@ -79,8 +80,8 @@ void AttributeDescriptor::setup() {
   size_t bufSize = getAmount(*getAttachedMesh(), rate) * size;
   static auto memProp = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-  setupBuffers("attribute descriptor", bufSize, usage, memProp,
-               isComputeFriendly);
+  setupBuffers("attribute descriptor [" + std::to_string(binding) + "]",
+               bufSize, usage, memProp, isComputeFriendly);
 
   for (auto b : getBuffers()) {
     if (isOnlySetup) {
