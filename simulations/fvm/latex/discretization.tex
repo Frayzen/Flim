@@ -1,0 +1,71 @@
+\section{Discretisation}
+
+We consider a mesh $\mathcal{M}$ over a surface $\Omega$ with polygons; along with the $\bm{x}$ spacial variable. Let $j$ be a polygonal cell of this mesh and $\ell$ an edge $[r, s]$. We will denote $\bm{n}_{\ell j}$ the outward from cell $j$ normal at the edge $\ell$. The centroid of the cell $j$ is $\bm{x}_j$, the middle of the edge $\ell$ is $\bm{x}_\ell$ and the position of the node of $r$ (resp. s) is called $\bm{x}_r$ (resp. $\bm{x}_s$). A second cell $k$ is said to be a neighbouring cell of $j$, if $\exists ! \ell \in \mathcal{M} : (\ell \in k) \cap (\ell \in j)$. The boudnaries of the 
+
+\begin{figure}[H]
+  \centering
+	\begin{tikzpicture}[scale=1.5, solidnode/.style={circle,fill=black,inner sep=1.6pt},opencircle/.style={circle,draw=black,very thin,inner sep=1.6pt}, bar/.style={line width=0.7pt,draw=black},arrowstyle/.style={-Stealth,thin}]
+
+ \coordinate (a) at (0.5,0.5);
+ \coordinate (b) at (0.7,1.7);
+ \coordinate (c) at (1.8,2);
+ \coordinate (d) at (2.8,1.5);
+ \coordinate (e) at (2.1,0.4);
+
+ \coordinate (ell) at ($(a)!0.5!(b)$);
+
+    \draw[thick] (a) -- (b) -- (c) -- (d) -- (e) -- cycle;
+    \fill[color=cyan!40!gray] (a) -- (b) -- (c) -- (d) -- (e) -- cycle;
+\foreach \p in {a,b,c,d, e}
+			\node[opencircle, fill=white] at (\p) {};
+
+	\draw (a) node [left] {$r$};
+	\draw (b) node [left] {$s$};
+
+	\draw (ell) node [below left] {$\ell$};
+	\draw (ell) node [] {$\times$};
+  \coordinate (nell) at ($ (ell)!0.5!90:(b) $);
+  \draw [arrowstyle](ell)--(nell) node [above right,inner sep=1pt] {\small $\bm{n}_{\ell}$};
+\end{tikzpicture}
+\caption{A cell $j$, an edge $\ell$ and its normal $\bm{n}_\ell$}
+  \label{fig:example_cell}
+\end{figure}
+We start by recalling divergence theorem. Given a field $\bm{u}$ and a closed surface $V$,
+\be
+\int_V \nabla \cdot \bm{u}\, dV = \int_{\partial V} \bm{n} \cdot \bm{u} \, dS
+\label{divergence_theorem}
+\ee
+where $\partial V$ denotes the boundaries of the closed surface $V$ and $\bm{n}$ the outpointing normal.
+
+We define the field $\bm{u}^\star$, so that
+\be
+\dis \frac{\partial \bm{u}^\star}{\partial t} + (\bm{u}^\star \cdot \nabla) \bm{u} - \nu \nabla^2 \bm{u}^\star - \bm{g} = 0.
+\label{define_ustar}
+\ee
+which is, in essence, the same equation as \eqref{navier_stokes} but with the pressure field term omitted after applying a semi-implicit (resp. implicit) discretization of the and transport (resp. diffusion) term.
+
+We will then integrate \eqref{define_ustar} over a cell $j$ (see figure \ref{fig:example_cell}) and discretize in time.
+\be
+\dis \int_j \frac{\bm{u}^\star - \bm{u}}{\Delta t} + (\bm{u}^\star \cdot \nabla) \bm{u} - \nu \nabla^2 \bm{u}^\star - \bm{g} = 0.
+\label{integrate_ustar}
+
+\ee
+We now split this last equation and evalute term by term.
+
+\subsection{Constant term}
+
+\be
+\int_j \bm{g} = V_j \bm{g}
+\ee
+
+\subsection{Convection term}
+The convection term can be expressed using the divergence theorem \eqref{divergence_theorem},
+\be
+\dis \int_j (\bm{u}^\star \cdot \nabla) \bm{u} 
+= \int_{\partial j} (\bm{u}^\star \cdot \bm{n}_{\partial j}) \bm{u}
+= \sum_{\ell \in j} \int_\ell (\bm{u}^\star \cdot \bm{n}_{\ell j}) \bm{u}
+= \sum_{\ell \in j} |\ell| (\bm{u}_\ell^\star \cdot \bm{n}_{\ell j}) \bm{u}_\ell.
+\ee
+Please 
+
+% - \nu \nabla^2 \bm{u}^\star - \bm{g} = 0.
