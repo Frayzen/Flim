@@ -16,6 +16,7 @@
 #include <Kokkos_DualView.hpp>
 #include <Kokkos_Macros.hpp>
 #include <Kokkos_Pair.hpp>
+#include <Kokkos_StdAlgorithms.hpp>
 #include <cmath>
 #include <cstdint>
 #include <decl/Kokkos_Declare_OPENMP.hpp>
@@ -75,8 +76,8 @@ int main() {
   FlimAPI api = FlimAPI::init();
   {
     // Simulation parameters
-    const int nb_x = 25;
-    const int nb_y = 15;
+    const int nb_x = 70;
+    const int nb_y = 25;
     const int total = nb_x * nb_y;
 
     const float L_x = 1.0f;
@@ -87,9 +88,9 @@ int main() {
     // Equation coefficients
     const float dt = 0.01f;
     const float T_d = 1.0f;   // Time coefficient
-    const float A_d = 0.1f;   // Advection coefficient
-    const float B_d = 0.05f;  // Diffusion coefficient
-    const float K = 0.01f;    // Reaction coefficient
+    const float A_d = 0.0f;   // Advection coefficient
+    const float B_d = -0.1f;  // Diffusion coefficient
+    const float K = 0.0f;     // Reaction coefficient
     const float Vj = dx * dy; // Control volume area (2D)
 
     Mesh mesh = MeshUtils::createGrid(L_x, nb_x, nb_y);
@@ -113,12 +114,19 @@ int main() {
         .singleBuffered(true)
         .onlySetup(true);
 
-    params.mode = RenderMode::RENDERER_MODE_LINE;
+    params.mode = RenderMode::RENDERER_MODE_TRIS;
+    params.useBackfaceCulling = false;
     const Renderer &rd = scene.registerMesh(mesh, params);
     scene.instantiate(mesh);
 
     api.setupGraphics();
-    // auto colors = getAttributeBufferView<Vector4f>(rd, 1);
+
+    scene.camera.controls = true;
+    scene.camera.speed = 5;
+    scene.camera.sensivity = 5;
+    scene.camera.transform.position = Vector3f(0, nb_y, (nb_x + nb_y) / 2.0f);
+
+    auto colors = getAttributeBufferView<Vector4f>(rd, 1);
 
     // --- MATRIX TOPOLOGY SETUP ---
     typename MatrixType::StaticCrsGraphType::row_map_type::non_const_type
@@ -163,13 +171,12 @@ int main() {
         });
 
     bool running = false;
-    float cold[3] = {0.1f, 0.1f, 0.5f};
-    float hot[3] = {1.0f, 0.2f, 0.1f};
-
+    float cold[3] = {0.1f, 0.1f, 1.0f};
+    float hot[3] = {1.0f, 0.1f, 0.1f};
+    static float max = 1.0f;
+    static float min = 1.0f;
     api.run([&](float deltaTime) {
-      (void)deltaTime;
-
-      if (running) {
+      if (ImGui::Button("Step") || running) {
         // --- ASSEMBLE MATRIX AND RHS ---
         Kokkos::parallel_for(
             "Assemble", total, KOKKOS_LAMBDA(const int j_idx) {
@@ -221,10 +228,31 @@ int main() {
                 }
                 b(j_idx) = 1.0f; // Hot top
               }
+
+              // Dirichlet BC override: Top boundary
+              if (j == nb_y - 1) {
+                for (int k = row_map(j_idx); k < row_map(j_idx + 1); ++k) {
+                  values(k) = (entries(k) == j_idx) ? 1.0f : 0.0f;
+                }
+                b(j_idx) = 0.0f; // Cold bot
+              }
             });
 
         auto u_next = solve_CG_sparse(A, b, total);
         Kokkos::deep_copy(u_n, u_next);
+        typedef Kokkos::MinMax<float>::value_type MinMax;
+        MinMax minmax;
+        Kokkos::parallel_reduce(
+            "MinMaxReduce", u_n.size(),
+            KOKKOS_LAMBDA(uint32_t i, MinMax &m) {
+              if (u_n[i] < m.min_val)
+                m.min_val = u_n[i];
+              if (u_n[i] > m.max_val)
+                m.max_val = u_n[i];
+            },
+            Kokkos::MinMax<float>(minmax));
+        min = minmax.min_val;
+        max = minmax.max_val;
       }
 
       // --- VISUALIZATION ---
@@ -233,18 +261,18 @@ int main() {
       ImGui::ColorEdit3("Hot", hot);
 
       ImGui::Text("Delta time : %f", deltaTime);
+      ImGui::Text("MAX VAL: %f", max);
+      ImGui::Text("MIN VAL: %f", min);
 
-      // Kokkos::parallel_for(
-      //     "ApplyColor", total,
-      //     KOKKOS_LAMBDA(const uint32_t id){
-      // float v = u_n(id);
-      // v = (v < 0.0f) ? 0.0f : (v > 1.0f ? 1.0f : v); // Clamp
-      // colors[id] = Vector4f(1.0f, 0.0f, 0.0, 1.0f);
-      // Vector4f(cold[0] * (1 - v) + hot[0] * v,
-      // cold[1] * (1 - v) + hot[1] * v,
-      // cold[2] * (1 - v) + hot[2] * v, 1.0f);
-      // });
-      //
+      float cur_min = min;
+      float cur_max = max;
+      Vector4f hotv = Vector4f(hot[0], hot[1], hot[2], 1.0f);
+      Vector4f coldv = Vector4f(cold[0], cold[1], cold[2], 1.0f);
+      Kokkos::parallel_for(
+          "ApplyColor", total, KOKKOS_LAMBDA(const uint32_t id) {
+            float v = (u_n(id) - cur_min) / (cur_max - cur_min);
+            colors[id] = v * hotv + (1 - v) * coldv;
+          });
     });
   }
   Kokkos::finalize();
