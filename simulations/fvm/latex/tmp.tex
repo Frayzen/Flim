@@ -1,0 +1,153 @@
+\section{General equation}
+
+Let 
+\be
+u = (u_x, u_y).
+\ee
+We denote the equation in dimension 2
+\be
+T\frac{\partial u}{\partial t} +
+A_0\frac{\partial u}{\partial x} +
+A_1\frac{\partial u}{\partial y} +
+B_0\frac{\partial^2 u}{\partial x^2} +
+B_1\frac{\partial^2 u}{\partial y^2} +
+K u = f,
+\label{general_equation}
+\ee
+We define
+\be
+A = (A_0, A_1), \quad 
+B = (B_0, B_1),
+\ee
+and
+\be
+v = A \odot u = (A_0 u_x, A_1 u_y),\quad
+w = B \odot u = (B_0 u_x, B_1 u_y), 
+\ee
+Then, we simplfiy \eqref{general_equation} accordingly
+\be
+T\frac{\partial u}{\partial t} +
+\nabla \cdot v +
+\nabla^2 w +
+K u = f.
+\label{simplified_equation}
+\ee
+We integrate over a given cell $j$. We denote the edges of this cell $\ell \in j$.
+\be
+\int_j
+T\frac{\partial u}{\partial t} +
+\nabla \cdot v +
+\nabla^2 w +
+K u = \int_j f,
+\label{equation_integrated}
+\ee
+and proceed term by term.
+We first recall the Divergence Theorem.
+\be
+\int_\Omega \nabla \cdot u = \int_{\partial \Omega} n \cdot u,
+\ee
+where n is the outward normal of the domain.
+\subsection{Taylor expansion at $\ell$}
+Given a field $u$, a cell $j$ and, one of its face $\ell$ and the neighbouring cell $k$ sharing the edge $\ell$ with $j$, we approximate $u_\ell$ using taylor expansion given a 2D direction $\delta$.
+\be
+u_{\ell + \delta} = u_\ell + \delta \nabla u_\ell + \mathcal{O}(|\delta|^2)
+\ee
+We define the distance between $j$ and $k$ barycenters $d_{jk} = d_{j \ell} + d_{\ell k}$, which is the sum of the distance from $j$ to $\ell$ and $\ell$ to $k$ since $j$, $k$ and $\ell$ are aligned. Since $\ell$ is at even distance from both $j$ and $k$, $d_{j \ell} = d_{\ell k}$. 
+
+If we substitue $\delta$ with  $d_{\ell j} n_{\ell j}$ and $d_{\ell j} n_{\ell k}$ 
+\be
+\begin{split}
+  u_{j} = u_\ell + ( n_{\ell j} d_{\ell j} ) \cdot (\nabla u)_\ell + \mathcal{O}(d_{\ell j}^2), \\
+u_{k} = u_\ell - ( n_{\ell j} d_{\ell j} ) \cdot (\nabla u)_\ell + \mathcal{O}(d_{\ell j}^2).
+\label{taylor_serie_at_ell}
+\end{split}
+\ee
+
+\subsection{Terms that do not involve space derivatives}
+
+We can integrate in a straight forward way the terms $f$, $Ku$ and $\dis T\frac{\partial u}{\partial t}$ from \eqref{simplified_equation}
+\be
+\begin{split}
+\int_j f = V_j f_j \\
+\int_j Ku = V_j K_j u_j \\
+\int_j  T\frac{\partial u}{\partial t}= V_j T\frac{\partial u_j}{\partial t} \\
+  \label{integrate_term_no_space_der}
+\end{split}
+\ee
+
+\subsection{Advection term}
+
+We then integrate the term $\nabla \cdot v$
+\be
+\int_j \nabla \cdot v = \int_{\partial j} n \cdot v = \sum_{\ell \in j} \int_\ell n_{\ell j} \cdot v \approx \sum_{\ell \in j} |\ell| n_{\ell j} \cdot v_\ell,
+\label{integrate_nabla_v}
+\ee
+where $n_{\ell j}$ denotes the unit normal at $\ell$ pointing outward from cell $j$ and $|\ell|$ denotes the length of the edge $\ell$.
+Summing both equations of \eqref{taylor_serie_at_ell} (substituting $u = w$) yields
+\be
+v_{k} + v_{j} = 2v_\ell + \mathcal{O}(d_{\ell j}^2).
+\ee
+And solving for $v_\ell$
+\be
+v_\ell = \frac{v_{k} + v_{j}}{2} + \mathcal{O}(d_{\ell j}^2).
+\ee
+Therefore, the equation \eqref{integrate_nabla_v} becomes
+\be
+\int_j \nabla \cdot v \approx \sum_{\ell \in j} |\ell| n_{\ell j} \cdot \frac{v_k + v_j}{2},
+\label{integrate_nabla_v_result}
+\ee
+
+\subsection{Diffusion term}
+
+Let us integrate the term $\nabla^2 w$. We recall that $\nabla^2 w = \nabla \cdot (\nabla w)$ and use divergence theorem to simplify the integral.
+\be
+\int_j \nabla^2 w = \int_{\partial j} n \cdot (\nabla w) = \sum_{\ell \in j} \int_\ell n_{\ell j} \cdot (\nabla w) \approx \sum_{\ell \in j} |\ell| n_{\ell j} \cdot (\nabla w)_\ell.
+\label{integrate_nabla_square_w}
+\ee
+We now need to approximate $(\nabla w)_\ell$. By susbtracting the second equation of \eqref{taylor_serie_at_ell} from the first one (after substituting $u = w$) , we have
+\be
+w_k - w_j = 2( n_{\ell j} d_{\ell j} ) \cdot (\nabla w)_\ell + \mathcal{O}(d_{\ell j}^2).
+\ee
+We recall that $2d_{\ell j} = d_{j k}$ and solve for $n_{\ell j} \cdot (\nabla w)_\ell$
+\be
+n_{\ell j} \cdot (\nabla w)_\ell = \frac{w_k - w_j}{d_{j k}}  + \mathcal{O}(d_{\ell j}^2).
+\ee
+Therefore, equation \eqref{integrate_nabla_square_w} naturally becomes
+\be
+\dis \int_j \nabla^2 w \approx \sum_{\ell \in j} |\ell| \frac{w_k - w_j}{d_{j k}}.
+\label{integrate_nabla_square_w_result}
+\ee
+
+\subsection{Time integration}
+Merging \eqref{integrate_term_no_space_der}, \eqref{integrate_nabla_v_result} and \eqref{integrate_nabla_square_w_result} into \eqref{equation_integrated} yields
+
+\be
+V_j T\frac{\partial u_j}{\partial t} +
+\sum_{\ell \in j} \left( |\ell| n_{\ell j} \cdot  \left(\frac{v_k + v_j}{2}\right)\right) +
+\sum_{\ell \in j} |\ell| \left(\frac{w_k - w_j}{d_{j k}}\right)+
+V_j K u = V_j f_j.
+\label{space_integrated}
+\ee
+Applying a time integration on \eqref{space_integrated} while merging every known fields together ($f_j^n$ and $u_j^n$) as well as the unkown gives
+\be
+V_j \frac{T}{\Delta t} u_j^{n+1}  +
+\sum_{\ell \in j} |\ell| \left(
+ n_{\ell j} \cdot \left(\frac{v_k^{n+1} + v_j^{n+1}}{2}\right) +
+\frac{w_k^{n+1} - w_j^{n+1}}{d_{j k}}
+\right)+
+V_j K u_j^{n+1} = V_j f_j^{n+1}
++ V_j \frac{T}{\Delta t} u_j^n
+.
+\label{time_integrated}
+\ee
+We aim to express this equation per-dimension. We will denote $d$ the index of the dimension (0 for $x$ and 1 for $y$). Therefore equation \eqref{time_integrated} becomes
+\be
+V_j \frac{T_d}{\Delta t} u_{jd}^{n+1}  +
+\sum_{\ell \in j} |\ell| \left(
+ A_d \, n_{\ell j d} \left(\frac{u_{kd}^{n+1} + u_{jd}^{n+1}}{2}\right) +
+B_d \left( \frac{u_{kd}^{n+1} - u_{jd}^{n+1}}{d_{j k}} \right)
+\right)+
+V_j K u_{jd}^{n+1} = V_j f_{jd}^{n+1}
++ V_j \frac{T_d}{\Delta t} u_{jd}^n
+.
+\ee

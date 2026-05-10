@@ -8,8 +8,10 @@
 
 !examples/
 !examples/**/
+
 !simulations/
 !simulations/**/
+!simulations/**/*.tex
 
 !*.cc
 !*.hh
