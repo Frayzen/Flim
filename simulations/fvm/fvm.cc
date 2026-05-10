@@ -4,6 +4,7 @@
 #include "api/render/mesh.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/tree/instance.hh"
+#include "cartesian_grid_solver.hh"
 #include "kokkos/renderer_accesser.hh"
 #include "vulkan/buffers/params_utils.hh"
 #include "vulkan/rendering/renderer.hh"
@@ -31,55 +32,15 @@ using namespace Flim;
 #include <KokkosSparse_CrsMatrix.hpp>
 #include <KokkosSparse_spmv.hpp>
 
-// Define types for clarity
-using DeviceSpace = Kokkos::DefaultExecutionSpace;
-using MatrixType = KokkosSparse::CrsMatrix<float, int, DeviceSpace, void, int>;
-
-// --- CG SOLVER FOR SPARSE ---
-Kokkos::View<float *> solve_CG_sparse(MatrixType A, Kokkos::View<float *> f,
-                                      int size) {
-  Kokkos::View<float *> u("u", size);
-  Kokkos::View<float *> r("r", size);
-  Kokkos::View<float *> p("p", size);
-  Kokkos::View<float *> Ap("Ap", size);
-
-  Kokkos::deep_copy(u, 0.0f);
-  Kokkos::deep_copy(r, f);
-  Kokkos::deep_copy(p, r);
-
-  float rr_old = KokkosBlas::dot(r, r);
-
-  for (int iter = 0; iter < 1000; iter++) {
-    KokkosSparse::spmv("N", 1.0f, A, p, 0.0f, Ap);
-
-    float pAp = KokkosBlas::dot(p, Ap);
-    if (std::abs(pAp) < 1e-12f)
-      break;
-
-    float alpha = rr_old / pAp;
-    KokkosBlas::axpy(alpha, p, u);
-    KokkosBlas::axpy(-alpha, Ap, r);
-
-    float rr_new = KokkosBlas::dot(r, r);
-    if (std::sqrt(rr_new) < 1e-6f)
-      break;
-
-    float beta = rr_new / rr_old;
-    KokkosBlas::axpby(1.0f, r, beta, p);
-    rr_old = rr_new;
-  }
-  return u;
-}
-
 int main() {
   Kokkos::initialize();
   FlimAPI api = FlimAPI::init();
   {
-    // Simulation parameters
-    const int nb_x = 70;
-    const int nb_y = 25;
-    const int total = nb_x * nb_y;
 
+    // Simulation parameters
+    const int nb_x = 25;
+    const int nb_y = 15;
+    const int total = nb_x * nb_y;
     const float L_x = 1.0f;
     const float L_y = 1.0f;
     const float dx = L_x / (nb_x - 1);
@@ -87,11 +48,16 @@ int main() {
 
     // Equation coefficients
     const float dt = 0.01f;
-    const float T_d = 1.0f;   // Time coefficient
-    const float A_d = 0.0f;   // Advection coefficient
-    const float B_d = -0.1f;  // Diffusion coefficient
-    const float K = 0.0f;     // Reaction coefficient
+    const float K = 0.01f;    // Reaction coefficient
     const float Vj = dx * dy; // Control volume area (2D)
+
+    // 1. Initialization (Outside the loop)
+    CartesianGridSolver solver(nb_x, nb_y, L_x, L_y);
+    CartesianGridSolver::Params simParams = {};
+    simParams.dt = 0.01f;
+    simParams.T_d = 1.0f;
+    simParams.A_d = -0.1f; // Advection
+    simParams.B_d = -0.1f; // Diffusion
 
     Mesh mesh = MeshUtils::createGrid(L_x, nb_x, nb_y);
     auto &scene = api.getScene();
@@ -128,120 +94,23 @@ int main() {
 
     auto colors = getAttributeBufferView<Vector4f>(rd, 1);
 
-    // --- MATRIX TOPOLOGY SETUP ---
-    typename MatrixType::StaticCrsGraphType::row_map_type::non_const_type
-        row_map("row_map", total + 1);
-    auto row_map_host = Kokkos::create_mirror_view(row_map);
-
-    int nnz_count = 0;
-    for (int idx = 0; idx < total; idx++) {
-      row_map_host(idx) = nnz_count;
-      int i = idx % nb_x;
-      int j = idx / nb_x;
-      nnz_count++; // Diagonal
-      if (i > 0)
-        nnz_count++;
-      if (i < nb_x - 1)
-        nnz_count++;
-      if (j > 0)
-        nnz_count++;
-      if (j < nb_y - 1)
-        nnz_count++;
-    }
-    row_map_host(total) = nnz_count;
-    Kokkos::deep_copy(row_map, row_map_host);
-
-    typename MatrixType::index_type::non_const_type entries("entries",
-                                                            nnz_count);
-    typename MatrixType::values_type::non_const_type values("values",
-                                                            nnz_count);
-    MatrixType A("FVMMatrix", total, total, nnz_count, values, row_map,
-                 entries);
-
-    // Simulation State
-    Kokkos::View<float *> u_n("u_n", total);     // Solution at time n
-    Kokkos::View<float *> f_ext("f_ext", total); // Source term
-    Kokkos::View<float *> b("rhs", total);       // Right hand side
-
-    // Init: High value at center
-    Kokkos::parallel_for(
-        total, KOKKOS_LAMBDA(int i) {
-          u_n(i) = 0.0f;
-          f_ext(i) = 0.0f;
-        });
-
     bool running = false;
     float cold[3] = {0.1f, 0.1f, 1.0f};
     float hot[3] = {1.0f, 0.1f, 0.1f};
     static float max = 1.0f;
     static float min = 1.0f;
     api.run([&](float deltaTime) {
+      static float sumtime = 0.0f;
+      sumtime += deltaTime;
+
+      auto u_n = solver.getSolution();
       if (ImGui::Button("Step") || running) {
         // --- ASSEMBLE MATRIX AND RHS ---
-        Kokkos::parallel_for(
-            "Assemble", total, KOKKOS_LAMBDA(const int j_idx) {
-              int i = j_idx % nb_x;
-              int j = j_idx / nb_x;
-              int row_start = row_map(j_idx);
-              int entry_ptr = row_start;
-
-              // 1. Diagonal: Vi * (Td/dt + K)
-              float diag_val = Vj * (T_d / dt) + Vj * K;
-              // 2. RHS: Vj * (f + (Td/dt)*u_n)
-              float rhs_val = Vj * f_ext(j_idx) + Vj * (T_d / dt) * u_n(j_idx);
-
-              entries(entry_ptr) = j_idx; // diag is first in our row_map logic
-              entry_ptr++;
-
-              auto add_face = [&](int ni, int nj, float n_d, float face_len,
-                                  float dist) {
-                int k_idx = nj * nb_x + ni;
-                // Term: |l| * [ Ad * n_d * (uk+uj)/2 + Bd * (uk-uj)/dist ]
-                // Coeff for uk: |l| * ( (Ad*n_d/2) + (Bd/dist) )
-                // Coeff for uj: |l| * ( (Ad*n_d/2) - (Bd/dist) )
-                float coeff_k = face_len * ((A_d * n_d * 0.5f) + (B_d / dist));
-                float coeff_j = face_len * ((A_d * n_d * 0.5f) - (B_d / dist));
-
-                entries(entry_ptr) = k_idx;
-                values(entry_ptr) = coeff_k;
-                diag_val += coeff_j;
-                entry_ptr++;
-              };
-
-              // Dimension d=0 (X-direction) normals: left is -1, right is 1
-              if (i > 0)
-                add_face(i - 1, j, -1.0f, dy, dx);
-              if (i < nb_x - 1)
-                add_face(i + 1, j, 1.0f, dy, dx);
-              if (j > 0)
-                add_face(i, j - 1, 0.0f, dx, dy);
-              if (j < nb_y - 1)
-                add_face(i, j + 1, 0.0f, dx, dy);
-
-              values(row_start) = diag_val;
-              b(j_idx) = rhs_val;
-
-              // Dirichlet BC override: Top boundary
-              if (j == 0) {
-                for (int k = row_map(j_idx); k < row_map(j_idx + 1); ++k) {
-                  values(k) = (entries(k) == j_idx) ? 1.0f : 0.0f;
-                }
-                b(j_idx) = 1.0f; // Hot top
-              }
-
-              // Dirichlet BC override: Top boundary
-              if (j == nb_y - 1) {
-                for (int k = row_map(j_idx); k < row_map(j_idx + 1); ++k) {
-                  values(k) = (entries(k) == j_idx) ? 1.0f : 0.0f;
-                }
-                b(j_idx) = 0.0f; // Cold bot
-              }
-            });
-
-        auto u_next = solve_CG_sparse(A, b, total);
-        Kokkos::deep_copy(u_n, u_next);
+        float curtime = sumtime;
+        solver.step(simParams, deltaTime);
         typedef Kokkos::MinMax<float>::value_type MinMax;
         MinMax minmax;
+        u_n = solver.getSolution();
         Kokkos::parallel_reduce(
             "MinMaxReduce", u_n.size(),
             KOKKOS_LAMBDA(uint32_t i, MinMax &m) {
@@ -260,7 +129,7 @@ int main() {
       ImGui::ColorEdit3("Cold", cold);
       ImGui::ColorEdit3("Hot", hot);
 
-      ImGui::Text("Delta time : %f", deltaTime);
+      ImGui::Text("Delta time : %f", dt);
       ImGui::Text("MAX VAL: %f", max);
       ImGui::Text("MIN VAL: %f", min);
 
