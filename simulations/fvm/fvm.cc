@@ -4,6 +4,7 @@
 #include "api/render/mesh.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/tree/instance.hh"
+#include "ast/fvm_ast.hh"
 #include "kokkos/renderer_accesser.hh"
 #include "vulkan/buffers/params_utils.hh"
 #include "vulkan/rendering/renderer.hh"
@@ -19,6 +20,14 @@ int main() {
   Kokkos::initialize();
   FlimAPI api = FlimAPI::init();
   {
+    FVMAst ast(2, 1);
+    auto u = ast.getImplicitUnknown();
+    auto ue = ast.getExplicitUnknown();
+
+    auto dt = 0.0001f;
+    auto heat_equation = (u - ue) / dt + div(grad(u));
+
+    heat_equation.print();
 
     const int nb_x = 50;
     const int nb_y = 50;
@@ -65,8 +74,6 @@ int main() {
     float hot[3] = {1.0f, 0.1f, 0.1f};
     static float max = 1.0f;
     static float min = 1.0f;
-
-    float dt = 0.0001;
 
     api.run([&](float deltaTime) {
       static float sumtime = 0.0f;
