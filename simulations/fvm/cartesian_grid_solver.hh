@@ -16,9 +16,11 @@ public:
       KokkosSparse::CrsMatrix<float, int, DeviceSpace, void, int>;
 
   struct Params {
-    float T_d = 1.0f; // Time coefficient
-    float A_d = 0.0f; // Advection coefficient
-    float B_d = 0.1f; // Diffusion coefficient
+    float T = 1.0f;   // Time coefficient
+    float A_0 = 0.0f; // Advection X coefficient
+    float A_1 = 0.0f; // Advection Y coefficient
+    float B_0 = 0.1f; // Diffusion X coefficient
+    float B_1 = 0.1f; // Diffusion Y coefficient
     float K = 0.0f;   // Reaction coefficient
     float dt = 0.01f; // Time step
   };
@@ -31,6 +33,7 @@ public:
   Kokkos::View<float *> getSolution() const;
   int getWidth() const;
   int getHeight() const;
+  Kokkos::View<float *> getSourceTerm() const;
 
 private:
   int _nx, _ny, _total;

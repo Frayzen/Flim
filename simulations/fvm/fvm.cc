@@ -4,26 +4,10 @@
 #include "api/render/mesh.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/tree/instance.hh"
-#include "cartesian_grid_solver.hh"
 #include "kokkos/renderer_accesser.hh"
+#include "navier_stokes_solver.hh"
 #include "vulkan/buffers/params_utils.hh"
 #include "vulkan/rendering/renderer.hh"
-#include <Eigen/src/Core/Matrix.h>
-#include <HIP/Kokkos_HIP_Parallel_Team.hpp>
-#include <KokkosKernels_default_types.hpp>
-#include <KokkosSparse_CrsMatrix.hpp>
-#include <KokkosSparse_spmv.hpp>
-#include <Kokkos_Core.hpp>
-#include <Kokkos_DualView.hpp>
-#include <Kokkos_Macros.hpp>
-#include <Kokkos_Pair.hpp>
-#include <Kokkos_StdAlgorithms.hpp>
-#include <cmath>
-#include <cstdint>
-#include <decl/Kokkos_Declare_OPENMP.hpp>
-#include <imgui.h>
-#include <impl/Kokkos_Profiling.hpp>
-#include <setup/Kokkos_Setup_HIP.hpp>
 
 using namespace Flim;
 
@@ -37,27 +21,15 @@ int main() {
   FlimAPI api = FlimAPI::init();
   {
 
-    // Simulation parameters
-    const int nb_x = 25;
-    const int nb_y = 15;
+    const int nb_x = 50;
+    const int nb_y = 50;
     const int total = nb_x * nb_y;
     const float L_x = 1.0f;
     const float L_y = 1.0f;
     const float dx = L_x / (nb_x - 1);
     const float dy = L_y / (nb_y - 1);
-
-    // Equation coefficients
-    const float dt = 0.01f;
-    const float K = 0.01f;    // Reaction coefficient
-    const float Vj = dx * dy; // Control volume area (2D)
-
-    // 1. Initialization (Outside the loop)
-    CartesianGridSolver solver(nb_x, nb_y, L_x, L_y);
-    CartesianGridSolver::Params simParams = {};
-    simParams.dt = 0.01f;
-    simParams.T_d = 1.0f;
-    simParams.A_d = -0.1f; // Advection
-    simParams.B_d = -0.1f; // Diffusion
+    NavierStokesSolver ns(nb_x, nb_y, 1.0f, 1.0f);
+    FluidParams fp = {0.001f, 1.0f, 0.01f}; // Low viscosity = High Reynolds
 
     Mesh mesh = MeshUtils::createGrid(L_x, nb_x, nb_y);
     auto &scene = api.getScene();
@@ -99,18 +71,21 @@ int main() {
     float hot[3] = {1.0f, 0.1f, 0.1f};
     static float max = 1.0f;
     static float min = 1.0f;
+
+    float dt = 0.0001;
+
     api.run([&](float deltaTime) {
       static float sumtime = 0.0f;
       sumtime += deltaTime;
 
-      auto u_n = solver.getSolution();
+      auto u_n = ns.getU();
       if (ImGui::Button("Step") || running) {
         // --- ASSEMBLE MATRIX AND RHS ---
         float curtime = sumtime;
-        solver.step(simParams, deltaTime);
+        ns.step(fp, dt);
         typedef Kokkos::MinMax<float>::value_type MinMax;
         MinMax minmax;
-        u_n = solver.getSolution();
+        u_n = ns.getU();
         Kokkos::parallel_reduce(
             "MinMaxReduce", u_n.size(),
             KOKKOS_LAMBDA(uint32_t i, MinMax &m) {

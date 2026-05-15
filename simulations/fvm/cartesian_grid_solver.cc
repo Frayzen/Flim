@@ -25,15 +25,13 @@ CartesianGridSolver::CartesianGridSolver(int nb_x, int nb_y, float L_x,
   setupTopology();
 }
 
-void CartesianGridSolver::step(const Params &p, float time) {
-  assemble(p, time);
-  solve();
-}
-
 // Accessors
 Kokkos::View<float *> CartesianGridSolver::getSolution() const { return _u_n; }
 int CartesianGridSolver::getWidth() const { return _nx; }
 int CartesianGridSolver::getHeight() const { return _ny; }
+Kokkos::View<float *> CartesianGridSolver::getSourceTerm() const {
+  return _f_ext;
+}
 
 void CartesianGridSolver::setupTopology() {
   typename MatrixType::StaticCrsGraphType::row_map_type::non_const_type row_map(
@@ -84,18 +82,25 @@ void CartesianGridSolver::assemble(const Params &p, float time) {
         int row_ptr = row_map(idx);
         int current_entry = row_ptr;
 
-        float diag = Vj * (p.T_d / p.dt) + Vj * p.K;
-        float rhs = Vj * f_ext(idx) + Vj * (p.T_d / p.dt) * u_n(idx);
+        // Use p.T as provided in your updated Params struct
+        float diag = Vj * (p.T / p.dt) + Vj * p.K;
+        float rhs = Vj * f_ext(idx) + Vj * (p.T / p.dt) * u_n(idx);
 
         // Diagonal entry first
         entries(current_entry) = idx;
         current_entry++;
 
+        // lambda now uses directional A and B coefficients
         auto add_face = [&](int ni, int nj, float n_d, float face_len,
-                            float dist) {
+                            float dist, float advection_coeff,
+                            float diffusion_coeff) {
           int k_idx = nj * nx + ni;
-          float ck = face_len * ((p.A_d * n_d * 0.5f) + (p.B_d / dist));
-          float cj = face_len * ((p.A_d * n_d * 0.5f) - (p.B_d / dist));
+
+          // ck (neighbor coefficient) and cj (contribution to center diagonal)
+          float ck = face_len * ((advection_coeff * n_d * 0.5f) +
+                                 (diffusion_coeff / dist));
+          float cj = face_len * ((advection_coeff * n_d * 0.5f) -
+                                 (diffusion_coeff / dist));
 
           entries(current_entry) = k_idx;
           values(current_entry) = ck;
@@ -103,29 +108,20 @@ void CartesianGridSolver::assemble(const Params &p, float time) {
           current_entry++;
         };
 
+        // Dimension X faces (Left/Right)
         if (i > 0)
-          add_face(i - 1, j, -1.0f, dy, dx);
+          add_face(i - 1, j, -1.0f, dy, dx, p.A_0, p.B_0);
         if (i < nx - 1)
-          add_face(i + 1, j, 1.0f, dy, dx);
+          add_face(i + 1, j, 1.0f, dy, dx, p.A_0, p.B_0);
+
+        // Dimension Y faces (Top/Bottom)
         if (j > 0)
-          add_face(i, j - 1, -1.0f, dx, dy); // Note: Corrected n_d
+          add_face(i, j - 1, -1.0f, dx, dy, p.A_1, p.B_1);
         if (j < ny - 1)
-          add_face(i, j + 1, 1.0f, dx, dy);
+          add_face(i, j + 1, 1.0f, dx, dy, p.A_1, p.B_1);
 
         values(row_ptr) = diag;
         b(idx) = rhs;
-
-        // --- Dirichlet BC Overrides ---
-        if (j == 0) { // Top
-          for (int k = row_map(idx); k < row_map(idx + 1); ++k)
-            values(k) = (entries(k) == idx) ? 1.0f : 0.0f;
-          b(idx) = sin(time) * sin((float)i / (float)nx);
-        }
-        if (j == ny - 1) { // Bottom
-          for (int k = row_map(idx); k < row_map(idx + 1); ++k)
-            values(k) = (entries(k) == idx) ? 1.0f : 0.0f;
-          b(idx) = 0.0f;
-        }
       });
 }
 
