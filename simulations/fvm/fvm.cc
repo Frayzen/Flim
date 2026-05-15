@@ -5,7 +5,6 @@
 #include "api/render/mesh_utils.hh"
 #include "api/tree/instance.hh"
 #include "kokkos/renderer_accesser.hh"
-#include "navier_stokes_solver.hh"
 #include "vulkan/buffers/params_utils.hh"
 #include "vulkan/rendering/renderer.hh"
 
@@ -23,13 +22,8 @@ int main() {
 
     const int nb_x = 50;
     const int nb_y = 50;
-    const int total = nb_x * nb_y;
     const float L_x = 1.0f;
     const float L_y = 1.0f;
-    const float dx = L_x / (nb_x - 1);
-    const float dy = L_y / (nb_y - 1);
-    NavierStokesSolver ns(nb_x, nb_y, 1.0f, 1.0f);
-    FluidParams fp = {0.001f, 1.0f, 0.01f}; // Low viscosity = High Reynolds
 
     Mesh mesh = MeshUtils::createGrid(L_x, nb_x, nb_y);
     auto &scene = api.getScene();
@@ -78,25 +72,26 @@ int main() {
       static float sumtime = 0.0f;
       sumtime += deltaTime;
 
-      auto u_n = ns.getU();
       if (ImGui::Button("Step") || running) {
         // --- ASSEMBLE MATRIX AND RHS ---
         float curtime = sumtime;
-        ns.step(fp, dt);
         typedef Kokkos::MinMax<float>::value_type MinMax;
         MinMax minmax;
-        u_n = ns.getU();
-        Kokkos::parallel_reduce(
-            "MinMaxReduce", u_n.size(),
-            KOKKOS_LAMBDA(uint32_t i, MinMax &m) {
-              if (u_n[i] < m.min_val)
-                m.min_val = u_n[i];
-              if (u_n[i] > m.max_val)
-                m.max_val = u_n[i];
-            },
-            Kokkos::MinMax<float>(minmax));
-        min = minmax.min_val;
-        max = minmax.max_val;
+        union test {
+          int a;
+          float b;
+        };
+        Kokkos::View<test *> a("example", 10);
+        Kokkos::parallel_for(
+            "MinMaxReduce", 10, KOKKOS_LAMBDA(uint32_t i) { a(i).a = 3; });
+        Kokkos::fence();
+        auto t = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, a);
+        std::cout << t(0).a << std::endl;
+        Kokkos::parallel_for(
+            "MinMaxReduce", 10, KOKKOS_LAMBDA(uint32_t i) { a(i).b = 3.8f; });
+        Kokkos::fence();
+        t = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, a);
+        std::cout << t(0).b << std::endl;
       }
 
       // --- VISUALIZATION ---
@@ -107,16 +102,6 @@ int main() {
       ImGui::Text("Delta time : %f", dt);
       ImGui::Text("MAX VAL: %f", max);
       ImGui::Text("MIN VAL: %f", min);
-
-      float cur_min = min;
-      float cur_max = max;
-      Vector4f hotv = Vector4f(hot[0], hot[1], hot[2], 1.0f);
-      Vector4f coldv = Vector4f(cold[0], cold[1], cold[2], 1.0f);
-      Kokkos::parallel_for(
-          "ApplyColor", total, KOKKOS_LAMBDA(const uint32_t id) {
-            float v = (u_n(id) - cur_min) / (cur_max - cur_min);
-            colors[id] = v * hotv + (1 - v) * coldv;
-          });
     });
   }
   Kokkos::finalize();
