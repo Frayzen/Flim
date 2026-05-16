@@ -71,7 +71,10 @@ public:
   const size_t unknown_size;
   const size_t space_dimension;
 
+  bool isLinearImplicit(Expr e) const;
+
 private:
+  bool checkLinearImplicit(int node_id) const;
   std::string nodeToString(int node_id) const;
   std::vector<Node> nodes;
   // CSR format for sparse matrices matrices data

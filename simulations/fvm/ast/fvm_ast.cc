@@ -188,3 +188,77 @@ std::string FVMAst::nodeToString(int node_id) const {
 void FVMAst::Expr::print() const { std::cout << toString() << std::endl; }
 
 std::string FVMAst::Expr::toString() const { return tree.nodeToString(id); }
+
+bool FVMAst::isLinearImplicit(Expr e) const {
+  return checkLinearImplicit(e.id);
+}
+
+bool FVMAst::checkLinearImplicit(int node_id) const {
+  if (node_id == -1)
+    return false;
+
+  const Node &node = nodes[node_id];
+  int type_val = static_cast<int>(node.type);
+
+  // --- Leafs ---
+  if (node.type == NodeType::UNKNOWN_IMPLICIT) {
+    return true;
+  }
+  if (node.type == NodeType::UNKNOWN_EXPLICIT || node.type == NodeType::CONST) {
+    return false;
+  }
+
+  // --- Unary Operators (DIVERGENCE, GRADIENT, NEGATE, TRANSPOSE) ---
+  if (type_val & static_cast<int>(NodeType::UNARY_OP)) {
+    return checkLinearImplicit(node.left);
+  }
+
+  // --- Binary Operators (ADD, SUB, MUL, DIV, POW) ---
+  if (type_val & static_cast<int>(NodeType::BINARY_OP)) {
+    bool left_linear = checkLinearImplicit(node.left);
+    bool right_linear = checkLinearImplicit(node.right);
+
+    switch (node.type) {
+    case NodeType::ADD:
+    case NodeType::SUB:
+      // u + constant, constant - u, or u + u are all linear combinations
+      return left_linear || right_linear;
+
+    case NodeType::MUL:
+      // Hard constraint: u * u is non-linear and invalid for Ax = f
+      if (left_linear && right_linear) {
+        assert(
+            false &&
+            "Non-linear term detected: implicit unknown multiplied by itself!");
+      }
+      // Matrix * u or constant * u remains linear
+      return left_linear || right_linear;
+
+    case NodeType::DIV:
+      // constant / u is non-linear (hyperbolic dependency)
+      if (right_linear) {
+        assert(false &&
+               "Non-linear term detected: division by the implicit unknown!");
+      }
+      // u / constant remains linear
+      return left_linear;
+
+    case NodeType::POW:
+      // u^1 is linear, anything else (u^2, u^0.5) is non-linear
+      if (left_linear) {
+        const Node &exponent = nodes[node.right];
+        if (exponent.type != NodeType::CONST || exponent.data.value != 1.0f) {
+          assert(false && "Non-linear term detected: implicit unknown raised "
+                          "to a power != 1!");
+        }
+        return true;
+      }
+      return false;
+
+    default:
+      break;
+    }
+  }
+
+  return false;
+}

@@ -26,8 +26,8 @@ int main() {
 
     auto dt = 0.0001f;
     auto heat_equation = (u - ue) / dt + div(grad(u));
-
     heat_equation.print();
+    assert(ast.isLinearImplicit(heat_equation));
 
     const int nb_x = 50;
     const int nb_y = 50;
