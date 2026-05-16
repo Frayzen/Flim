@@ -4,7 +4,9 @@
 #include "api/render/mesh.hh"
 #include "api/render/mesh_utils.hh"
 #include "api/tree/instance.hh"
+#include "ast/fmv_solver.hh"
 #include "ast/fvm_ast.hh"
+#include "ast/fvm_mesh.hh"
 #include "kokkos/renderer_accesser.hh"
 #include "vulkan/buffers/params_utils.hh"
 #include "vulkan/rendering/renderer.hh"
@@ -20,14 +22,6 @@ int main() {
   Kokkos::initialize();
   FlimAPI api = FlimAPI::init();
   {
-    FVMAst ast(2, 1);
-    auto u = ast.getImplicitUnknown();
-    auto ue = ast.getExplicitUnknown();
-
-    auto dt = 0.0001f;
-    auto heat_equation = (u - ue) / dt + div(grad(u));
-    heat_equation.print();
-    assert(ast.isLinearImplicit(heat_equation));
 
     const int nb_x = 50;
     const int nb_y = 50;
@@ -35,6 +29,19 @@ int main() {
     const float L_y = 1.0f;
 
     Mesh mesh = MeshUtils::createGrid(L_x, nb_x, nb_y);
+
+    FVMAst ast(2, 1);
+    auto u = ast.getImplicitUnknown();
+    auto ue = ast.getExplicitUnknown();
+
+    auto dt = 0.0001f;
+    auto heat_equation = (u - ue) / dt + div(grad(u));
+    heat_equation.print();
+
+    FVMMesh fvmMesh(mesh);
+    FVMSolver solver(ast, fvmMesh);
+    solver.assemble();
+
     auto &scene = api.getScene();
     RenderParams params("Default");
 

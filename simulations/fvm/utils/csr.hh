@@ -54,16 +54,6 @@ public:
     return Kokkos::subview(data, span);
   }
 
-  /**
-   * @brief Retrieve the number of vector contained in this object.
-   * @return The number of vector contained.
-   */
-  KOKKOS_INLINE_FUNCTION int size() const { return indices.extent(0) - 1; }
-
-  CSRList(Kokkos::View<uint *, MemorySpace> fromIndices,
-          Kokkos::View<ValueType *, MemorySpace> fromValues)
-      : indices(fromIndices), values(fromValues) {};
-
   void Sync() {
     indices.modify_host();
     indices.sync_device();

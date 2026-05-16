@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ast/fvm_mesh.hh"
 #include "fvm_ast.hh"
 
 #include <KokkosBlas1_axpby.hpp>
@@ -7,17 +8,24 @@
 #include <KokkosSparse_CrsMatrix.hpp>
 #include <KokkosSparse_spmv.hpp>
 #include <Kokkos_Core.hpp>
+#include <vector>
 
-using DeviceSpace = Kokkos::DefaultExecutionSpace;
 using MatrixType = KokkosSparse::CrsMatrix<float, int, DeviceSpace, void, int>;
 
 class FVMSolver {
 public:
-  FVMSolver(FVMAst ast) : ast(ast) {};
+  FVMSolver(const FVMAst &ast, const FVMMesh &mesh)
+      : fvmMesh(mesh), rpn(ast.getRPN()) {
+    setup(ast);
+  }
 
+  void setup(const FVMAst &ast);
   void assemble();
 
 private:
+  Kokkos::View<FVMAst::Node *, DeviceSpace> nodes;
+  CSRList<DeviceSpace, float> nodeValues;
   MatrixType _A;
-  FVMAst ast;
+  const FVMMesh &fvmMesh;
+  const std::vector<FVMAst::Node> rpn;
 };

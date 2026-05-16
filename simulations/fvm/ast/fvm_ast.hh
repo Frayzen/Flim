@@ -61,7 +61,11 @@ public:
 
   // --- Data Access ---
   const std::vector<Node> &getNodes() const { return nodes; }
+  const std::vector<float> &getNodeValues() const { return values; }
+  const std::vector<int> &getNodeValuesOffset() const { return offsets; }
   const Node &root(Expr e) const { return nodes[e.id]; }
+
+  const std::vector<Node> getRPN() const;
 
   FVMAst(size_t space_dimension, size_t unknown_size)
       : unknown_size(unknown_size), space_dimension(space_dimension) {};
@@ -71,7 +75,7 @@ public:
   const size_t unknown_size;
   const size_t space_dimension;
 
-  bool isLinearImplicit(Expr e) const;
+  bool isLinearImplicit() const;
 
 private:
   bool checkLinearImplicit(int node_id) const;

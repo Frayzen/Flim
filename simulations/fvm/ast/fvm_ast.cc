@@ -189,8 +189,8 @@ void FVMAst::Expr::print() const { std::cout << toString() << std::endl; }
 
 std::string FVMAst::Expr::toString() const { return tree.nodeToString(id); }
 
-bool FVMAst::isLinearImplicit(Expr e) const {
-  return checkLinearImplicit(e.id);
+bool FVMAst::isLinearImplicit() const {
+  return checkLinearImplicit(nodes.size() - 1);
 }
 
 bool FVMAst::checkLinearImplicit(int node_id) const {
@@ -261,4 +261,54 @@ bool FVMAst::checkLinearImplicit(int node_id) const {
   }
 
   return false;
+}
+
+const std::vector<FVMAst::Node> FVMAst::getRPN() const {
+  std::vector<Node> rpn;
+
+  if (nodes.empty())
+    return rpn;
+
+  constexpr uint32_t STACK_SIZE = 256;
+
+  uint32_t stack[STACK_SIZE];
+  uint32_t stack_size = 0;
+
+  uint32_t traversal[STACK_SIZE];
+  uint32_t traversal_size = 0;
+
+  // root assumed to be last node
+  stack[stack_size++] = static_cast<uint32_t>(nodes.size() - 1);
+
+  // modified DFS
+  while (stack_size != 0) {
+    uint32_t node_id = stack[--stack_size];
+
+    traversal[traversal_size++] = node_id;
+
+    const Node &curNode = nodes[node_id];
+
+    int idLeft = curNode.left;
+    int idRight = curNode.right;
+
+    // push left first
+    if (idLeft != -1) {
+      stack[stack_size++] = static_cast<uint32_t>(idLeft);
+    }
+
+    // push right second
+    if (idRight != -1) {
+      stack[stack_size++] = static_cast<uint32_t>(idRight);
+    }
+    assert(stack_size < STACK_SIZE);
+  }
+
+  // reverse => postorder (RPN)
+  rpn.reserve(traversal_size);
+
+  for (int i = static_cast<int>(traversal_size) - 1; i >= 0; --i) {
+    rpn.push_back(nodes[traversal[i]]);
+  }
+
+  return rpn;
 }
