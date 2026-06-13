@@ -88,6 +88,7 @@ void VulkanApplication::recreateSwapChain() {
     glfwWaitEvents();
   }
   vkDeviceWaitIdle(context.device);
+  swap_chain_manager.destroySwapChain();
   swap_chain_manager.createSwapChain();
   surface_manager.setupSwapChainImages();
   surface_manager.createImageViews();

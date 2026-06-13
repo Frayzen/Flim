@@ -81,6 +81,25 @@ VkExtent2D SwapChainManager::chooseSwapExtent(
   }
 }
 
+void SwapChainManager::destroySwapChain() {
+  vkDestroyImageView(context.device, context.depthImage.view, nullptr);
+  vkDestroyImage(context.device, context.depthImage.textureImage, nullptr);
+  vkFreeMemory(context.device, context.depthImage.textureImageMemory, nullptr);
+
+  /* for (size_t i = 0; i < swapChain.swapChainFramebuffers.size(); i++) { */
+  /*   vkDestroyFramebuffer(context.device, swapChain.swapChainFramebuffers[i],
+   */
+  /*                        nullptr); */
+  /* } */
+
+  for (size_t i = 0; i < swapChain.swapChainImageViews.size(); i++) {
+    vkDestroyImageView(context.device, swapChain.swapChainImageViews[i],
+                       nullptr);
+  }
+
+  vkDestroySwapchainKHR(context.device, swapChain.swapChain, nullptr);
+}
+
 void SwapChainManager::createSwapChain() {
   SwapChainSupportDetails swapChainSupport =
       querySwapChainSupport(context, context.physicalDevice);
@@ -154,23 +173,6 @@ void SwapChainManager::createSwapChain() {
   }
 }
 
-SwapChainManager::~SwapChainManager() {
-  vkDestroyImageView(context.device, context.depthImage.view, nullptr);
-  vkDestroyImage(context.device, context.depthImage.textureImage, nullptr);
-  vkFreeMemory(context.device, context.depthImage.textureImageMemory, nullptr);
-
-  /* for (size_t i = 0; i < swapChain.swapChainFramebuffers.size(); i++) { */
-  /*   vkDestroyFramebuffer(context.device, swapChain.swapChainFramebuffers[i],
-   */
-  /*                        nullptr); */
-  /* } */
-
-  for (size_t i = 0; i < swapChain.swapChainImageViews.size(); i++) {
-    vkDestroyImageView(context.device, swapChain.swapChainImageViews[i],
-                       nullptr);
-  }
-
-  vkDestroySwapchainKHR(context.device, swapChain.swapChain, nullptr);
-}
+SwapChainManager::~SwapChainManager() { destroySwapChain(); }
 
 } // namespace Flim
