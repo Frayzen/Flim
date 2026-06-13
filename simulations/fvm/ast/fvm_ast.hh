@@ -15,7 +15,6 @@ enum class NodeType {
   ADD,
   SUB,
   MUL,
-  DIV,
   POW,
 
   UNARY_OP = 0x400,
@@ -94,8 +93,7 @@ private:
   VAL(*, MUL)                                                                  \
   VAL(+, ADD)                                                                  \
   VAL(-, SUB)                                                                  \
-  VAL(^, POW)                                                                  \
-  VAL(/, DIV)
+  VAL(^, POW)
 
 #define VAL(sign, _)                                                           \
   FVMAst::Expr operator sign(float s, FVMAst::Expr e);                         \
@@ -103,6 +101,8 @@ private:
   FVMAst::Expr operator sign(FVMAst::Expr lhs, FVMAst::Expr rhs);
 AST_OPERATORS
 #undef VAL
+
+FVMAst::Expr operator/(FVMAst::Expr e, float s);
 
 // --- PDE Differential Operators ---
 FVMAst::Expr div(FVMAst::Expr e);

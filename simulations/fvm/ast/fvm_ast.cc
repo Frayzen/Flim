@@ -1,4 +1,5 @@
 #include "fvm_ast.hh"
+#include <cstdint>
 #include <iostream>
 
 // --- FVMAst::Expr Implementations ---
@@ -10,11 +11,13 @@ size_t FVMAst::Expr::height() const { return tree.nodes[id].height; }
 // --- FVMAst Node Creation Implementations ---
 
 FVMAst::Expr FVMAst::getImplicitUnknown() {
-  return {*this, addNode({NodeType::UNKNOWN_IMPLICIT, unknown_size, 1})};
+  return {*this,
+          addNode({NodeType::UNKNOWN_IMPLICIT, unknown_size, unknown_size})};
 }
 
 FVMAst::Expr FVMAst::getExplicitUnknown() {
-  return {*this, addNode({NodeType::UNKNOWN_EXPLICIT, unknown_size, 1})};
+  return {*this,
+          addNode({NodeType::UNKNOWN_EXPLICIT, unknown_size, unknown_size})};
 }
 
 FVMAst::Expr FVMAst::constant(float v) {
@@ -49,6 +52,8 @@ int FVMAst::addNode(Node n) {
   }
 AST_OPERATORS
 #undef VAL
+
+FVMAst::Expr operator/(FVMAst::Expr e, float s) { return e * (1 / s); }
 
 FVMAst::Expr transpose(FVMAst::Expr e) {
   // ONLY WORKS FOR VECTOR FOR NOW
@@ -117,8 +122,6 @@ static std::string nodeTypeToString(NodeType type) {
     return " - ";
   case NodeType::MUL:
     return " * ";
-  case NodeType::DIV:
-    return " / ";
   case NodeType::DIVERGENCE:
     return "div";
   case NodeType::GRADIENT:
@@ -192,6 +195,9 @@ std::string FVMAst::Expr::toString() const { return tree.nodeToString(id); }
 bool FVMAst::isLinearImplicit() const {
   return checkLinearImplicit(nodes.size() - 1);
 }
+// TODO assert that this is not allowed
+//  2 * (3 + u)
+//  factors can only be in front of single vars
 
 bool FVMAst::checkLinearImplicit(int node_id) const {
   if (node_id == -1)
@@ -233,15 +239,6 @@ bool FVMAst::checkLinearImplicit(int node_id) const {
       }
       // Matrix * u or constant * u remains linear
       return left_linear || right_linear;
-
-    case NodeType::DIV:
-      // constant / u is non-linear (hyperbolic dependency)
-      if (right_linear) {
-        assert(false &&
-               "Non-linear term detected: division by the implicit unknown!");
-      }
-      // u / constant remains linear
-      return left_linear;
 
     case NodeType::POW:
       // u^1 is linear, anything else (u^2, u^0.5) is non-linear

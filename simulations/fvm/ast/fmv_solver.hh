@@ -3,10 +3,10 @@
 #include "ast/fvm_mesh.hh"
 #include "fvm_ast.hh"
 
-#include <KokkosBlas1_axpby.hpp>
-#include <KokkosBlas1_dot.hpp>
+// #include <KokkosBlas1_axpby.hpp>
+// #include <KokkosBlas1_dot.hpp>
+// #include <KokkosSparse_spmv.hpp>
 #include <KokkosSparse_CrsMatrix.hpp>
-#include <KokkosSparse_spmv.hpp>
 #include <Kokkos_Core.hpp>
 #include <vector>
 
@@ -23,7 +23,7 @@ public:
   void assemble();
 
 private:
-  Kokkos::View<FVMAst::Node *, DeviceSpace> nodes;
+  Kokkos::View<const FVMAst::Node *, DeviceSpace> nodes;
   CSRList<DeviceSpace, float> nodeValues;
   MatrixType _A;
   const FVMMesh &fvmMesh;

@@ -7,16 +7,15 @@
 #include "ast/fmv_solver.hh"
 #include "ast/fvm_ast.hh"
 #include "ast/fvm_mesh.hh"
-#include "kokkos/renderer_accesser.hh"
 #include "vulkan/buffers/params_utils.hh"
 #include "vulkan/rendering/renderer.hh"
 
 using namespace Flim;
 
-#include <KokkosBlas1_axpby.hpp>
-#include <KokkosBlas1_dot.hpp>
-#include <KokkosSparse_CrsMatrix.hpp>
-#include <KokkosSparse_spmv.hpp>
+// #include <KokkosBlas1_axpby.hpp>
+// #include <KokkosBlas1_dot.hpp>
+// #include <KokkosSparse_CrsMatrix.hpp>
+// #include <KokkosSparse_spmv.hpp>
 
 int main() {
   Kokkos::initialize();
@@ -74,7 +73,7 @@ int main() {
     scene.camera.sensivity = 5;
     scene.camera.transform.position = Vector3f(0, nb_y, (nb_x + nb_y) / 2.0f);
 
-    auto colors = getAttributeBufferView<Vector4f>(rd, 1);
+    // auto colors = getAttributeBufferView<Vector4f>(rd, 1);
 
     bool running = false;
     float cold[3] = {0.1f, 0.1f, 1.0f};
