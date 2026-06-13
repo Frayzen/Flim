@@ -6,11 +6,13 @@
 #include "vulkan/context.hh"
 #include "vulkan/device/device_utils.hh"
 #include "vulkan/rendering/renderer.hh"
+#include "vulkan/rendering/utils.hh"
 
 #include <cstdint>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <sys/types.h>
 #include <vulkan/vulkan_core.h>
 
@@ -192,12 +194,25 @@ void CommandPoolManager::createSyncObjects() {
       throw std::runtime_error(
           "failed to create synchronization objects for a frame!");
     }
+    auto istr = std::to_string(i);
+    setDebugObjectName(VK_OBJECT_TYPE_SEMAPHORE,
+                       (uint64_t)computeFinishedSemaphores[i],
+                       "Compute Finished Semaphore " + istr);
+    setDebugObjectName(VK_OBJECT_TYPE_SEMAPHORE,
+                       (uint64_t)imageAvailableSemaphores[i],
+                       "Image Available Semaphore " + istr);
+    setDebugObjectName(VK_OBJECT_TYPE_SEMAPHORE,
+                       (uint64_t)renderFinishedSemaphores[i],
+                       "Render Finished Semaphore " + istr);
+    setDebugObjectName(VK_OBJECT_TYPE_FENCE, (uint64_t)computeInFlightFences[i],
+                       "Compute In Flight Fence " + istr);
   }
 }
 
 static uint32_t imageIndex;
 
-static void beginCmdBuffer(VkCommandBuffer &cmdBuffer) {
+static void beginCmdBuffer(VkCommandBuffer &cmdBuffer,
+                           bool useImageMemoryBarrier) {
   vkResetCommandBuffer(cmdBuffer, 0);
 
   VkCommandBufferBeginInfo beginInfo{};
@@ -209,9 +224,10 @@ static void beginCmdBuffer(VkCommandBuffer &cmdBuffer) {
     throw std::runtime_error("failed to begin recording command buffer!");
   }
 
-  createImageMemoryBarrier(cmdBuffer, VK_IMAGE_LAYOUT_UNDEFINED,
-                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                           context.swapChain.swapChainImages[imageIndex]);
+  if (useImageMemoryBarrier)
+    createImageMemoryBarrier(cmdBuffer, VK_IMAGE_LAYOUT_UNDEFINED,
+                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                             context.swapChain.swapChainImages[imageIndex]);
 }
 
 bool CommandPoolManager::acquireFrame() {
@@ -236,11 +252,11 @@ bool CommandPoolManager::acquireFrame() {
 
   VkCommandBuffer &graphicBuffer =
       commandPool.graphicBuffers[context.currentImage];
-  beginCmdBuffer(graphicBuffer);
+  beginCmdBuffer(graphicBuffer, true);
 
   VkCommandBuffer &computeBuffer =
       commandPool.computeBuffers[context.currentImage];
-  beginCmdBuffer(computeBuffer);
+  beginCmdBuffer(computeBuffer, false);
 
   VkRenderingAttachmentInfo depthInfo{};
   depthInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
