@@ -1,6 +1,7 @@
 #include "flim_api.hh"
 #include <GLFW/glfw3.h>
 #include <cassert>
+#include <functional>
 #include <iostream>
 
 namespace Flim {
