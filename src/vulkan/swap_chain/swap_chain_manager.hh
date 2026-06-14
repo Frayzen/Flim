@@ -12,6 +12,7 @@ public:
   ~SwapChainManager();
 
   void createSwapChain();
+  void destroySwapChain();
 
 private:
   SwapChain &swapChain;

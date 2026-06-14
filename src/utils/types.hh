@@ -12,14 +12,11 @@ typedef Eigen::Vector4f Vector4f;
 
 constexpr auto D = Eigen::Dynamic;
 
-template <typename T>
-std::shared_ptr<>
-
 #define MATRIX_TYPE(Type, ShortType, Rows, Cols)                               \
   typedef Eigen::Matrix<Type, Rows, Cols> Matrix##ShortType##Rows##Cols;       \
   typedef Eigen::Map<Eigen::Matrix<Type, Rows, Cols>>                          \
-      MapMatrix##ShortType##Rows##Cols; \
-  typename <>
+      MapMatrix##ShortType##Rows##Cols;                                        \
+  typename<>
 
 #define SET_MATRIX(Rows, Cols)                                                 \
   MATRIX_TYPE(float, f, Cols, Rows)                                            \
