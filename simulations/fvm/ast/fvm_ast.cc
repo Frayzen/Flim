@@ -27,6 +27,10 @@ FVMAst::Expr FVMAst::constant(float v) {
 }
 
 int FVMAst::addNode(Node n) {
+  if (n.left != NO_CHILD)
+    n.maxDepth = nodes[n.left].maxDepth + 1;
+  if (n.right != NO_CHILD)
+    n.maxDepth = std::max(n.maxDepth, nodes[n.right].maxDepth + 1);
   nodes.push_back(n);
   return static_cast<int>(nodes.size()) - 1;
 }
@@ -261,17 +265,16 @@ bool FVMAst::checkLinearImplicit(int node_id) const {
 }
 
 const std::vector<FVMAst::Node> FVMAst::getRPN() const {
-  std::vector<Node> rpn;
-
+  std::vector<FVMAst::Node> rpn;
   if (nodes.empty())
     return rpn;
 
-  constexpr uint32_t STACK_SIZE = 256;
+  uint32_t depth = getDepth();
 
-  uint32_t stack[STACK_SIZE];
+  std::vector<uint32_t> stack(depth);
   uint32_t stack_size = 0;
 
-  uint32_t traversal[STACK_SIZE];
+  std::vector<uint32_t> traversal(nodes.size());
   uint32_t traversal_size = 0;
 
   // root assumed to be last node
@@ -297,11 +300,7 @@ const std::vector<FVMAst::Node> FVMAst::getRPN() const {
     if (idRight != -1) {
       stack[stack_size++] = static_cast<uint32_t>(idRight);
     }
-    assert(stack_size < STACK_SIZE);
   }
-
-  // reverse => postorder (RPN)
-  rpn.reserve(traversal_size);
 
   for (int i = static_cast<int>(traversal_size) - 1; i >= 0; --i) {
     rpn.push_back(nodes[traversal[i]]);
@@ -309,3 +308,5 @@ const std::vector<FVMAst::Node> FVMAst::getRPN() const {
 
   return rpn;
 }
+
+size_t FVMAst::getDepth() const { return nodes[nodes.size() - 1].maxDepth; }

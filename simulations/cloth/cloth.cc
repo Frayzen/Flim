@@ -1,21 +1,12 @@
 #include "api/flim_api.hh"
+#include "api/mesh/mesh.hh"
+#include "api/mesh/mesh_utils.hh"
 #include "api/parameters/base_params.hh"
 #include "api/parameters/render_params.hh"
-#include "api/render/mesh.hh"
-#include "api/render/mesh_utils.hh"
 #include "api/tree/instance.hh"
+#include "kokkos/flimkokkos.hh"
 #include "kokkos/renderer_accesser.hh"
 #include "vulkan/rendering/renderer.hh"
-#include <Eigen/src/Core/Matrix.h>
-#include <Kokkos_Core.hpp>
-#include <Kokkos_DualView.hpp>
-#include <Kokkos_Macros.hpp>
-#include <Kokkos_Pair.hpp>
-#include <cmath>
-#include <decl/Kokkos_Declare_OPENMP.hpp>
-#include <imgui.h>
-#include <impl/Kokkos_Profiling.hpp>
-#include <setup/Kokkos_Setup_HIP.hpp>
 
 using namespace Flim;
 

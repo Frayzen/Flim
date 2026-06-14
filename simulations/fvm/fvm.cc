@@ -1,8 +1,8 @@
 #include "api/flim_api.hh"
 #include "api/parameters/base_params.hh"
 #include "api/parameters/render_params.hh"
-#include "api/render/mesh.hh"
-#include "api/render/mesh_utils.hh"
+#include "api/mesh/mesh.hh"
+#include "api/mesh/mesh_utils.hh"
 #include "api/tree/instance.hh"
 #include "ast/fmv_solver.hh"
 #include "ast/fvm_ast.hh"
@@ -17,8 +17,8 @@ using namespace Flim;
 // #include <KokkosSparse_CrsMatrix.hpp>
 // #include <KokkosSparse_spmv.hpp>
 
-int main() {
-  Kokkos::initialize();
+int main(int argc, char *argv[]) {
+  Kokkos::initialize(argc, argv);
   FlimAPI api = FlimAPI::init();
   {
 
@@ -39,6 +39,7 @@ int main() {
 
     FVMMesh fvmMesh(mesh);
     FVMSolver solver(ast, fvmMesh);
+    std::cout << "HERE " << std::endl;
     solver.assemble();
 
     auto &scene = api.getScene();

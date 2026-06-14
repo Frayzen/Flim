@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <vector>
 #include <vulkan/vulkan_core.h>
-const uint32_t width = 1600;
-const uint32_t height = 900;
+const uint32_t SCREEN_WIDTH = 1600;
+const uint32_t SCREEN_HEIGHT = 900;
 
 #if __cplusplus >= 202002L
 template <typename T, typename U>

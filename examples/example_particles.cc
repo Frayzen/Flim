@@ -2,8 +2,8 @@
 #include <Eigen/StdVector>
 
 #include "api/flim_api.hh"
-#include "api/render/mesh.hh"
-#include "api/render/mesh_utils.hh"
+#include "api/mesh/mesh.hh"
+#include "api/mesh/mesh_utils.hh"
 #include "api/scene.hh"
 #include "api/tree/camera.hh"
 #include "api/tree/instance.hh"

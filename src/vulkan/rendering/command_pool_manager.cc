@@ -1,6 +1,6 @@
 #include "command_pool_manager.hh"
 #include "api/parameters/render_params.hh"
-#include "api/render/mesh.hh"
+#include "api/mesh/mesh.hh"
 #include "consts.hh"
 #include "vulkan/buffers/buffer_utils.hh"
 #include "vulkan/context.hh"

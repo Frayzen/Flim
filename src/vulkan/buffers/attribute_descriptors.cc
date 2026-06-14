@@ -1,5 +1,5 @@
 #include "vulkan/buffers/attribute_descriptors.hh"
-#include "api/render/mesh.hh"
+#include "api/mesh/mesh.hh"
 #include "utils/checks.hh"
 #include "vulkan/buffers/descriptor_holder.hh"
 #include <cassert>

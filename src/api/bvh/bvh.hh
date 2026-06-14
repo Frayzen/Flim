@@ -1,6 +1,6 @@
 #pragma once
 
-#include "api/render/mesh.hh"
+#include "api/mesh/mesh.hh"
 #include <cmath>
 #include <cstddef>
 #include <cstdint>

@@ -66,7 +66,7 @@ void FVMSolver::setup(const FVMAst &ast) {
   nodeValues.Sync();
 }
 
-using view_type = Kokkos::View<float *>;
+using view_type = Kokkos::View<float *, DeviceSpace::memory_space>;
 struct Operand {
   Kokkos::Subview<view_type, std::pair<int, int>> view;
   size_t width;
@@ -82,7 +82,7 @@ getConstVal(FVMAst::Node &node, const CSRList<DeviceSpace, float> &nodeValues) {
     auto subview = nodeValues.entryAt_device(node.data.id);
     ptr = subview.data();
   }
-  return Eigen::Map<Eigen::MatrixXf>(ptr, height, width);
+  return Eigen::Map<Eigen::MatrixXf>(ptr, node.height, node.width);
 };
 
 KOKKOS_INLINE_FUNCTION void applyMul(Operand &leftOp, Operand &rightOp) {
@@ -116,94 +116,98 @@ void FVMSolver::assemble() {
   Kokkos::View<float *, DeviceSpace> scratchMemory(
       "Face tmp values", maxMemoryInAST * 2 * mesh.triangles.size());
   auto indices = fvmMesh.getAdjacency().indices.d_view;
-  Kokkos::parallel_for(
-      "Assemble", mesh.triangles.size(), KOKKOS_LAMBDA(uint32_t id) {
-        auto resultMem = Kokkos::subview(
-            scratchMemory, Kokkos::make_pair(maxMemoryInAST * 2 * id,
-                                             (maxMemoryInAST + 1) * 2 * id));
-        auto getOperand = [&](bool left, size_t width,
-                              size_t height) -> Operand {
-          auto memOffset = left ? 0 : 1;
-          auto subview = Kokkos::subview(
-              resultMem,
-              Kokkos::make_pair(maxMemoryInAST * 2 * memOffset,
-                                maxMemoryInAST * 2 * (memOffset + 1)));
-          return {
-              .view = subview,
-              .width = width,
-              .height = height,
-              .value =
-                  Eigen::Map<Eigen::MatrixXf>(subview.data(), height, width),
-              .location = Cell,
-          };
-        };
-        auto checkMatch = [](FieldLocation &loc1, FieldLocation &loc2) {
-          if (loc1 == Same || loc2 == Same)
-            return;
-          KOKKOS_ASSERT(loc1 == loc2);
-        };
+  // Kokkos::parallel_for(
+  //     "Assemble", Kokkos::RangePolicy<DeviceSpace>(0, mesh.triangles.size()),
+  //     KOKKOS_LAMBDA(uint32_t id) {
+  //       auto resultMem = Kokkos::subview(
+  //           scratchMemory, Kokkos::make_pair(maxMemoryInAST * 2 * id,
+  //                                            (maxMemoryInAST + 1) * 2 * id));
+  //       auto getOperand = [&](bool left, size_t width,
+  //                             size_t height) -> Operand {
+  //         auto memOffset = left ? 0 : 1;
+  //         auto subview = Kokkos::subview(
+  //             resultMem,
+  //             Kokkos::make_pair(maxMemoryInAST * 2 * memOffset,
+  //                               maxMemoryInAST * 2 * (memOffset + 1)));
+  //         return {
+  //             .view = subview,
+  //             .width = width,
+  //             .height = height,
+  //             .value =
+  //                 Eigen::Map<Eigen::MatrixXf>(subview.data(), height, width),
+  //             .location = Cell,
+  //         };
+  //       };
+  //       auto checkMatch = [](FieldLocation &loc1, FieldLocation &loc2) {
+  //         if (loc1 == Same || loc2 == Same)
+  //           return;
+  //         KOKKOS_ASSERT(loc1 == loc2);
+  //       };
 
-        // LETS DO EVERYTHING EXPLICIT FIRST
-        bool is_explicit = true;
-        bool isLeftOpSet = false;
-        Operand leftOp, rightOp;
-        for (size_t i = 0; i < node_list.size(); i++) {
-          auto curNode = node_list(i);
+  //       // LETS DO EVERYTHING EXPLICIT FIRST
+  //       bool is_explicit = true;
+  //       bool isLeftOpSet = false;
+  //       Operand leftOp, rightOp;
+  //       for (size_t i = 0; i < node_list.size(); i++) {
+  //         auto curNode = node_list(i);
 
-          Operand curOp;
-          switch (curNode.type) {
-          case NodeType::CONST:
-            curOp = getOperand(!isLeftOpSet, curNode.width, curNode.height);
-            curOp.location = Same;
-            if (is_explicit)
-              curOp.value = getConstVal(curNode, node_values);
-            else
-              curOp.value.setZero();
-            break;
-          case NodeType::UNKNOWN_IMPLICIT:
-            curOp = getOperand(!isLeftOpSet, curNode.width, curNode.height);
-            if (!is_explicit)
-              curOp.value.setZero();
-            else
-              curOp.value.setIdentity();
-            break;
-          case NodeType::UNKNOWN_EXPLICIT:
-            curOp = getOperand(!isLeftOpSet, curNode.width, curNode.height);
-            if (is_explicit)
-              curOp.value.setZero();
-            else
-              curOp.value.setIdentity();
-            break;
-          case NodeType::MUL:
-            checkMatch(leftOp.location, rightOp.location);
-            applyMul(leftOp, rightOp);
-            break;
-          case NodeType::ADD:
-            checkMatch(leftOp.location, rightOp.location);
-            leftOp.value += rightOp.value;
-            break;
-          case NodeType::SUB:
-            checkMatch(leftOp.location, rightOp.location);
-            leftOp.value -= rightOp.value;
-            break;
-          case NodeType::DIVERGENCE:
-            KOKKOS_ASSERT(leftOp.location == Faces);
-            break;
-          case NodeType::GRADIENT:
-            KOKKOS_ASSERT(leftOp.location == Cell);
-            break;
-          default:
-            KOKKOS_ASSERT(false);
-            break;
-          }
-          if (isLeftOpSet)
-            rightOp = curOp;
-          else
-            leftOp = curOp;
-          isLeftOpSet = static_cast<int>(curNode.type) &
-                            static_cast<int>(NodeType::VALUE_OP) ||
-                        static_cast<int>(curNode.type) &
-                            static_cast<int>(NodeType::UNARY_OP);
-        }
-      });
+  //         Operand curOp =
+  //             getOperand(!isLeftOpSet, curNode.width, curNode.height);
+
+  //         bool is_value_op = static_cast<int>(curNode.type) &
+  //                            static_cast<int>(NodeType::VALUE_OP);
+  //         bool is_unary_op = static_cast<int>(curNode.type) &
+  //                            static_cast<int>(NodeType::UNARY_OP);
+
+  //         switch (curNode.type) {
+  //         case NodeType::CONST:
+  //           curOp.location = Same;
+  //           if (is_explicit)
+  //             curOp.value = getConstVal(curNode, node_values);
+  //           else
+  //             curOp.value.setZero();
+  //           break;
+  //         case NodeType::UNKNOWN_IMPLICIT:
+  //           if (!is_explicit)
+  //             curOp.value.setZero();
+  //           else
+  //             curOp.value.setIdentity();
+  //           break;
+  //         case NodeType::UNKNOWN_EXPLICIT:
+  //           if (is_explicit)
+  //             curOp.value.setZero();
+  //           else
+  //             curOp.value.setIdentity();
+  //           break;
+  //         case NodeType::MUL:
+  //           checkMatch(leftOp.location, rightOp.location);
+  //           applyMul(leftOp, rightOp);
+  //           break;
+  //         case NodeType::ADD:
+  //           checkMatch(leftOp.location, rightOp.location);
+  //           leftOp.value += rightOp.value;
+  //           break;
+  //         case NodeType::SUB:
+  //           checkMatch(leftOp.location, rightOp.location);
+  //           leftOp.value -= rightOp.value;
+  //           break;
+  //         case NodeType::DIVERGENCE:
+  //           KOKKOS_ASSERT(leftOp.location == Faces);
+  //           break;
+  //         case NodeType::GRADIENT:
+  //           KOKKOS_ASSERT(leftOp.location == Cell);
+  //           break;
+  //         default:
+  //           KOKKOS_ASSERT(false);
+  //           break;
+  //         }
+  //         if (is_value_op) {
+  //           if (isLeftOpSet)
+  //             rightOp = curOp;
+  //           else
+  //             leftOp = curOp;
+  //         }
+  //         isLeftOpSet = is_value_op || is_unary_op;
+  //       }
+  //     });
 }

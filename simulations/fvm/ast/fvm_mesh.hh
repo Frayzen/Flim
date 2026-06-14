@@ -1,11 +1,11 @@
 #pragma once
 
-#include "api/render/mesh.hh"
+#include "api/mesh/mesh.hh"
 #include "utils/csr.hh"
 #include <Eigen/Core>
 #include <Kokkos_DualView.hpp>
 
-using DeviceSpace = Kokkos::DefaultExecutionSpace;
+using DeviceSpace = Kokkos::DefaultHostExecutionSpace;
 
 using namespace Flim;
 

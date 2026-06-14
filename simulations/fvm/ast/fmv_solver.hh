@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ast/fvm_mesh.hh"
+#include "ast/fvm_stack.hh"
 #include "fvm_ast.hh"
 
 // #include <KokkosBlas1_axpby.hpp>
@@ -15,7 +16,7 @@ using MatrixType = KokkosSparse::CrsMatrix<float, int, DeviceSpace, void, int>;
 class FVMSolver {
 public:
   FVMSolver(const FVMAst &ast, const FVMMesh &mesh)
-      : fvmMesh(mesh), rpn(ast.getRPN()) {
+      : fvmMesh(mesh), rpn(ast.getRPN()), stack(rpn, ast.getDepth()) {
     setup(ast);
   }
 
@@ -28,4 +29,5 @@ private:
   MatrixType _A;
   const FVMMesh &fvmMesh;
   const std::vector<FVMAst::Node> rpn;
+  const FVMStack stack;
 };

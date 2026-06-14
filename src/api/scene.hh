@@ -3,7 +3,7 @@
 #include "api/fwd.hh"
 #include "api/parameters/compute_params.hh"
 #include "api/parameters/render_params.hh"
-#include "api/render/mesh.hh"
+#include "api/mesh/mesh.hh"
 #include "api/tree/camera.hh"
 #include "vulkan/computing/computer.hh"
 #include "vulkan/rendering/renderer.hh"

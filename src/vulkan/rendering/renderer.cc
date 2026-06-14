@@ -1,7 +1,7 @@
 #include "renderer.hh"
 
 #include "api/parameters/render_params.hh"
-#include "api/render/mesh.hh"
+#include "api/mesh/mesh.hh"
 #include "api/tree/instance.hh"
 #include "vulkan/context.hh"
 #include <Eigen/src/Core/Matrix.h>

@@ -22,7 +22,8 @@ void WindowManager::initWindow() {
   }
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Disable OpenGL (default API)
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);   // For later
-  context.window = glfwCreateWindow(width, height, "FLIM", nullptr, nullptr);
+  context.window =
+      glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "FLIM", nullptr, nullptr);
   if (!context.window) {
     throw std::runtime_error("Failed to create GLFW window");
   }

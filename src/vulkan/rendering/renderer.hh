@@ -1,7 +1,7 @@
 #pragma once
 
 #include "api/parameters/render_params.hh"
-#include "api/render/mesh.hh"
+#include "api/mesh/mesh.hh"
 #include "api/tree/camera.hh"
 #include "utils/checks.hh"
 #include "vulkan/buffers/buffer_manager.hh"

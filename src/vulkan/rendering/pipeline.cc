@@ -1,6 +1,6 @@
 #include "pipeline.hh"
 #include "api/parameters/render_params.hh"
-#include "api/render/mesh.hh"
+#include "api/mesh/mesh.hh"
 #include "vulkan/context.hh"
 #include "vulkan/rendering/renderer.hh"
 #include <iostream>

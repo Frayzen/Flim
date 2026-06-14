@@ -24,6 +24,8 @@ enum class NodeType {
   NEGATE
 };
 
+#define NO_CHILD (-1)
+
 class FVMAst {
 public:
   union NodeData {
@@ -35,9 +37,10 @@ public:
     NodeType type;
     size_t height;
     size_t width;
-    int left = -1;
-    int right = -1;
+    int left = NO_CHILD;
+    int right = NO_CHILD;
     NodeData data = {0.0f};
+    int maxDepth = 1;
   };
 
   // Lightweight handle for syntax sugar
@@ -75,6 +78,7 @@ public:
   const size_t space_dimension;
 
   bool isLinearImplicit() const;
+  size_t getDepth() const;
 
 private:
   bool checkLinearImplicit(int node_id) const;
