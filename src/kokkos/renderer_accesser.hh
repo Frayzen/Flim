@@ -1,11 +1,30 @@
 #pragma once
 #include "vulkan/buffers/buffer_utils.hh"
 #include "vulkan/rendering/renderer.hh"
+#include <cstdint>
 #define CUR_FRAME -1
 
 #include <Kokkos_Core.hpp>
 
 namespace Flim {
+
+template <typename Type, int rows, int cols> struct FlimMatrixWrapper {
+
+  Type vec[rows * cols];
+
+  KOKKOS_INLINE_FUNCTION
+  auto get() { return Eigen::Map<Eigen::Matrix<Type, rows, cols>>(vec); };
+};
+
+using Vector3fW = FlimMatrixWrapper<float, 3, 1>;
+using Vector2fW = FlimMatrixWrapper<float, 2, 1>;
+using Vector3uW = FlimMatrixWrapper<uint32_t, 3, 1>;
+
+struct VertexW {
+  Vector3fW pos;
+  Vector3fW normal;
+  Vector2fW uv;
+};
 
 template <typename Type>
 Kokkos::View<Type *, Kokkos::DefaultExecutionSpace>
@@ -30,9 +49,9 @@ getAttributeBufferView(const Renderer &r, int binding,
   throw std::runtime_error("Invalid binding");
 };
 
-Kokkos::View<Vector3<uint32_t> *, Kokkos::DefaultExecutionSpace>
+Kokkos::View<Vector3uW *, Kokkos::DefaultExecutionSpace>
 getIndexBufferView(const Renderer &r) {
-  return getBufferView<Vector3<uint32_t>>(r.indexBuffer);
+  return getBufferView<Vector3uW>(r.indexBuffer);
 }
 
 }; // namespace Flim

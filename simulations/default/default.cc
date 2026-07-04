@@ -8,21 +8,21 @@
 #include "kokkos/renderer_accesser.hh"
 #include "vulkan/buffers/uniform_descriptors.hh"
 #include <Eigen/src/Core/Matrix.h>
-// #include <Kokkos_Core.hpp>
-// #include <Kokkos_Random.hpp>
+#include <Kokkos_Core.hpp>
+#include <Kokkos_Random.hpp>
 #include <cstdint>
 #include <cstdio>
-// #include <decl/Kokkos_Declare_OPENMP.hpp>
+#include <decl/Kokkos_Declare_OPENMP.hpp>
 #include <imgui.h>
-// #include <impl/Kokkos_Profiling.hpp>
+#include <impl/Kokkos_Profiling.hpp>
 #include <iostream>
-// #include <setup/Kokkos_Setup_HIP.hpp>
+#include <setup/Kokkos_Setup_HIP.hpp>
 #include <unistd.h>
 
 using namespace Flim;
 
 int main() {
-  // Kokkos::initialize();
+  Kokkos::initialize();
 
   FlimAPI api = FlimAPI::init();
   {
@@ -62,26 +62,25 @@ int main() {
     scene.camera.sensivity = 5;
 
     api.setupGraphics();
-    // Kokkos::View<Vertex *> vertices =
-    //     getAttributeBufferView<Vertex>(rd,
-    //     BINDING_DEFAULT_VERTICES_ATTRIBUTES);
-    // Kokkos::View<Vector3f *> originals("Original vertices",
-    // vertices.extent(0)); Kokkos::View<Vector3f *> dir("Directions",
-    // vertices.extent(0)); Kokkos::Random_XorShift64_Pool<>
-    // random_pool(42424242); Kokkos::parallel_for(
-    //     "Init", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
-    //       originals(i) = vertices(i).pos;
-    //       auto generator = random_pool.get_state();
-    //       dir(i) =
-    //           Vector3f(generator.drand(-1.0, 1.0),
-    //           generator.drand(-1.0, 1.0),
-    //                    generator.drand(-1.0, 1.0))
-    //               .normalized();
-    //       vertices(i).pos =
-    //           vertices(i).pos + (dir(i) * generator.drand(-0.3, 0.3));
-    //       random_pool.free_state(generator);
-    //     });
-    // Kokkos::fence("Wait for init");
+    Kokkos::View<VertexW *> vertices = getAttributeBufferView<VertexW>(
+        rd, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+    Kokkos::View<Vector3fW *> originals("Original vertices",
+                                        vertices.extent(0));
+    Kokkos::View<Vector3fW *> dir("Directions", vertices.extent(0));
+    Kokkos::Random_XorShift64_Pool<> random_pool(42424242);
+    Kokkos::parallel_for(
+        "Init", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
+          originals(i).get() = vertices(i).pos.get();
+          auto generator = random_pool.get_state();
+          dir(i).get() =
+              Vector3f(generator.drand(-1.0, 1.0), generator.drand(-1.0, 1.0),
+                       generator.drand(-1.0, 1.0))
+                  .normalized();
+          vertices(i).pos.get() = vertices(i).pos.get() +
+                                  (dir(i).get() * generator.drand(-0.3, 0.3));
+          random_pool.free_state(generator);
+        });
+    Kokkos::fence("Wait for init");
 
     BVH<5> bvh(cube);
 
@@ -93,14 +92,16 @@ int main() {
     static float dist = 100;
     api.run([&](float deltaTime) {
       float curMaxDist = maxDistMove;
-      // Kokkos::parallel_for(
-      //     "Move vertices", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
-      //       vertices(i).pos += dir(i) * deltaTime;
-      //       if ((vertices(i).pos - originals(i)).norm() > curMaxDist) {
-      //         vertices(i).pos = originals(i) + curMaxDist * dir(i);
-      //         dir(i) *= -1;
-      //       }
-      //     });
+      Kokkos::parallel_for(
+          "Move vertices", vertices.extent(0), KOKKOS_LAMBDA(const int i) {
+            vertices(i).pos.get() += dir(i).get() * deltaTime;
+            if ((vertices(i).pos.get() - originals(i).get()).norm() >
+                curMaxDist) {
+              vertices(i).pos.get() =
+                  originals(i).get() + curMaxDist * dir(i).get();
+              dir(i).get() *= -1;
+            }
+          });
       ImGui::SliderFloat("Speed", &speed, 0, 1);
       ImGui::SliderFloat("Radius", &radius, 0.5, 10);
       ImGui::InputFloat3("Coord pointing", &pointing.x());

@@ -32,7 +32,7 @@ installdeps()
 
 find_package(glfw3 REQUIRED 1.3)
 find_package(Vulkan REQUIRED)
-find_package(Eigen3 REQUIRED)
+find_package(Eigen REQUIRED)
 find_package(assimp REQUIRED)
 
 find_package(Vulkan COMPONENTS glslc)

@@ -51,7 +51,8 @@ int main() {
   static int ecol = 1;
   api.setupGraphics();
   Kokkos::View<Vertex *> vertices =
-      getAttributeBufferView<Vertex>(rd, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+      getAttributeBufferView<Vertex>(
+          rd, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
   Kokkos::View<Vector3<uint32_t> *> indices = getIndexBufferView(rd);
 
   api.run([&](float deltaTime) {

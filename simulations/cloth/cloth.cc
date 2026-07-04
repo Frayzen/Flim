@@ -52,13 +52,13 @@ int main() {
     Instance &c = scene.instantiate(mesh);
 
     api.setupGraphics();
-    Kokkos::View<Vertex *> vertices =
-        getAttributeBufferView<Vertex>(rd, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
-    Kokkos::View<Vertex **> pts(vertices.data(), nb_x, nb_y);
-    Kokkos::View<Vertex **> initPos("Init points", nb_x, nb_y);
+    Kokkos::View<VertexW *> vertices = getAttributeBufferView<VertexW>(
+        rd, BINDING_DEFAULT_VERTICES_ATTRIBUTES);
+    Kokkos::View<VertexW **> pts(vertices.data(), nb_x, nb_y);
+    Kokkos::View<VertexW **> initPos("Init points", nb_x, nb_y);
     Kokkos::deep_copy(initPos, pts);
-    Kokkos::View<Vertex **> oldPos("Old points", nb_x, nb_y);
-    Kokkos::View<Vector3f **> vels("Velocities", nb_x, nb_y);
+    Kokkos::View<VertexW **> oldPos("Old points", nb_x, nb_y);
+    Kokkos::View<Vector3fW **> vels("Velocities", nb_x, nb_y);
 
     // inverse of the mass
     Kokkos::DualView<float **> weights("Weights", nb_x, nb_y);
@@ -103,7 +103,7 @@ int main() {
             "Apply gravity",
             Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {nb_x, nb_y}),
             KOKKOS_LAMBDA(const int i, const int j) {
-              vels(i, j) = Vector3f(0, 0, 0);
+              vels(i, j).get() = Vector3f(0, 0, 0);
             });
         Kokkos::fence("Wait reset");
       }
@@ -118,7 +118,8 @@ int main() {
             "Apply gravity",
             Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {nb_x, nb_y}),
             KOKKOS_LAMBDA(const int i, const int j) {
-              vels(i, j).y() -= deltaTime * g * weights.view_device()(i, j);
+              vels(i, j).get().y() -=
+                  deltaTime * g * weights.view_device()(i, j);
             });
         Kokkos::fence("Wait gravity");
 
@@ -131,7 +132,7 @@ int main() {
               "Update position",
               Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {nb_x, nb_y}),
               KOKKOS_LAMBDA(const int i, const int j) {
-                pts(i, j).pos += dt * vels(i, j);
+                pts(i, j).pos.get() += dt * vels(i, j).get();
               });
           Kokkos::fence("Wait update pos");
 
@@ -143,10 +144,10 @@ int main() {
                 Vector3f delta;
 #define UPDATE_CONSTRAINT_NEIGHBOUR(X, Y, Length)                              \
   if (X >= 0 && X < nb_x && Y >= 0 && Y < nb_y) {                              \
-    delta = apply_constraint(pts(i, j).pos, pts(X, Y).pos,                     \
+    delta = apply_constraint(pts(i, j).pos.get(), pts(X, Y).pos.get(),         \
                              weights.view_device()(i, j),                      \
                              weights.view_device()(X, Y), inv_dt_sq, Length);  \
-    pts(i, j).pos += delta;                                                    \
+    pts(i, j).pos.get() += delta;                                              \
   }
                 UPDATE_CONSTRAINT_NEIGHBOUR(i, j + 1, side_length)
                 UPDATE_CONSTRAINT_NEIGHBOUR(i, j - 1, side_length)
@@ -165,8 +166,9 @@ int main() {
             "Apply damping",
             Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {nb_x, nb_y}),
             KOKKOS_LAMBDA(const int i, const int j) {
-              vels(i, j) =
-                  damping * (pts(i, j).pos - oldPos(i, j).pos) / deltaTime;
+              vels(i, j).get() =
+                  damping * (pts(i, j).pos.get() - oldPos(i, j).pos.get()) /
+                  deltaTime;
             });
         Kokkos::fence("Wait damping");
       }
